@@ -1,0 +1,164 @@
+# Neutron ML Pipeline - .gitignore
+
+# ============================================================================
+# Poetry & Python
+# ============================================================================
+
+# Poetry
+.venv/
+dist/
+*.egg-info/
+__pypackages__/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg
+
+# ============================================================================
+# Environment & Secrets
+# ============================================================================
+
+.env
+.env.local
+.env.*.local
+
+# ============================================================================
+# Testing & Coverage
+# ============================================================================
+
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# ============================================================================
+# Type Checking & Linting
+# ============================================================================
+
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# ============================================================================
+# IDEs & Editors
+# ============================================================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Vim
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Emacs
+*~
+\#*\#
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# ============================================================================
+# Nix
+# ============================================================================
+
+result
+result-*
+.direnv/
+.envrc
+
+# ============================================================================
+# ML / AI Artifacts
+# ============================================================================
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Ray
+ray_results/
+/tmp/ray/
+
+# Models & Checkpoints
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.pb
+*.onnx
+
+# Datasets (customize as needed)
+/data/
+/datasets/
+*.csv
+*.parquet
+
+# ============================================================================
+# Logs & Runtime
+# ============================================================================
+
+*.log
+worker.pid
+worker.log
+*.pid
+
+# Temporal
+.temporal/
+
+# ============================================================================
+# Docker & Infrastructure
+# ============================================================================
+
+# Docker volumes (não commitado)
+postgres_data/
+mlflow_artifacts/
+
+# ============================================================================
+# OS & System Files
+# ============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+.Trash-*
+.nfs*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

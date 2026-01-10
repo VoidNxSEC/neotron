@@ -1,0 +1,105 @@
+version: '3.8'
+
+# Neutron ML Pipeline Infrastructure
+# Services: Temporal, MLflow, PostgreSQL, Ray Dashboard
+
+services:
+  # PostgreSQL - Backend para Temporal e MLflow
+  postgres:
+    image: postgres:15-alpine
+    container_name: neutron-postgres
+    environment:
+      POSTGRES_USER: neutron
+      POSTGRES_PASSWORD: neutron
+      POSTGRES_DB: neutron
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U neutron"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - neutron-network
+
+  # Temporal Server
+  temporal:
+    image: temporalio/auto-setup:1.22.4
+    container_name: neutron-temporal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=neutron
+      - POSTGRES_PWD=neutron
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    ports:
+      - "7233:7233"  # Temporal gRPC
+      - "8088:8088"  # Temporal UI
+    volumes:
+      - ./temporal-config:/etc/temporal/config/dynamicconfig
+    healthcheck:
+      test: ["CMD", "tctl", "cluster", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - neutron-network
+
+  # MLflow Tracking Server
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.10.2
+    container_name: neutron-mlflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://neutron:neutron@postgres:5432/mlflow
+      --default-artifact-root /mlflow/artifacts
+      --host 0.0.0.0
+      --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow_artifacts:/mlflow/artifacts
+    environment:
+      - MLFLOW_TRACKING_URI=http://0.0.0.0:5000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - neutron-network
+
+  # Ray Dashboard (opcional - pode rodar local)
+  # Descomente se quiser Ray cluster via Docker
+  # ray-head:
+  #   image: rayproject/ray:2.9.0-py310
+  #   container_name: neutron-ray-head
+  #   command: ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --block
+  #   ports:
+  #     - "6379:6379"   # Ray GCS
+  #     - "8265:8265"   # Ray Dashboard
+  #     - "10001:10001" # Ray client
+  #   volumes:
+  #     - ray_data:/tmp/ray
+  #   shm_size: 2gb
+  #   networks:
+  #     - neutron-network
+
+networks:
+  neutron-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mlflow_artifacts:
+  # ray_data:
