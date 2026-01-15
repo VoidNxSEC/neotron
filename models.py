@@ -3,9 +3,12 @@ Core data models - Type-safe, composable primitives
 Filosofia: Se o compilador/runtime não pode validar, você tá fazendo errado
 """
 from pydantic import BaseModel, Field, validator
-from typing import Literal, Optional, Dict, Any, List
+from typing import Literal, Optional, Dict, Any, List, Union, Tuple
 from datetime import datetime
 from enum import Enum
+import random
+import itertools
+import math
 
 
 class SearchStrategy(str, Enum):
@@ -29,6 +32,111 @@ class HyperparameterSpace(BaseModel):
         if v[0] >= v[1]:
             raise ValueError(f"Invalid range: {v}")
         return v
+
+    def sample_random(self) -> Dict[str, Any]:
+        """Sample random hyperparameters from the search space"""
+        result = {}
+
+        # Learning rate
+        if isinstance(self.learning_rate, tuple):
+            # Continuous range - sample log-uniform
+            min_lr, max_lr = self.learning_rate
+            log_min = random.uniform(float(min_lr), float(max_lr))
+            result["learning_rate"] = log_min
+        else:
+            # Discrete list
+            result["learning_rate"] = random.choice(self.learning_rate)
+
+        # Weight decay
+        if isinstance(self.weight_decay, tuple):
+            min_wd, max_wd = self.weight_decay
+            result["weight_decay"] = random.uniform(float(min_wd), float(max_wd))
+        else:
+            result["weight_decay"] = random.choice(self.weight_decay)
+
+        # Warmup steps
+        if isinstance(self.warmup_steps, tuple):
+            min_ws, max_ws = self.warmup_steps
+            result["warmup_steps"] = random.randint(int(min_ws), int(max_ws))
+        else:
+            result["warmup_steps"] = random.choice(self.warmup_steps)
+
+        # Num epochs
+        if isinstance(self.num_epochs, tuple):
+            min_ep, max_ep = self.num_epochs
+            result["num_epochs"] = random.randint(int(min_ep), int(max_ep))
+        else:
+            result["num_epochs"] = random.choice(self.num_epochs)
+
+        # Batch size
+        if isinstance(self.batch_size, tuple):
+            min_bs, max_bs = self.batch_size
+            result["batch_size"] = random.randint(int(min_bs), int(max_bs))
+        else:
+            result["batch_size"] = random.choice(self.batch_size)
+
+        return result
+
+    def get_grid_points(self, points_per_dim: int = 3) -> List[Dict[str, Any]]:
+        """
+        Generate grid points for grid search.
+
+        Args:
+            points_per_dim: Number of points to sample per dimension for continuous ranges
+
+        Returns:
+            List of hyperparameter dictionaries representing grid points
+        """
+        # Generate values for each dimension
+        lr_values = self._get_dimension_values(self.learning_rate, points_per_dim, log_scale=True)
+        wd_values = self._get_dimension_values(self.weight_decay, points_per_dim, log_scale=False)
+        ws_values = self._get_dimension_values(self.warmup_steps, points_per_dim, log_scale=False, as_int=True)
+        ep_values = self._get_dimension_values(self.num_epochs, points_per_dim, log_scale=False, as_int=True)
+        bs_values = self._get_dimension_values(self.batch_size, points_per_dim, log_scale=False, as_int=True)
+
+        # Generate all combinations
+        grid_points = []
+        for lr, wd, ws, ep, bs in itertools.product(lr_values, wd_values, ws_values, ep_values, bs_values):
+            grid_points.append({
+                "learning_rate": lr,
+                "weight_decay": wd,
+                "warmup_steps": ws,
+                "num_epochs": ep,
+                "batch_size": bs
+            })
+
+        return grid_points
+
+    def _get_dimension_values(
+        self,
+        dimension: Union[Tuple, List],
+        points_per_dim: int,
+        log_scale: bool = False,
+        as_int: bool = False
+    ) -> List:
+        """Helper to get values for a single dimension"""
+        if isinstance(dimension, list):
+            # Already discrete
+            return dimension
+
+        # Continuous range
+        min_val, max_val = dimension
+
+        if log_scale:
+            # Log-scale sampling for learning rate
+            log_min = math.log10(min_val)
+            log_max = math.log10(max_val)
+            values = [10 ** (log_min + i * (log_max - log_min) / (points_per_dim - 1))
+                     for i in range(points_per_dim)]
+        else:
+            # Linear scale
+            step = (max_val - min_val) / (points_per_dim - 1)
+            values = [min_val + i * step for i in range(points_per_dim)]
+
+        if as_int:
+            values = [int(round(v)) for v in values]
+
+        return values
 
 
 class TrainingConfig(BaseModel):
