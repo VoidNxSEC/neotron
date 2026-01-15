@@ -6,13 +6,20 @@
     flake-utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils, ... }@inputs:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      ...
+    }@inputs:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
         pkgs = import nixpkgs {
           inherit system;
           config = {
-            allowUnfree = true;  # Para CUDA e drivers proprietários
+            allowUnfree = true; # Para CUDA e drivers proprietários
             cudaSupport = true;
           };
         };
@@ -85,8 +92,8 @@
             name = "neutron-ml-pipeline-dev";
 
             buildInputs = with pkgs; [
-              # Python environment via Poetry
-              poetry
+              # Python environment via uv
+              uv
               python313
 
               # System dependencies
@@ -95,10 +102,19 @@
               docker-compose
               just
 
-              # Build tools (para compilar deps se necessário)
+              # GUI Dependencies
+              gtk4
+              libadwaita
+              glib
+              gobject-introspection
+              wrapGAppsHook4
+              cairo
+
+              # Build tools
               gcc
               stdenv.cc.cc.lib
               zlib
+              pkg-config
 
               # Monitoring tools
               htop
@@ -120,7 +136,7 @@
 
             shellHook = ''
               echo "════════════════════════════════════════════════════════════"
-              echo "  🚀 Neutron ML Pipeline Dev Environment (Poetry)"
+              echo "  🚀 Neutron ML Pipeline Dev Environment (uv)"
               echo "════════════════════════════════════════════════════════════"
               echo ""
 
@@ -135,19 +151,19 @@
               export RAY_ADDRESS="auto"
               export ML_GPU_COST_PER_HOUR="0.90"
 
-              # Poetry config
-              export POETRY_VIRTUALENVS_IN_PROJECT=true
+              # uv configuration
+              export UV_PYTHON=${pkgs.python313}/bin/python
+              export UV_VENV_PATH=".venv"
 
               echo "📦 Python Environment:"
               echo "  Python: $(python --version)"
-              echo "  Poetry: $(poetry --version)"
+              echo "  uv: $(uv --version)"
               echo "  CUDA: ${pkgs.cudaPackages.cudatoolkit.version}"
               echo ""
               echo "📦 Available commands:"
               echo "  just --list         # List all tasks"
-              echo "  just quickstart     # Complete setup"
-              echo "  poetry install      # Install dependencies"
-              echo "  poetry show         # Show installed packages"
+              echo "  uv sync             # Install dependencies"
+              echo "  uv run <cmd>        # Run command in venv"
               echo ""
               echo "🌐 Services (after 'just infra-up'):"
               echo "  Temporal UI: http://localhost:8088"
@@ -164,7 +180,7 @@
             name = "neutron-ml-pipeline-prod";
 
             buildInputs = with pkgs; [
-              poetry
+              uv
               python313
               docker
               docker-compose
@@ -211,9 +227,16 @@
         # Formatter para nix code
         formatter = pkgs.nixpkgs-fmt;
       }
-    ) // {
+    )
+    // {
       # NixOS module para deployment (mantido do original)
-      nixosModules.default = { config, lib, pkgs, ... }:
+      nixosModules.default =
+        {
+          config,
+          lib,
+          pkgs,
+          ...
+        }:
         with lib;
         let
           cfg = config.services.neutron-ml-pipeline;
@@ -305,12 +328,15 @@
               createHome = true;
             };
 
-            users.groups.${cfg.group} = {};
+            users.groups.${cfg.group} = { };
 
             # PostgreSQL setup
             services.postgresql = mkIf cfg.postgresql.enable {
               enable = true;
-              ensureDatabases = [ "temporal" "mlflow" ];
+              ensureDatabases = [
+                "temporal"
+                "mlflow"
+              ];
               ensureUsers = [
                 {
                   name = "temporal";
@@ -383,8 +409,7 @@
             systemd.targets.neutron-workers = mkIf cfg.worker.enable {
               description = "Neutron ML Pipeline Worker Pool";
               wantedBy = [ "multi-user.target" ];
-              wants = map (i: "neutron-worker@${toString i}.service")
-                         (range 1 cfg.worker.instances);
+              wants = map (i: "neutron-worker@${toString i}.service") (range 1 cfg.worker.instances);
             };
 
             # Cost tracking timer (daily report)
@@ -410,8 +435,8 @@
             networking.firewall.allowedTCPPorts = mkIf cfg.enable [
               cfg.temporal.port
               cfg.mlflow.port
-              8088  # Temporal UI
-              8265  # Ray dashboard
+              8088 # Temporal UI
+              8265 # Ray dashboard
             ];
           };
         };
