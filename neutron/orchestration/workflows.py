@@ -8,11 +8,17 @@ from datetime import timedelta
 from typing import List, Optional
 import asyncio
 
-from models import (
+from neutron.core.models import (
     PipelineConfig, TrainingConfig, TrainingResult,
     OptimizationState, SearchStrategy, HyperparameterSpace
 )
-from optimizer import HyperparameterOptimizer
+from neutron.optimization.optimizer import HyperparameterOptimizer
+from neutron.compliance.auditors import (
+    lgpd_art18_explanation_guardrail,
+    lgpd_art20_portability_guardrail,
+    LGPD_GUARDRAILS
+)
+from neutron.compliance.sentinel import AgentOutput, ComplianceViolation
 
 
 # ============================================================================
@@ -75,7 +81,7 @@ async def validate_gcp_credits_activity(
     Returns:
         Dict with approval status and credit info
     """
-    from cost_tracker import CerebroCreditValidator
+    from neutron.tracking.cost_tracker import CerebroCreditValidator
 
     validator = CerebroCreditValidator(project_id=gcp_project_id)
     validation_result = validator.validate_credits_before_run(estimated_cost)
@@ -127,6 +133,145 @@ async def analyze_results_activity(
     }
     
     return analysis
+
+
+@activity.defn(name="validate_agent_output")
+async def validate_agent_output_activity(
+    output_text: str,
+    explanation: Optional[str] = None,
+    explanation_quality: float = 0.0,
+    metadata: Optional[dict] = None,
+    model_name: Optional[str] = None,
+    guardrails: Optional[List[str]] = None
+) -> dict:
+    """
+    SENTINEL Compliance Validation Activity
+
+    Validates agent output against LGPD compliance guardrails.
+    This activity enforces compliance requirements and logs all
+    validations to immutable audit trail.
+
+    Args:
+        output_text: The main agent output content
+        explanation: Human-readable explanation (LGPD Art. 18)
+        explanation_quality: Quality score of explanation (0.0-1.0)
+        metadata: Additional metadata (portability info for Art. 20)
+        model_name: Name of model that generated output
+        guardrails: List of guardrail names to enforce (default: all LGPD)
+
+    Returns:
+        Dict with validation results:
+        - passed: Whether all validations passed
+        - output: Original output (if passed)
+        - violations: List of violations (if failed)
+        - audit_ids: List of audit log IDs
+
+    Raises:
+        ComplianceViolation will be caught and returned as failed validation
+    """
+
+    # Create AgentOutput
+    output = AgentOutput(
+        content=output_text,
+        has_explanation=bool(explanation),
+        explanation=explanation,
+        explanation_quality=explanation_quality,
+        metadata=metadata,
+        model_name=model_name
+    )
+
+    # Determine which guardrails to enforce
+    if guardrails:
+        # Specific guardrails requested
+        guardrails_to_enforce = []
+        for name in guardrails:
+            for g in LGPD_GUARDRAILS:
+                if g.name == name:
+                    guardrails_to_enforce.append(g)
+                    break
+    else:
+        # Default: enforce all LGPD guardrails
+        guardrails_to_enforce = LGPD_GUARDRAILS
+
+    # Enforce each guardrail
+    violations = []
+    audit_ids = []
+
+    for guardrail in guardrails_to_enforce:
+        try:
+            enforced = guardrail.enforce(output)
+            audit_ids.append(enforced.audit_id)
+
+            if not enforced.validation_result.passed:
+                # Warning/audit level - logged but didn't block
+                violations.append({
+                    "guardrail": guardrail.name,
+                    "severity": guardrail.severity,
+                    "details": enforced.validation_result.details,
+                    "blocked": False
+                })
+
+        except ComplianceViolation as e:
+            # Blocking violation
+            violations.append({
+                "guardrail": e.guardrail.name,
+                "severity": e.guardrail.severity,
+                "details": e.result.details,
+                "blocked": True
+            })
+
+            # For blocking violations, return immediately
+            return {
+                "passed": False,
+                "output": None,
+                "violations": violations,
+                "audit_ids": audit_ids,
+                "blocked_by": e.guardrail.name
+            }
+
+    # All guardrails passed (or only warnings)
+    blocking_violations = [v for v in violations if v.get("blocked", False)]
+
+    return {
+        "passed": len(blocking_violations) == 0,
+        "output": output_text if len(blocking_violations) == 0 else None,
+        "violations": violations if violations else [],
+        "audit_ids": audit_ids,
+        "blocked_by": None
+    }
+
+
+@activity.defn(name="batch_validate_outputs")
+async def batch_validate_outputs_activity(
+    outputs: List[dict],
+    guardrails: Optional[List[str]] = None
+) -> List[dict]:
+    """
+    Batch validation of multiple agent outputs
+
+    Useful for validating ensemble results or multi-agent outputs.
+
+    Args:
+        outputs: List of dicts with keys: output_text, explanation, etc.
+        guardrails: List of guardrail names to enforce
+
+    Returns:
+        List of validation results (same format as validate_agent_output_activity)
+    """
+    results = []
+
+    for output_dict in outputs:
+        result = await validate_agent_output_activity(
+            output_text=output_dict.get("output_text", ""),
+            explanation=output_dict.get("explanation"),
+            explanation_quality=output_dict.get("explanation_quality", 0.0),
+            metadata=output_dict.get("metadata"),
+            model_name=output_dict.get("model_name"),
+            guardrails=guardrails
+        )
+        results.append(result)
+
+    return results
 
 
 # ============================================================================

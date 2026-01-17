@@ -20,12 +20,12 @@ import json
 from pathlib import Path
 from typing import Optional
 
-from models import (
+from neutron.core.models import (
     PipelineConfig,
     HyperparameterSpace,
     SearchStrategy
 )
-from workflows import start_adaptive_pipeline
+from neutron.orchestration.workflows import start_adaptive_pipeline
 
 
 # ============================================================================

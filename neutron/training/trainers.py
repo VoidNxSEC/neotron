@@ -29,7 +29,7 @@ from transformers import (
 )
 from datasets import load_dataset, load_from_disk
 
-from models import TrainingConfig, TrainingResult, MetricResult
+from neutron.core.models import TrainingConfig, TrainingResult, MetricResult
 
 
 # ============================================================================

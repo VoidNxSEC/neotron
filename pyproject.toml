@@ -45,7 +45,11 @@ dev = [
 cerebro = ["google-cloud-bigquery>=3.14.0"]
 
 [project.scripts]
+neutron = "neutron.cli.main:main"
+neutron-worker = "neutron.orchestration.worker:main"
 neutron-gui = "neutron.gui.app:main"
+neutron-dag = "neutron.integration.dag_bridge:main"
+neutron-cost = "neutron.tracking.cost_tracker:main"
 
 [build-system]
 requires = ["hatchling"]

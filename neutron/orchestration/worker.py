@@ -27,7 +27,7 @@ from temporalio.worker import Worker
 import ray
 
 # Neutron imports
-from workflows import (
+from neutron.orchestration.workflows import (
     AdaptiveMLPipelineWorkflow,
     EnsembleTrainingWorkflow,
     AdaptiveMLPipelineWithQueries,
@@ -36,7 +36,7 @@ from workflows import (
     analyze_results_activity,
     validate_gcp_credits_activity  # CEREBRO integration
 )
-from trainers import TrainerPool
+from neutron.training.trainers import TrainerPool
 
 
 # ============================================================================

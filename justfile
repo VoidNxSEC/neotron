@@ -178,13 +178,13 @@ worker:
     #!/usr/bin/env bash
     echo -e "{{PURPLE}}👷 Starting Temporal worker...{{NC}}"
     echo -e "{{YELLOW}}Press Ctrl+C to stop{{NC}}"
-    python worker.py
+    python -m neutron.orchestration.worker
 
 # Start worker in background
 worker-bg:
     #!/usr/bin/env bash
     echo -e "{{PURPLE}}👷 Starting worker in background...{{NC}}"
-    nohup python worker.py > worker.log 2>&1 &
+    nohup python -m neutron.orchestration.worker > worker.log 2>&1 &
     echo $! > worker.pid
     echo -e "{{GREEN}}✅ Worker started (PID: $(cat worker.pid)){{NC}}"
     echo -e "{{CYAN}}Logs: tail -f worker.log{{NC}}"
@@ -213,19 +213,19 @@ worker-logs:
 run-basic:
     #!/usr/bin/env bash
     echo -e "{{CYAN}}🎯 Running basic random search pipeline...{{NC}}"
-    python main.py 1
+    python -m neutron.cli.main 1
 
 # Run adaptive multi-strategy pipeline
 run-adaptive:
     #!/usr/bin/env bash
     echo -e "{{PURPLE}}🧠 Running adaptive multi-strategy pipeline...{{NC}}"
-    python main.py 2
+    python -m neutron.cli.main 2
 
 # Run custom composition pipeline
 run-custom:
     #!/usr/bin/env bash
     echo -e "{{BLUE}}🎨 Running custom composition pipeline...{{NC}}"
-    python main.py 3
+    python -m neutron.cli.main 3
 
 # Run pipeline with custom config
 run config_path:
@@ -235,9 +235,9 @@ run config_path:
     import asyncio
     from pathlib import Path
     import json
-    from models import PipelineConfig
-    from workflows import start_adaptive_pipeline
-    
+    from neutron.core.models import PipelineConfig
+    from neutron.orchestration.workflows import start_adaptive_pipeline
+
     config_dict = json.loads(Path('{{config_path}}').read_text())
     config = PipelineConfig(**config_dict)
     asyncio.run(start_adaptive_pipeline(config))
@@ -529,14 +529,14 @@ clean-all: clean
 cost-unified experiment_name days="7":
     #!/usr/bin/env bash
     echo -e "{{CYAN}}💰 Unified Cost Report (Neutron + CEREBRO){{NC}}"
-    python -m integrations.unified_cost_reporter "{{experiment_name}}" --days {{days}}
+    python -m neutron.integration.unified_cost_reporter "{{experiment_name}}" --days {{days}}
 
 # Quick credit status check
 credits-status:
     #!/usr/bin/env bash
     echo -e "{{CYAN}}💳 CEREBRO GCP Credit Status{{NC}}"
     python -c "
-    from cost_tracker import CerebroCreditValidator
+    from neutron.tracking.cost_tracker import CerebroCreditValidator
     validator = CerebroCreditValidator()
     status = validator.get_credit_status(days_back=7)
 

@@ -206,7 +206,7 @@
           worker = pkgs.writeShellScriptBin "neutron-worker" ''
             #!/usr/bin/env bash
             cd ${./.}
-            python worker.py "$@"
+            python -m neutron.orchestration.worker "$@"
           '';
 
           # Cost tracker

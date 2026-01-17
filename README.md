@@ -109,7 +109,7 @@ docker-compose ps
 
 ```bash
 # Terminal 1 - Temporal worker
-python worker.py
+python -m neutron.orchestration.worker
 
 # Você vai ver:
 # [INFO] Starting Temporal worker...
@@ -122,11 +122,15 @@ python worker.py
 
 ```bash
 # Terminal 2 - Execute pipeline
-python main.py 1  # Basic random search
+python -m neutron.cli.main 1  # Basic random search
 # ou
-python main.py 2  # Adaptive multi-strategy
+python -m neutron.cli.main 2  # Adaptive multi-strategy
 # ou
-python main.py 3  # Custom composition
+python -m neutron.cli.main 3  # Custom composition
+
+# Or use the installed CLI commands:
+neutron 1  # After poetry install
+neutron-worker  # Start worker
 ```
 
 ## 📊 Monitoring & Observability
@@ -302,10 +306,10 @@ def score(self) -> float:
 ```bash
 # Run múltiplos workers pra high availability
 # Terminal 1
-python worker.py --worker-id worker-1
+python -m neutron.orchestration.worker --worker-id worker-1
 
 # Terminal 2
-python worker.py --worker-id worker-2
+python -m neutron.orchestration.worker --worker-id worker-2
 
 # Temporal load-balances automaticamente
 ```

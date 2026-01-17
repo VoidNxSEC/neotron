@@ -71,19 +71,19 @@ stop-infra:
 worker:
 	@echo "👷 Starting Temporal worker..."
 	@echo "Press Ctrl+C to stop"
-	python worker.py
+	python -m neutron.orchestration.worker
 
 run-basic:
 	@echo "🎯 Running basic random search pipeline..."
-	python main.py 1
+	python -m neutron.cli.main 1
 
 run-adaptive:
 	@echo "🧠 Running adaptive multi-strategy pipeline..."
-	python main.py 2
+	python -m neutron.cli.main 2
 
 run-custom:
 	@echo "🎨 Running custom composition pipeline..."
-	python main.py 3
+	python -m neutron.cli.main 3
 
 # ============================================================================
 # Development
@@ -167,7 +167,7 @@ clean-all: clean
 
 shell:
 	@echo "🐚 Starting IPython shell with imports..."
-	ipython -i -c "from models import *; from optimizer import *; from workflows import *; print('Imports loaded. Ready to experiment.')"
+	ipython -i -c "from neutron.core.models import *; from neutron.optimization.optimizer import *; from neutron.orchestration.workflows import *; print('Imports loaded. Ready to experiment.')"
 
 notebook:
 	@echo "📓 Starting Jupyter notebook..."

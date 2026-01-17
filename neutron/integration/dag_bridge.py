@@ -22,8 +22,8 @@ import networkx as nx
 from temporalio.client import Client
 from temporalio import workflow
 
-from models import PipelineConfig, TrainingConfig, HyperparameterSpace, SearchStrategy
-from workflows import start_adaptive_pipeline
+from neutron.core.models import PipelineConfig, TrainingConfig, HyperparameterSpace, SearchStrategy
+from neutron.orchestration.workflows import start_adaptive_pipeline
 
 
 @dataclass
