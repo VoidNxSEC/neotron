@@ -1,22 +1,28 @@
 """
-NEXUS Integrated Workflow - Phase 2 Complete
+NEXUS Integrated Workflow - Phase 3 Complete
 
-Combines CORTEX (Multi-Agent), SYNAPSE (Memory), and GDPR (Compliance)
-into unified workflows for production-grade AI agent orchestration.
+Combines CORTEX (Multi-Agent), SYNAPSE (Memory), GDPR (Compliance),
+ORACLE (Explainability), and EU AI Act into unified workflows for
+production-grade, transparent AI agent orchestration.
 
 Architecture:
-┌─────────────────────────────────────────────────────────┐
-│                    NEXUS Workflow                       │
-│                                                         │
-│  ┌──────────┐    ┌──────────┐    ┌──────────┐         │
-│  │ CORTEX   │───▶│ SYNAPSE  │───▶│  GDPR    │         │
-│  │Multi-Agent│    │ Memory   │    │Compliance│         │
-│  └──────────┘    └──────────┘    └──────────┘         │
-│       │               │                 │              │
-│       ▼               ▼                 ▼              │
-│  Consensus      Long-term         Validated           │
-│   Output         Context           Output             │
-└─────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                    NEXUS Workflow                            │
+│                                                              │
+│  ┌──────────┐    ┌──────────┐    ┌─────────┐   ┌─────────┐│
+│  │ CORTEX   │───▶│ SYNAPSE  │───▶│  GDPR   │──▶│ ORACLE  ││
+│  │Multi-Agent│    │ Memory   │    │Compliance   │Explain  ││
+│  └──────────┘    └──────────┘    └─────────┘   └─────────┘│
+│       │               │                 │            │     │
+│       ▼               ▼                 ▼            ▼     │
+│  Consensus      Long-term         Validated    Explainable│
+│   Output         Context           Output        Output   │
+│                                                            │
+│  ┌─────────────┐                                          │
+│  │  EU AI Act  │ ◀───────────────────────────────────────│
+│  │ Compliance  │  (Transparency + Human Oversight)        │
+│  └─────────────┘                                          │
+└──────────────────────────────────────────────────────────────┘
 
 Example:
     >>> # Create memory-enabled agent swarm
@@ -67,6 +73,20 @@ from neutron.compliance.auditors import (
     gdpr_art22_human_oversight_guardrail,
     validate_with_gdpr,
     GDPRErasureHandler,
+    # EU AI Act compliance
+    AISystemRiskLevel,
+    classify_ai_system_risk,
+    validate_ai_act_compliance,
+    get_ai_act_guardrails,
+    ARTICLE_13_TRANSPARENCY,
+    ARTICLE_14_HUMAN_OVERSIGHT,
+)
+
+# ORACLE - Explainability
+from neutron.reasoning import (
+    ExplanationType,
+    ExplanationResult,
+    explain_agent_decision,
 )
 
 
@@ -258,7 +278,10 @@ class NexusSwarm:
         customer_id: Optional[str] = None,
         retrieve_k: int = 5,
         human_reviewer_id: Optional[str] = None,
-        review_timestamp: Optional[str] = None
+        review_timestamp: Optional[str] = None,
+        generate_explanation: bool = True,
+        explanation_type: ExplanationType = ExplanationType.CHAIN_OF_THOUGHT,
+        enable_ai_act: bool = True
     ) -> Dict[str, Any]:
         """
         Execute task with full NEXUS integration
@@ -268,18 +291,23 @@ class NexusSwarm:
         2. Agents execute task with memory context
         3. Reach consensus on outputs (CORTEX)
         4. Validate consensus with GDPR guardrails
-        5. Store consensus as new memory (SYNAPSE)
-        6. Return validated result
+        5. Validate with EU AI Act guardrails (Phase 3)
+        6. Generate ORACLE explanation (Phase 3)
+        7. Store consensus as new memory (SYNAPSE)
+        8. Return validated, explainable result
 
         Args:
             task: Task to execute
             customer_id: Customer ID for memory/compliance
             retrieve_k: Number of memories to retrieve
-            human_reviewer_id: For GDPR Article 22 compliance
+            human_reviewer_id: For GDPR Article 22 and EU AI Act Article 14
             review_timestamp: For GDPR Article 22 compliance
+            generate_explanation: Whether to generate ORACLE explanation
+            explanation_type: Type of explanation to generate
+            enable_ai_act: Whether to enforce EU AI Act compliance
 
         Returns:
-            Dict with consensus output, validation, and metadata
+            Dict with consensus output, validation, explanation, and metadata
         """
         # 1. Execute all agents with memory
         individual_results = await asyncio.gather(*[
@@ -346,6 +374,130 @@ class NexusSwarm:
                         )
                     compliance_passed = False
 
+        # 5b. Validate with EU AI Act guardrails (Phase 3)
+        ai_act_results = []
+        ai_act_compliance_passed = True
+        ai_system_risk_level = AISystemRiskLevel.MINIMAL
+
+        if enable_ai_act:
+            # Classify AI system risk level
+            use_case = task.metadata.get("use_case", task.type)
+            ai_system_risk_level = classify_ai_system_risk(use_case, gdpr_metadata)
+
+            # Build AI Act metadata
+            ai_act_metadata = {
+                **gdpr_metadata,  # Include GDPR metadata
+                "use_case": use_case,
+                "ai_disclosure": True,
+                "system_info": f"NEXUS multi-agent system ({len(self.agents)} agents)",
+                "capabilities": "Multi-agent consensus with memory and compliance",
+                "limitations": "Decisions limited by training data and agent capabilities",
+            }
+
+            # Add human oversight metadata for high-risk systems
+            if ai_system_risk_level == AISystemRiskLevel.HIGH:
+                ai_act_metadata.update({
+                    "human_oversight_enabled": human_reviewer_id is not None,
+                    "oversight_mechanism": "human_in_the_loop" if human_reviewer_id else None,
+                    "overseer_id": human_reviewer_id,
+                    "can_override": True,
+                    "human_decision_authority": True,
+                })
+
+            # Create AI Act output
+            ai_act_output = AgentOutput(
+                content=str(consensus_output),
+                metadata=ai_act_metadata
+            )
+
+            # Validate with AI Act
+            ai_act_results = validate_ai_act_compliance(ai_act_output)
+
+            # Check for blocking violations
+            for result in ai_act_results:
+                if not result.passed:
+                    # Article 5 (prohibited) and Article 14 (high-risk oversight) are blocking
+                    if ("Article 5" in result.metadata.get("article", "") or
+                        ("Article 14" in result.metadata.get("article", "") and
+                         result.metadata.get("violation_type") == "oversight_disabled")):
+                        raise ComplianceViolation(
+                            guardrail=ARTICLE_14_HUMAN_OVERSIGHT,
+                            result=result
+                        )
+                    ai_act_compliance_passed = False
+
+        # 5c. Generate ORACLE explanation (Phase 3)
+        explanation = None
+        if generate_explanation:
+            # Build explanation metadata
+            explanation_metadata = {
+                "individual_results": [
+                    {
+                        "agent_id": r.agent_id,
+                        "output": r.output,
+                        "confidence": r.confidence,
+                        "metadata": r.metadata,
+                    }
+                    for r in individual_results
+                ],
+                "task_type": task.type,
+                "consensus_strategy": self.consensus_strategy,
+                "risk_level": risk_level,
+                "ai_system_risk_level": ai_system_risk_level.value,
+                "compliance_status": {
+                    "gdpr_passed": compliance_passed,
+                    "ai_act_passed": ai_act_compliance_passed if enable_ai_act else None,
+                },
+            }
+
+            # Add reasoning steps for chain-of-thought
+            if explanation_type == ExplanationType.CHAIN_OF_THOUGHT:
+                reasoning_steps = [
+                    f"Step 1: Received task '{task.type}' for {customer_id or 'anonymous'}",
+                    f"Step 2: Retrieved {retrieve_k} relevant memories from SYNAPSE",
+                    f"Step 3: Executed {len(self.agents)} specialized agents with memory context",
+                    f"Step 4: Applied {self.consensus_strategy} consensus reaching {agreement_score:.1%} agreement",
+                    f"Step 5: Validated with GDPR (passed: {compliance_passed})",
+                ]
+                if enable_ai_act:
+                    reasoning_steps.append(
+                        f"Step 6: Validated with EU AI Act ({ai_system_risk_level.value} risk, passed: {ai_act_compliance_passed})"
+                    )
+                reasoning_steps.append(
+                    f"Step 7: Final decision: {consensus_output} (confidence: {consensus_confidence:.2f})"
+                )
+                explanation_metadata["reasoning_steps"] = reasoning_steps
+
+            # Add similar cases for example-based
+            if explanation_type == ExplanationType.EXAMPLE_BASED:
+                explanation_metadata["similar_cases"] = [
+                    {
+                        "case_id": r.agent_id,
+                        "outcome": r.output,
+                        "similarity": r.confidence,
+                        "metadata": r.metadata,
+                    }
+                    for r in individual_results
+                ]
+
+            # Generate explanation
+            explanation = explain_agent_decision(
+                decision=f"Consensus: {consensus_output}",
+                input_data={
+                    "task_type": task.type,
+                    "agent_count": len(self.agents),
+                    "consensus_strategy": self.consensus_strategy,
+                    "memory_enabled": True,
+                },
+                output_data={
+                    "consensus_output": consensus_output,
+                    "confidence": consensus_confidence,
+                    "agreement_score": agreement_score,
+                },
+                explanation_type=explanation_type,
+                metadata=explanation_metadata,
+            )
+
         # 6. Store consensus as new memory
         if task.input_data.get("output_embedding"):
             memory_id = self.memory_store.store(
@@ -366,21 +518,35 @@ class NexusSwarm:
         else:
             memory_id = None
 
-        # 7. Return complete result
+        # 7. Return complete result (Phase 3 enhanced)
         return {
             "consensus_output": consensus_output,
             "consensus_confidence": consensus_confidence,
             "agreement_score": agreement_score,
             "individual_results": individual_results,
+            # GDPR compliance
             "compliance_passed": compliance_passed,
             "validation_results": validation_results,
+            # EU AI Act compliance (Phase 3)
+            "ai_act_compliance_passed": ai_act_compliance_passed if enable_ai_act else None,
+            "ai_act_validation_results": ai_act_results,
+            "ai_system_risk_level": ai_system_risk_level.value if enable_ai_act else None,
+            # ORACLE explanation (Phase 3)
+            "explanation": explanation,
+            "explanation_human_readable": explanation.to_human_readable() if explanation else None,
+            # Memory
             "memory_id": memory_id,
+            # Metadata
             "metadata": {
                 "customer_id": customer_id,
                 "risk_level": risk_level,
+                "ai_system_risk_level": ai_system_risk_level.value if enable_ai_act else None,
                 "agent_count": len(self.agents),
                 "consensus_strategy": self.consensus_strategy,
                 "gdpr_enabled": self.enable_gdpr,
+                "ai_act_enabled": enable_ai_act,
+                "explanation_enabled": generate_explanation,
+                "explanation_type": explanation_type.value if generate_explanation else None,
             }
         }
 
