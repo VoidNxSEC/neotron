@@ -1,7 +1,7 @@
 [project]
 name = "neutron-ml-pipeline"
 version = "0.1.0"
-description = "Adaptive ML Pipeline - Temporal + Ray + MLflow orchestration"
+description = "Enterprise-Grade AI Agent Orchestration with Compliance-as-Code"
 authors = [{ name = "kernelcore", email = "kernelcore@neutron.ai" }]
 readme = "README.md"
 requires-python = ">=3.13"

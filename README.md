@@ -4,19 +4,18 @@
 
 <div align="center">
 
-[![Tests](https://img.shields.io/badge/tests-350%2B%20passing-success?style=for-the-badge&logo=pytest)](https://github.com/kernelcore/neutron)
-[![Coverage](https://img.shields.io/badge/coverage-90%25%2B-brightgreen?style=for-the-badge&logo=codecov)](https://codecov.io)
-[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue?style=for-the-badge&logo=python)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-350%2B_Passing-success?style=for-the-badge&logo=pytest&logoColor=white)](https://github.com/kernelcore/neutron)
+[![Coverage](https://img.shields.io/badge/Coverage-90%25%2B-2ea44f?style=for-the-badge&logo=codecov&logoColor=white)](https://codecov.io)
+[![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
-[![LGPD](https://img.shields.io/badge/LGPD-compliant-green?style=for-the-badge)](docs/compliance/LGPD.md)
-[![GDPR](https://img.shields.io/badge/GDPR-compliant-green?style=for-the-badge)](docs/compliance/GDPR.md)
-[![EU AI Act](https://img.shields.io/badge/EU%20AI%20Act-compliant-green?style=for-the-badge)](docs/compliance/AI_ACT.md)
+[![LGPD](https://img.shields.io/badge/Compliance-LGPD-4B0082?style=for-the-badge)](docs/compliance/LGPD.md)
+[![GDPR](https://img.shields.io/badge/Compliance-GDPR-4B0082?style=for-the-badge)](docs/compliance/GDPR.md)
+[![EU AI Act](https://img.shields.io/badge/Compliance-EU_AI_Act-4B0082?style=for-the-badge)](docs/compliance/AI_ACT.md)
 
-[![Production Ready](https://img.shields.io/badge/status-production%20ready-success?style=for-the-badge)](docs/PRODUCTION.md)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-automated-blue?style=for-the-badge&logo=github-actions)](/.github/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/docs-comprehensive-informational?style=for-the-badge&logo=readthedocs)](docs/)
-[![Code Quality](https://img.shields.io/badge/code%20quality-A%2B-brightgreen?style=for-the-badge)](scripts/run_all_tests.py)
+[![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge)](docs/PRODUCTION.md)
+[![CI/CD](https://img.shields.io/badge/CI%2FCD-Automated-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](/.github/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/Docs-Comprehensive-FF6F00?style=for-the-badge&logo=readthedocs&logoColor=white)](docs/)
+[![Code Quality](https://img.shields.io/badge/Quality-A%2B-success?style=for-the-badge)](scripts/run_all_tests.py)
 
 </div>
 
@@ -38,27 +37,64 @@ NEXUS is the **world's first enterprise-grade AI agent orchestration platform** 
 
 ## Architecture
 
+```mermaid
+graph TD
+    subgraph "Decision Engine"
+        CORTEX[CORTEX<br/>Multi-Agent Orchestration] --> SYNAPSE[SYNAPSE<br/>Long-term Memory]
+        SYNAPSE --> GDPR[GDPR<br/>Compliance Filter]
+        GDPR --> ORACLE[ORACLE<br/>Explainability Engine]
+    end
+
+    subgraph "Outputs"
+        CONSENSUS[Consensus<br/>Decision]
+        CONTEXT[Context-Aware<br/>Response]
+        VALIDATED[Validated<br/>Output]
+        EXPLANATION[Human-Readable<br/>Explanation]
+    end
+
+    CORTEX --> CONSENSUS
+    SYNAPSE --> CONTEXT
+    GDPR --> VALIDATED
+    ORACLE --> EXPLANATION
+
+    SENTINEL[SENTINEL<br/>Guardrails] -.-> CORTEX
+    SENTINEL -.-> SYNAPSE
+    SENTINEL -.-> ORACLE
+
+    style SENTINEL fill:#f96,stroke:#333,stroke-width:2px,stroke-dasharray: 5 5
+    style CORTEX fill:#bbf,stroke:#333,stroke-width:2px
+    style GDPR fill:#bfb,stroke:#333,stroke-width:2px
 ```
-┌──────────────────────────────────────────────────────────────┐
-│                    NEXUS Platform                            │
-│          "Where Compliance Meets Computation"                │
-├──────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌──────────┐  ┌──────────┐  ┌─────────┐  ┌─────────┐      │
-│  │ CORTEX   │─▶│ SYNAPSE  │─▶│  GDPR   │─▶│ ORACLE  │      │
-│  │Multi-Agent  │ Memory   │  │Compliance  │Explain  │      │
-│  └──────────┘  └──────────┘  └─────────┘  └─────────┘      │
-│       │             │              │            │           │
-│       ▼             ▼              ▼            ▼           │
-│  Consensus    Long-term      Validated    Explainable      │
-│   Output       Context        Output        Output         │
-│                                                              │
-│  ┌─────────────┐                                            │
-│  │ SENTINEL    │ ◀──────────────────────────────────────────│
-│  │ Guardrails  │  (LGPD + GDPR + EU AI Act)                │
-│  └─────────────┘                                            │
-└──────────────────────────────────────────────────────────────┘
+
+## Infrastructure & Determinism
+
+NEXUS enforces a **"Lab-in-a-Box"** philosophy using strict Infrastructure-as-Code principles.
+
+### The Hermetic Stack
+
+We utilize **Nix Flakes** to guarantee bit-perfect reproducibility across all development and CI environments. This eliminates "it works on my machine" issues by pinning the entire dependency graph, from the system `glibc` to the Python interpreter.
+
+-   **Base**: `nixos-unstable` (Pinned via `flake.lock`)
+-   **Runtime**: Python 3.13 + `uv` for ultra-fast package resolution
+-   **Compute**: CUDA-ready environment with `ray` distributed backend
+-   **Orchestration**: `temporal` + `mlflow` + `postgres` defined in `docker-compose.yml`
+
+### Developer Experience (DevX)
+
+The environment bootstraps instantly via `nix develop`, providing a shell with all tools pre-configured:
+
+```bash
+# 1. Enter the hermetic environment
+nix develop
+
+# 2. Spin up the infrastructure
+just infra-up
+
+# 3. Run the compliance suite
+just test-sentinel
 ```
+
+No manual installation of CUDA, Postgres, or Python is required. Everything is declarative.
 
 ### The 4 Pillars
 
@@ -345,12 +381,6 @@ pytest --cov=neutron --cov-report=html
 # Run linting
 ruff check neutron/
 ```
-
----
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
