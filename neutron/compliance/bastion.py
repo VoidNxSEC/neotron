@@ -66,27 +66,30 @@ Reference:
 - Linux capabilities: https://man7.org/linux/man-pages/man7/capabilities.7.html
 """
 
+import ctypes
+import os
+import struct
+import sys
+from contextlib import contextmanager
 from dataclasses import dataclass, field
-from typing import Literal, List, Optional, Dict, Any, Callable
 from datetime import datetime
 from enum import Enum
-import os
-import sys
-import ctypes
-import struct
-from contextlib import contextmanager
+from typing import Any, Literal
 
 # Try to import prctl for capability management
 try:
     import prctl
+
     PRCTL_AVAILABLE = True
 except ImportError:
     PRCTL_AVAILABLE = False
+
     # Mock for systems without python-prctl
-    class prctl:
+    class prctl:  # noqa: N801
         @staticmethod
         def capbset_read(cap):
             return True
+
         @staticmethod
         def cap_effective_set_add(cap):
             pass
@@ -119,11 +122,11 @@ SECCOMP_RET_KILL_PROCESS = 0x80000000
 SECCOMP_RET_KILL_THREAD = 0x00000000
 SECCOMP_RET_TRAP = 0x00030000
 SECCOMP_RET_ERRNO = 0x00050000
-SECCOMP_RET_TRACE = 0x7ff00000
-SECCOMP_RET_ALLOW = 0x7fff0000
+SECCOMP_RET_TRACE = 0x7FF00000
+SECCOMP_RET_ALLOW = 0x7FFF0000
 
 # Architecture
-AUDIT_ARCH_X86_64 = 0xc000003e
+AUDIT_ARCH_X86_64 = 0xC000003E
 
 # Common syscall numbers for x86_64
 SYSCALL_NR = {
@@ -159,6 +162,7 @@ SYSCALL_NR = {
 # Custom Capabilities for Compliance
 # =============================================================================
 
+
 class ComplianceCapability(Enum):
     """
     Custom Linux capabilities for compliance enforcement
@@ -166,21 +170,24 @@ class ComplianceCapability(Enum):
     These are conceptual capabilities that would be implemented as
     extended attributes or custom capability bits in production.
     """
-    CAP_CONSENT_TOKEN = "cap_consent_token"       # LGPD Art 7 - User consent
-    CAP_DATA_ACCESS = "cap_data_access"           # General data access
-    CAP_PII_READ = "cap_pii_read"                 # Read personal data
-    CAP_PII_WRITE = "cap_pii_write"               # Write personal data
-    CAP_GDPR_PROCESS = "cap_gdpr_process"         # GDPR data processing
-    CAP_AUDIT_EXEMPT = "cap_audit_exempt"         # Exempt from audit
+
+    CAP_CONSENT_TOKEN = "cap_consent_token"  # LGPD Art 7 - User consent
+    CAP_DATA_ACCESS = "cap_data_access"  # General data access
+    CAP_PII_READ = "cap_pii_read"  # Read personal data
+    CAP_PII_WRITE = "cap_pii_write"  # Write personal data
+    CAP_GDPR_PROCESS = "cap_gdpr_process"  # GDPR data processing
+    CAP_AUDIT_EXEMPT = "cap_audit_exempt"  # Exempt from audit
 
 
 # =============================================================================
 # BPF Program Builder
 # =============================================================================
 
+
 @dataclass
 class BPFInstruction:
     """Single BPF instruction"""
+
     code: int
     jt: int = 0
     jf: int = 0
@@ -200,7 +207,7 @@ class BPFProgram:
     """
 
     def __init__(self):
-        self.instructions: List[BPFInstruction] = []
+        self.instructions: list[BPFInstruction] = []
 
     def add(self, code: int, jt: int = 0, jf: int = 0, k: int = 0):
         """Add instruction to program"""
@@ -221,14 +228,15 @@ class BPFProgram:
 
     def compile(self) -> bytes:
         """Compile program to binary"""
-        return b''.join(instr.pack() for instr in self.instructions)
+        return b"".join(instr.pack() for instr in self.instructions)
 
     def as_ctypes_struct(self):
         """Convert to ctypes structure for syscall"""
         # This would be used with prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)
-        program_bytes = self.compile()
+        # This would be used with prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog)
+        self.compile()
 
-        class sock_filter(ctypes.Structure):
+        class sock_filter(ctypes.Structure):  # noqa: N801
             _fields_ = [
                 ("code", ctypes.c_ushort),
                 ("jt", ctypes.c_ubyte),
@@ -236,7 +244,7 @@ class BPFProgram:
                 ("k", ctypes.c_uint),
             ]
 
-        class sock_fprog(ctypes.Structure):
+        class sock_fprog(ctypes.Structure):  # noqa: N801
             _fields_ = [
                 ("len", ctypes.c_ushort),
                 ("filter", ctypes.POINTER(sock_filter)),
@@ -261,6 +269,7 @@ class BPFProgram:
 # =============================================================================
 # Kernel Policy
 # =============================================================================
+
 
 @dataclass
 class KernelPolicy:
@@ -295,15 +304,16 @@ class KernelPolicy:
         ...     # unless process has CAP_CONSENT_TOKEN
         ...     open("/sensitive/data.db")  # → OSError: [Errno 13] Permission denied
     """
+
     name: str
     regulation: Literal["LGPD", "GDPR", "AI_ACT", "SOC2"]
-    blocked_syscalls: List[str] = field(default_factory=list)
-    required_capability: Optional[ComplianceCapability] = None
+    blocked_syscalls: list[str] = field(default_factory=list)
+    required_capability: ComplianceCapability | None = None
     action: Literal["KILL", "TRAP", "ERRNO"] = "ERRNO"
     errno: int = 13  # EACCES by default
     audit: bool = True
     description: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """Validate policy configuration"""
@@ -314,8 +324,7 @@ class KernelPolicy:
         for syscall in self.blocked_syscalls:
             if syscall not in SYSCALL_NR:
                 raise ValueError(
-                    f"Unknown syscall: {syscall}. "
-                    f"Available: {list(SYSCALL_NR.keys())}"
+                    f"Unknown syscall: {syscall}. " f"Available: {list(SYSCALL_NR.keys())}"
                 )
 
         # Set default description
@@ -355,7 +364,9 @@ class KernelPolicy:
                 prog.ret(SECCOMP_RET_ALLOW)  # Allow all others
             else:
                 # Jump to block if matches, otherwise check next
-                prog.jump_if_syscall_eq(syscall_nr, true_offset=len(self.blocked_syscalls) - i, false_offset=0)
+                prog.jump_if_syscall_eq(
+                    syscall_nr, true_offset=len(self.blocked_syscalls) - i, false_offset=0
+                )
 
         return prog
 
@@ -431,13 +442,7 @@ class KernelPolicy:
                 raise OSError(errno, f"prctl(PR_SET_NO_NEW_PRIVS) failed: {os.strerror(errno)}")
 
             # Apply seccomp filter
-            ret = libc.prctl(
-                PR_SET_SECCOMP,
-                SECCOMP_MODE_FILTER,
-                ctypes.byref(prog_struct),
-                0,
-                0
-            )
+            ret = libc.prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, ctypes.byref(prog_struct), 0, 0)
             if ret != 0:
                 errno = ctypes.get_errno()
                 raise OSError(errno, f"prctl(PR_SET_SECCOMP) failed: {os.strerror(errno)}")
@@ -485,6 +490,7 @@ class KernelPolicy:
 # Layered Enforcement (SENTINEL + BASTION)
 # =============================================================================
 
+
 @dataclass
 class LayeredPolicy:
     """
@@ -524,6 +530,7 @@ class LayeredPolicy:
         ...     kernel_policy=kernel_policy
         ... )
     """
+
     name: str
     regulation: Literal["LGPD", "GDPR", "AI_ACT", "SOC2"]
     application_check: Any  # ComplianceGuardrail from SENTINEL
@@ -549,6 +556,7 @@ class LayeredPolicy:
 # =============================================================================
 # Utility Functions
 # =============================================================================
+
 
 def grant_capability(capability: ComplianceCapability) -> None:
     """

@@ -13,19 +13,19 @@ Key GDPR Articles Implemented:
 Reference: https://gdpr-info.eu/
 """
 
-from neutron.compliance.sentinel import (
-    ComplianceGuardrail,
-    AgentOutput,
-    ValidationResult,
-    create_guardrail
-)
-from typing import List, Dict, Any, Optional
 from datetime import datetime
+from typing import Any
 
+from neutron.compliance.sentinel import (
+    AgentOutput,
+    ComplianceGuardrail,
+    ValidationResult,
+)
 
 # =============================================================================
 # GDPR Article 22 - Automated Decision-Making & Human Oversight
 # =============================================================================
+
 
 def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResult:
     """
@@ -63,8 +63,8 @@ def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResu
             metadata={
                 "article": "GDPR Article 22",
                 "requirement": "metadata_presence",
-                "violation_type": "missing_metadata"
-            }
+                "violation_type": "missing_metadata",
+            },
         )
 
     risk_level = output.metadata.get("risk_level", "unknown")
@@ -75,7 +75,7 @@ def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResu
             passed=True,
             details="GDPR Article 22 compliant: Low-risk automated decision",
             confidence=1.0,
-            metadata={"article": "GDPR Article 22", "risk_level": "low"}
+            metadata={"article": "GDPR Article 22", "risk_level": "low"},
         )
 
     # High/medium risk decisions require human oversight
@@ -98,8 +98,8 @@ def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResu
                     "article": "GDPR Article 22",
                     "requirement": "human_oversight",
                     "violation_type": "missing_human_review",
-                    "risk_level": risk_level
-                }
+                    "risk_level": risk_level,
+                },
             )
 
         # Check reviewer ID
@@ -114,8 +114,8 @@ def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResu
                 metadata={
                     "article": "GDPR Article 22",
                     "requirement": "reviewer_identification",
-                    "violation_type": "missing_reviewer_id"
-                }
+                    "violation_type": "missing_reviewer_id",
+                },
             )
 
         # Check review timestamp
@@ -130,8 +130,8 @@ def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResu
                 metadata={
                     "article": "GDPR Article 22",
                     "requirement": "review_timestamp",
-                    "violation_type": "missing_review_timestamp"
-                }
+                    "violation_type": "missing_review_timestamp",
+                },
             )
 
         # All checks passed
@@ -146,8 +146,8 @@ def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResu
                 "article": "GDPR Article 22",
                 "risk_level": risk_level,
                 "reviewer_id": reviewer_id,
-                "review_timestamp": review_timestamp
-            }
+                "review_timestamp": review_timestamp,
+            },
         )
 
     # Unknown risk level - fail safe
@@ -161,14 +161,15 @@ def check_gdpr_article_22_human_oversight(output: AgentOutput) -> ValidationResu
         metadata={
             "article": "GDPR Article 22",
             "violation_type": "invalid_risk_level",
-            "provided_risk_level": risk_level
-        }
+            "provided_risk_level": risk_level,
+        },
     )
 
 
 # =============================================================================
 # GDPR Article 15 - Right to Access
 # =============================================================================
+
 
 def check_gdpr_article_15_data_access(output: AgentOutput) -> ValidationResult:
     """
@@ -202,8 +203,8 @@ def check_gdpr_article_15_data_access(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "GDPR Article 15",
                 "requirement": "metadata_presence",
-                "violation_type": "missing_metadata"
-            }
+                "violation_type": "missing_metadata",
+            },
         )
 
     # Check data access enabled
@@ -219,8 +220,8 @@ def check_gdpr_article_15_data_access(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "GDPR Article 15",
                 "requirement": "data_access",
-                "violation_type": "access_disabled"
-            }
+                "violation_type": "access_disabled",
+            },
         )
 
     # Check data categories
@@ -236,8 +237,8 @@ def check_gdpr_article_15_data_access(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "GDPR Article 15",
                 "requirement": "data_categories",
-                "violation_type": "missing_categories"
-            }
+                "violation_type": "missing_categories",
+            },
         )
 
     # Check retention period
@@ -253,8 +254,8 @@ def check_gdpr_article_15_data_access(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "GDPR Article 15",
                 "requirement": "retention_period",
-                "violation_type": "missing_retention"
-            }
+                "violation_type": "missing_retention",
+            },
         )
 
     # Check export format
@@ -270,8 +271,8 @@ def check_gdpr_article_15_data_access(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "GDPR Article 15",
                 "requirement": "export_format",
-                "violation_type": "missing_export_format"
-            }
+                "violation_type": "missing_export_format",
+            },
         )
 
     # All checks passed
@@ -288,14 +289,15 @@ def check_gdpr_article_15_data_access(output: AgentOutput) -> ValidationResult:
             "article": "GDPR Article 15",
             "data_categories": data_categories,
             "retention_period": retention_period,
-            "export_format": export_format
-        }
+            "export_format": export_format,
+        },
     )
 
 
 # =============================================================================
 # GDPR Article 17 - Right to Erasure (Handled by MemoryStore)
 # =============================================================================
+
 
 def check_gdpr_article_17_erasure_support(output: AgentOutput) -> ValidationResult:
     """
@@ -322,11 +324,9 @@ def check_gdpr_article_17_erasure_support(output: AgentOutput) -> ValidationResu
         # Erasure support is optional for some outputs
         return ValidationResult(
             passed=True,
-            details=(
-                "GDPR Article 17: Erasure support not applicable (no personal data)"
-            ),
+            details=("GDPR Article 17: Erasure support not applicable (no personal data)"),
             confidence=1.0,
-            metadata={"article": "GDPR Article 17"}
+            metadata={"article": "GDPR Article 17"},
         )
 
     # Check if personal data is involved
@@ -338,7 +338,7 @@ def check_gdpr_article_17_erasure_support(output: AgentOutput) -> ValidationResu
             passed=True,
             details="GDPR Article 17: No personal data processed, erasure not required",
             confidence=1.0,
-            metadata={"article": "GDPR Article 17"}
+            metadata={"article": "GDPR Article 17"},
         )
 
     # Personal data is processed - check erasure support
@@ -354,8 +354,8 @@ def check_gdpr_article_17_erasure_support(output: AgentOutput) -> ValidationResu
             metadata={
                 "article": "GDPR Article 17",
                 "requirement": "erasure_support",
-                "violation_type": "erasure_not_supported"
-            }
+                "violation_type": "erasure_not_supported",
+            },
         )
 
     # Check erasure endpoint
@@ -371,21 +371,16 @@ def check_gdpr_article_17_erasure_support(output: AgentOutput) -> ValidationResu
             metadata={
                 "article": "GDPR Article 17",
                 "requirement": "erasure_endpoint",
-                "violation_type": "missing_endpoint"
-            }
+                "violation_type": "missing_endpoint",
+            },
         )
 
     # All checks passed
     return ValidationResult(
         passed=True,
-        details=(
-            f"GDPR Article 17 compliant: Erasure supported via {erasure_endpoint}"
-        ),
+        details=(f"GDPR Article 17 compliant: Erasure supported via {erasure_endpoint}"),
         confidence=1.0,
-        metadata={
-            "article": "GDPR Article 17",
-            "erasure_endpoint": erasure_endpoint
-        }
+        metadata={"article": "GDPR Article 17", "erasure_endpoint": erasure_endpoint},
     )
 
 
@@ -404,7 +399,7 @@ gdpr_art22_human_oversight_guardrail = ComplianceGuardrail(
         "Ensures high-risk automated decisions have human oversight. "
         "This is a BLOCKING guardrail - high-risk decisions without "
         "human review will be rejected."
-    )
+    ),
 )
 
 # GDPR Article 15 - Right to Access (WARNING)
@@ -418,7 +413,7 @@ gdpr_art15_data_access_guardrail = ComplianceGuardrail(
         "Ensures data subjects can access their personal data. "
         "This is a WARNING guardrail - violations are logged "
         "but do not block output."
-    )
+    ),
 )
 
 # GDPR Article 17 - Right to Erasure (WARNING)
@@ -432,11 +427,11 @@ gdpr_art17_erasure_support_guardrail = ComplianceGuardrail(
         "Ensures erasure is supported for personal data processing. "
         "This is a WARNING guardrail - violations are logged "
         "but do not block output."
-    )
+    ),
 )
 
 # Combined GDPR guardrail suite
-GDPR_GUARDRAILS: List[ComplianceGuardrail] = [
+GDPR_GUARDRAILS: list[ComplianceGuardrail] = [
     gdpr_art22_human_oversight_guardrail,
     gdpr_art15_data_access_guardrail,
     gdpr_art17_erasure_support_guardrail,
@@ -447,7 +442,8 @@ GDPR_GUARDRAILS: List[ComplianceGuardrail] = [
 # Convenience Functions
 # =============================================================================
 
-def get_gdpr_guardrails() -> List[ComplianceGuardrail]:
+
+def get_gdpr_guardrails() -> list[ComplianceGuardrail]:
     """
     Get all GDPR compliance guardrails
 
@@ -485,7 +481,7 @@ def get_gdpr_guardrail_by_article(article_number: int) -> ComplianceGuardrail:
     return guardrail_map[article_number]
 
 
-def validate_with_gdpr(output: AgentOutput) -> List[ValidationResult]:
+def validate_with_gdpr(output: AgentOutput) -> list[ValidationResult]:
     """
     Validate output against all GDPR guardrails
 
@@ -509,6 +505,7 @@ def validate_with_gdpr(output: AgentOutput) -> List[ValidationResult]:
 # Erasure Handler (Integration with SYNAPSE)
 # =============================================================================
 
+
 class GDPRErasureHandler:
     """
     Handles GDPR Article 17 erasure requests
@@ -525,7 +522,7 @@ class GDPRErasureHandler:
         """
         self.memory_store = memory_store
 
-    def erase_customer_data(self, customer_id: str) -> Dict[str, Any]:
+    def erase_customer_data(self, customer_id: str) -> dict[str, Any]:
         """
         Erase all data for a customer (GDPR Article 17)
 
@@ -537,6 +534,7 @@ class GDPRErasureHandler:
         """
         if not self.memory_store:
             from neutron.memory import MemoryStore
+
             self.memory_store = MemoryStore()
 
         # Delete from memory store
@@ -544,23 +542,26 @@ class GDPRErasureHandler:
 
         # Log erasure to compliance audit
         from neutron.compliance.audit_logger import AuditLogger
+
         logger = AuditLogger()
 
-        audit_id = logger.log({
-            "event": "gdpr_art17_erasure",
-            "regulation": "GDPR",
-            "customer_id": customer_id,
-            "deleted_memories": deleted_memories,
-            "timestamp": datetime.utcnow().isoformat(),
-            "article": "GDPR Article 17",
-            "guardrail_name": "gdpr_art17_erasure_handler",
-            "passed": True,
-            "severity": "audit"
-        })
+        audit_id = logger.log(
+            {
+                "event": "gdpr_art17_erasure",
+                "regulation": "GDPR",
+                "customer_id": customer_id,
+                "deleted_memories": deleted_memories,
+                "timestamp": datetime.utcnow().isoformat(),
+                "article": "GDPR Article 17",
+                "guardrail_name": "gdpr_art17_erasure_handler",
+                "passed": True,
+                "severity": "audit",
+            }
+        )
 
         return {
             "customer_id": customer_id,
             "deleted_memories": deleted_memories,
             "audit_id": audit_id,
-            "status": "completed"
+            "status": "completed",
         }

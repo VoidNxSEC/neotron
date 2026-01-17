@@ -16,20 +16,20 @@ risk-based requirements for AI systems operating in the EU.
 Reference: https://artificialintelligenceact.eu/
 """
 
-from neutron.compliance.sentinel import (
-    ComplianceGuardrail,
-    AgentOutput,
-    ValidationResult,
-    create_guardrail
-)
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 from enum import Enum
+from typing import Any
 
+from neutron.compliance.sentinel import (
+    AgentOutput,
+    ComplianceGuardrail,
+    ValidationResult,
+    create_guardrail,
+)
 
 # =============================================================================
 # Risk Classification System (Based on EU AI Act Annex III)
 # =============================================================================
+
 
 class AISystemRiskLevel(Enum):
     """
@@ -41,15 +41,15 @@ class AISystemRiskLevel(Enum):
     - LIMITED: AI systems requiring transparency (chatbots, deepfakes)
     - MINIMAL: All other AI systems with minimal regulatory requirements
     """
+
     UNACCEPTABLE = "unacceptable"  # Prohibited practices
-    HIGH = "high"                   # High-risk AI systems (Annex III)
-    LIMITED = "limited"             # Limited risk (transparency obligations)
-    MINIMAL = "minimal"             # Minimal risk (voluntary codes)
+    HIGH = "high"  # High-risk AI systems (Annex III)
+    LIMITED = "limited"  # Limited risk (transparency obligations)
+    MINIMAL = "minimal"  # Minimal risk (voluntary codes)
 
 
 def classify_ai_system_risk(
-    use_case: str,
-    metadata: Optional[Dict[str, Any]] = None
+    use_case: str, metadata: dict[str, Any] | None = None
 ) -> AISystemRiskLevel:
     """
     Classify AI system risk level according to EU AI Act Annex III
@@ -87,7 +87,7 @@ def classify_ai_system_risk(
         "social_credit",
         "real_time_biometric_surveillance",
         "subliminal_manipulation",
-        "exploit_vulnerabilities"
+        "exploit_vulnerabilities",
     ]
     if any(keyword in use_case_lower for keyword in unacceptable_keywords):
         return AISystemRiskLevel.UNACCEPTABLE
@@ -98,19 +98,16 @@ def classify_ai_system_risk(
         "biometric",
         "facial_recognition",
         "emotion_recognition",
-
         # Critical infrastructure
         "critical_infrastructure",
         "water_supply",
         "gas_supply",
         "electricity",
-
         # Education
         "education",
         "exam_scoring",
         "admission",
         "student_evaluation",
-
         # Employment
         "employment",
         "recruitment",
@@ -119,7 +116,6 @@ def classify_ai_system_risk(
         "worker_performance",
         "promotion",
         "termination",
-
         # Essential services
         "credit",
         "loan",
@@ -128,20 +124,17 @@ def classify_ai_system_risk(
         "insurance",
         "risk_assessment",
         "emergency_services",
-
         # Law enforcement
         "law_enforcement",
         "crime_prediction",
         "risk_profiling",
         "polygraph",
         "evidence_evaluation",
-
         # Migration
         "asylum",
         "visa",
         "border_control",
         "immigration",
-
         # Justice
         "legal_decision",
         "court",
@@ -169,6 +162,7 @@ def classify_ai_system_risk(
 # =============================================================================
 # Article 13 - Transparency and Information Provision
 # =============================================================================
+
 
 def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResult:
     """
@@ -218,8 +212,8 @@ def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResul
             metadata={
                 "article": "EU AI Act Article 13",
                 "requirement": "transparency",
-                "violation_type": "missing_metadata"
-            }
+                "violation_type": "missing_metadata",
+            },
         )
 
     # Check AI disclosure
@@ -235,8 +229,8 @@ def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResul
             metadata={
                 "article": "EU AI Act Article 13",
                 "requirement": "ai_disclosure",
-                "violation_type": "missing_disclosure"
-            }
+                "violation_type": "missing_disclosure",
+            },
         )
 
     # Check system information
@@ -252,8 +246,8 @@ def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResul
             metadata={
                 "article": "EU AI Act Article 13",
                 "requirement": "system_information",
-                "violation_type": "missing_system_info"
-            }
+                "violation_type": "missing_system_info",
+            },
         )
 
     # For high-risk systems, require capabilities and limitations
@@ -276,8 +270,8 @@ def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResul
                     "article": "EU AI Act Article 13",
                     "requirement": "capabilities_disclosure",
                     "violation_type": "missing_capabilities",
-                    "risk_level": risk_level.value
-                }
+                    "risk_level": risk_level.value,
+                },
             )
 
         if not limitations:
@@ -292,8 +286,8 @@ def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResul
                     "article": "EU AI Act Article 13",
                     "requirement": "limitations_disclosure",
                     "violation_type": "missing_limitations",
-                    "risk_level": risk_level.value
-                }
+                    "risk_level": risk_level.value,
+                },
             )
 
     # Check for synthetic content warning (deepfakes, generated content)
@@ -311,8 +305,8 @@ def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResul
                 metadata={
                     "article": "EU AI Act Article 13",
                     "requirement": "synthetic_content_labeling",
-                    "violation_type": "missing_synthetic_warning"
-                }
+                    "violation_type": "missing_synthetic_warning",
+                },
             )
 
     # All transparency requirements met
@@ -323,14 +317,15 @@ def check_ai_act_article_13_transparency(output: AgentOutput) -> ValidationResul
         metadata={
             "article": "EU AI Act Article 13",
             "risk_level": risk_level.value,
-            "disclosure_complete": True
-        }
+            "disclosure_complete": True,
+        },
     )
 
 
 # =============================================================================
 # Article 14 - Human Oversight
 # =============================================================================
+
 
 def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationResult:
     """
@@ -370,8 +365,8 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
             metadata={
                 "article": "EU AI Act Article 14",
                 "requirement": "metadata_presence",
-                "violation_type": "missing_metadata"
-            }
+                "violation_type": "missing_metadata",
+            },
         )
 
     # Classify risk level
@@ -387,8 +382,8 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
             metadata={
                 "article": "EU AI Act Article 14",
                 "risk_level": risk_level.value,
-                "oversight_required": False
-            }
+                "oversight_required": False,
+            },
         )
 
     # HIGH-RISK SYSTEMS: Check oversight requirements
@@ -407,16 +402,16 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
                 "article": "EU AI Act Article 14",
                 "requirement": "oversight_enabled",
                 "violation_type": "oversight_disabled",
-                "risk_level": risk_level.value
-            }
+                "risk_level": risk_level.value,
+            },
         )
 
     # Check oversight mechanism
     oversight_mechanism = output.metadata.get("oversight_mechanism")
     valid_mechanisms = [
-        "human_in_the_loop",     # Human reviews each decision
-        "human_on_the_loop",     # Human monitors and can intervene
-        "human_in_command",      # Human makes final decision
+        "human_in_the_loop",  # Human reviews each decision
+        "human_on_the_loop",  # Human monitors and can intervene
+        "human_in_command",  # Human makes final decision
     ]
 
     if oversight_mechanism not in valid_mechanisms:
@@ -431,8 +426,8 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
                 "article": "EU AI Act Article 14",
                 "requirement": "oversight_mechanism",
                 "violation_type": "invalid_mechanism",
-                "risk_level": risk_level.value
-            }
+                "risk_level": risk_level.value,
+            },
         )
 
     # Check overseer identification
@@ -449,8 +444,8 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
                 "article": "EU AI Act Article 14",
                 "requirement": "overseer_identification",
                 "violation_type": "missing_overseer_id",
-                "risk_level": risk_level.value
-            }
+                "risk_level": risk_level.value,
+            },
         )
 
     # Check override capability
@@ -467,8 +462,8 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
                 "article": "EU AI Act Article 14",
                 "requirement": "override_capability",
                 "violation_type": "override_disabled",
-                "risk_level": risk_level.value
-            }
+                "risk_level": risk_level.value,
+            },
         )
 
     # For human-in-command, verify human has decision authority
@@ -486,8 +481,8 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
                     "article": "EU AI Act Article 14",
                     "requirement": "human_decision_authority",
                     "violation_type": "missing_decision_authority",
-                    "risk_level": risk_level.value
-                }
+                    "risk_level": risk_level.value,
+                },
             )
 
     # All oversight requirements met
@@ -499,14 +494,15 @@ def check_ai_act_article_14_human_oversight(output: AgentOutput) -> ValidationRe
             "article": "EU AI Act Article 14",
             "risk_level": risk_level.value,
             "oversight_mechanism": oversight_mechanism,
-            "overseer_id": overseer_id
-        }
+            "overseer_id": overseer_id,
+        },
     )
 
 
 # =============================================================================
 # Unacceptable Risk Check (Prohibited Practices)
 # =============================================================================
+
 
 def check_ai_act_prohibited_practices(output: AgentOutput) -> ValidationResult:
     """
@@ -532,7 +528,7 @@ def check_ai_act_prohibited_practices(output: AgentOutput) -> ValidationResult:
             passed=True,
             details="EU AI Act: Cannot verify prohibited practices without metadata",
             confidence=0.5,
-            metadata={"article": "EU AI Act Article 5", "warning": "metadata_missing"}
+            metadata={"article": "EU AI Act Article 5", "warning": "metadata_missing"},
         )
 
     use_case = output.metadata.get("use_case", "")
@@ -552,15 +548,15 @@ def check_ai_act_prohibited_practices(output: AgentOutput) -> ValidationResult:
                 "violation_type": "prohibited_practice",
                 "risk_level": "unacceptable",
                 "use_case": use_case,
-                "severity": "BLOCKING"
-            }
+                "severity": "BLOCKING",
+            },
         )
 
     return ValidationResult(
         passed=True,
         details=f"EU AI Act Article 5 compliant: No prohibited practices ({risk_level.value} risk)",
         confidence=1.0,
-        metadata={"article": "EU AI Act Article 5", "risk_level": risk_level.value}
+        metadata={"article": "EU AI Act Article 5", "risk_level": risk_level.value},
     )
 
 
@@ -577,7 +573,7 @@ ARTICLE_13_TRANSPARENCY = create_guardrail(
     description=(
         "EU AI Act Article 13: Ensures AI systems provide transparency "
         "information to users about capabilities, limitations, and AI nature"
-    )
+    ),
 )
 
 # Article 14 - Human Oversight (BLOCKING severity for high-risk)
@@ -589,7 +585,7 @@ ARTICLE_14_HUMAN_OVERSIGHT = create_guardrail(
     description=(
         "EU AI Act Article 14: Ensures high-risk AI systems have effective "
         "human oversight with override capabilities"
-    )
+    ),
 )
 
 # Article 5 - Prohibited Practices (BLOCKING severity)
@@ -601,7 +597,7 @@ ARTICLE_5_PROHIBITED_PRACTICES = create_guardrail(
     description=(
         "EU AI Act Article 5: Blocks prohibited AI practices including "
         "social scoring, subliminal manipulation, and vulnerability exploitation"
-    )
+    ),
 )
 
 
@@ -609,7 +605,8 @@ ARTICLE_5_PROHIBITED_PRACTICES = create_guardrail(
 # Convenience Functions
 # =============================================================================
 
-def validate_ai_act_compliance(output: AgentOutput) -> List[ValidationResult]:
+
+def validate_ai_act_compliance(output: AgentOutput) -> list[ValidationResult]:
     """
     Validate output against all EU AI Act requirements
 
@@ -636,7 +633,7 @@ def validate_ai_act_compliance(output: AgentOutput) -> List[ValidationResult]:
     ]
 
 
-def get_ai_act_guardrails() -> List[ComplianceGuardrail]:
+def get_ai_act_guardrails() -> list[ComplianceGuardrail]:
     """
     Get all EU AI Act compliance guardrails
 

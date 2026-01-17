@@ -1,8 +1,8 @@
 """
 Tests for Ray trainers
 """
-import pytest
 
+import pytest
 
 # Note: These tests require Ray to be running
 # Mark as integration tests or skip if Ray not available

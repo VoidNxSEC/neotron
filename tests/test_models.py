@@ -1,22 +1,19 @@
 """
 Tests for core data models
 """
-import pytest
+
 from neutron.core.models import (
-    PipelineConfig,
-    TrainingConfig,
     HyperparameterSpace,
+    OptimizationState,
     SearchStrategy,
-    OptimizationState
+    TrainingConfig,
 )
 
 
 def test_hyperparameter_space_creation():
     """Test creating a hyperparameter space"""
     space = HyperparameterSpace(
-        learning_rate=(1e-5, 1e-3),
-        batch_size=[8, 16, 32],
-        num_epochs=[1, 2, 3]
+        learning_rate=(1e-5, 1e-3), batch_size=[8, 16, 32], num_epochs=[1, 2, 3]
     )
     assert space.learning_rate == (1e-5, 1e-3)
     assert space.batch_size == [8, 16, 32]
@@ -47,7 +44,7 @@ def test_training_config_creation():
         dataset_path="imdb",
         learning_rate=1e-4,
         batch_size=16,
-        num_epochs=2
+        num_epochs=2,
     )
     assert config.run_id == "test-run-1"
     assert config.learning_rate == 1e-4
@@ -56,9 +53,7 @@ def test_training_config_creation():
 def test_optimization_state_initialization():
     """Test optimization state tracking"""
     state = OptimizationState(
-        current_strategy=SearchStrategy.RANDOM,
-        trials_completed=0,
-        best_accuracy=0.0
+        current_strategy=SearchStrategy.RANDOM, trials_completed=0, best_accuracy=0.0
     )
     assert state.current_strategy == SearchStrategy.RANDOM
     assert state.trials_completed == 0

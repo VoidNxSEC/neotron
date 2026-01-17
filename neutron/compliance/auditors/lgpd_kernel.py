@@ -57,21 +57,19 @@ Reference:
 - LGPD: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.htm
 """
 
-from neutron.compliance.bastion import (
-    KernelPolicy,
-    ComplianceCapability,
-    LayeredPolicy,
-    grant_capability,
-    revoke_capability,
-    has_capability,
-)
-
 # Import application-layer guardrails from existing LGPD auditor
 from neutron.compliance.auditors.lgpd import (
     lgpd_art18_explanation_guardrail,
     lgpd_art20_portability_guardrail,
 )
-
+from neutron.compliance.bastion import (
+    ComplianceCapability,
+    KernelPolicy,
+    LayeredPolicy,
+    grant_capability,
+    has_capability,
+    revoke_capability,
+)
 
 # =============================================================================
 # LGPD Article 7 - Consent Enforcement (Kernel Layer)
@@ -81,11 +79,11 @@ lgpd_art7_consent_policy = KernelPolicy(
     name="lgpd_art7_consent_enforcement",
     regulation="LGPD",
     blocked_syscalls=[
-        "open",      # Block opening files
-        "openat",    # Block opening files (modern interface)
-        "read",      # Block reading data
-        "readv",     # Block vectored reads
-        "pread64",   # Block positioned reads
+        "open",  # Block opening files
+        "openat",  # Block opening files (modern interface)
+        "read",  # Block reading data
+        "readv",  # Block vectored reads
+        "pread64",  # Block positioned reads
     ],
     required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
     action="ERRNO",
@@ -101,7 +99,7 @@ lgpd_art7_consent_policy = KernelPolicy(
         "article_title": "Bases Legais para o Tratamento",
         "protection": "Prevents unauthorized data access at syscall level",
         "severity": "BLOCKING",
-    }
+    },
 )
 
 """
@@ -143,11 +141,11 @@ lgpd_art16_data_access_policy = KernelPolicy(
     name="lgpd_art16_data_access_enforcement",
     regulation="LGPD",
     blocked_syscalls=[
-        "unlink",      # Block file deletion
-        "unlinkat",    # Block file deletion (modern interface)
-        "rmdir",       # Block directory removal
-        "rename",      # Block file renaming
-        "renameat",    # Block file renaming (modern interface)
+        "unlink",  # Block file deletion
+        "unlinkat",  # Block file deletion (modern interface)
+        "rmdir",  # Block directory removal
+        "rename",  # Block file renaming
+        "renameat",  # Block file renaming (modern interface)
     ],
     required_capability=ComplianceCapability.CAP_PII_WRITE,
     action="ERRNO",
@@ -163,7 +161,7 @@ lgpd_art16_data_access_policy = KernelPolicy(
         "article_title": "Direitos do Titular",
         "protection": "Prevents unauthorized data modification/deletion",
         "severity": "BLOCKING",
-    }
+    },
 )
 
 """
@@ -199,9 +197,9 @@ lgpd_art46_retention_policy = KernelPolicy(
     name="lgpd_art46_retention_enforcement",
     regulation="LGPD",
     blocked_syscalls=[
-        "write",       # Block writing to retained files
-        "writev",      # Block vectored writes
-        "pwrite64",    # Block positioned writes
+        "write",  # Block writing to retained files
+        "writev",  # Block vectored writes
+        "pwrite64",  # Block positioned writes
     ],
     required_capability=ComplianceCapability.CAP_PII_WRITE,
     action="ERRNO",
@@ -217,7 +215,7 @@ lgpd_art46_retention_policy = KernelPolicy(
         "article_title": "Conservação de Dados Pessoais",
         "protection": "Enforces data immutability during retention",
         "severity": "WARNING",
-    }
+    },
 )
 
 """
@@ -247,7 +245,7 @@ lgpd_art18_layered = LayeredPolicy(
     name="lgpd_art18_full_enforcement",
     regulation="LGPD",
     application_check=lgpd_art18_explanation_guardrail,
-    kernel_policy=lgpd_art7_consent_policy
+    kernel_policy=lgpd_art7_consent_policy,
 )
 
 """
@@ -274,7 +272,7 @@ lgpd_art20_layered = LayeredPolicy(
     name="lgpd_art20_full_enforcement",
     regulation="LGPD",
     application_check=lgpd_art20_portability_guardrail,
-    kernel_policy=lgpd_art16_data_access_policy
+    kernel_policy=lgpd_art16_data_access_policy,
 )
 
 """
@@ -298,6 +296,7 @@ Usage:
 # =============================================================================
 # Convenience Functions
 # =============================================================================
+
 
 def grant_lgpd_consent(customer_id: str) -> None:
     """

@@ -14,27 +14,27 @@ Usage:
 import subprocess
 import sys
 import time
-import json
-from pathlib import Path
-from typing import Dict, List, Tuple
 from datetime import datetime
+from pathlib import Path
 
 
 class Colors:
     """ANSI color codes for terminal output"""
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    END = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    END = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 class TestSuite:
     """Test suite configuration"""
+
     def __init__(self, name: str, path: str, description: str, phase: str):
         self.name = name
         self.path = path
@@ -54,59 +54,57 @@ TEST_SUITES = [
         name="SENTINEL Core",
         path="tests/compliance/test_sentinel.py",
         description="Core compliance guardrail framework",
-        phase="Phase 1"
+        phase="Phase 1",
     ),
     TestSuite(
         name="LGPD Compliance",
         path="tests/compliance/auditors/test_lgpd.py",
         description="Brazilian data protection law (LGPD) compliance",
-        phase="Phase 1"
+        phase="Phase 1",
     ),
     TestSuite(
         name="Temporal Integration",
         path="tests/workflows/test_sentinel_temporal.py",
         description="SENTINEL integration with Temporal workflows",
-        phase="Phase 1"
+        phase="Phase 1",
     ),
-
     # Phase 2: CORTEX + SYNAPSE + GDPR
     TestSuite(
         name="CORTEX Multi-Agent",
         path="tests/orchestration/test_cortex.py",
         description="Multi-agent orchestration and consensus",
-        phase="Phase 2"
+        phase="Phase 2",
     ),
     TestSuite(
         name="SYNAPSE Memory",
         path="tests/memory/test_memory_store.py",
         description="Long-term memory with semantic search",
-        phase="Phase 2"
+        phase="Phase 2",
     ),
     TestSuite(
         name="GDPR Compliance",
         path="tests/compliance/auditors/test_gdpr.py",
         description="EU data protection law (GDPR) compliance",
-        phase="Phase 2"
+        phase="Phase 2",
     ),
     TestSuite(
         name="NEXUS Integration",
         path="tests/orchestration/test_nexus_workflow.py",
         description="Complete NEXUS workflow integration",
-        phase="Phase 2"
+        phase="Phase 2",
     ),
-
     # Phase 3: ORACLE + EU AI Act
     TestSuite(
         name="ORACLE Explainability",
         path="tests/reasoning/test_oracle.py",
         description="AI explainability framework (5 strategies)",
-        phase="Phase 3"
+        phase="Phase 3",
     ),
     TestSuite(
         name="EU AI Act Compliance",
         path="tests/compliance/auditors/test_ai_act.py",
         description="EU AI Act compliance (Articles 5, 13, 14)",
-        phase="Phase 3"
+        phase="Phase 3",
     ),
 ]
 
@@ -163,20 +161,13 @@ def run_test_suite(suite: TestSuite, coverage: bool = False, fast: bool = False)
         cmd.extend(["-m", "not slow"])
 
     if coverage:
-        cmd.extend([
-            "--cov=neutron",
-            "--cov-report=term-missing",
-            "--cov-append"
-        ])
+        cmd.extend(["--cov=neutron", "--cov-report=term-missing", "--cov-append"])
 
     # Run tests
     start_time = time.time()
     try:
         result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            timeout=300  # 5 minute timeout per suite
+            cmd, capture_output=True, text=True, timeout=300  # 5 minute timeout per suite
         )
         suite.duration = time.time() - start_time
 
@@ -185,25 +176,23 @@ def run_test_suite(suite: TestSuite, coverage: bool = False, fast: bool = False)
 
         # Extract test counts
         if "passed" in output:
-            for line in output.split('\n'):
-                if 'passed' in line or 'failed' in line:
+            for line in output.split("\n"):
+                if "passed" in line or "failed" in line:
                     # Parse pytest summary line
                     parts = line.split()
                     for i, part in enumerate(parts):
-                        if 'passed' in part and i > 0:
-                            suite.passed = int(parts[i-1])
-                        if 'failed' in part and i > 0:
-                            suite.failed = int(parts[i-1])
-                        if 'skipped' in part and i > 0:
-                            suite.skipped = int(parts[i-1])
+                        if "passed" in part and i > 0:
+                            suite.passed = int(parts[i - 1])
+                        if "failed" in part and i > 0:
+                            suite.failed = int(parts[i - 1])
+                        if "skipped" in part and i > 0:
+                            suite.skipped = int(parts[i - 1])
 
         suite.success = result.returncode == 0
 
         # Print results
         if suite.success:
-            print_success(
-                f"Passed: {suite.passed} tests in {suite.duration:.2f}s"
-            )
+            print_success(f"Passed: {suite.passed} tests in {suite.duration:.2f}s")
         else:
             print_error(
                 f"Failed: {suite.failed} failed, {suite.passed} passed in {suite.duration:.2f}s"
@@ -227,7 +216,7 @@ def run_test_suite(suite: TestSuite, coverage: bool = False, fast: bool = False)
         return False
 
 
-def generate_summary(suites: List[TestSuite]) -> Dict:
+def generate_summary(suites: list[TestSuite]) -> dict:
     """Generate test execution summary"""
     total_passed = sum(s.passed for s in suites)
     total_failed = sum(s.failed for s in suites)
@@ -245,12 +234,16 @@ def generate_summary(suites: List[TestSuite]) -> Dict:
         "successful_suites": successful_suites,
         "failed_suites": total_suites - successful_suites,
         "duration": total_duration,
-        "success_rate": (total_passed / (total_passed + total_failed) * 100) if (total_passed + total_failed) > 0 else 0,
+        "success_rate": (
+            (total_passed / (total_passed + total_failed) * 100)
+            if (total_passed + total_failed) > 0
+            else 0
+        ),
         "suite_success_rate": (successful_suites / total_suites * 100) if total_suites > 0 else 0,
     }
 
 
-def print_summary(suites: List[TestSuite]):
+def print_summary(suites: list[TestSuite]):
     """Print test execution summary"""
     print_header("Test Execution Summary")
 
@@ -282,7 +275,9 @@ def print_summary(suites: List[TestSuite]):
             phase_total = len(phase_suites)
 
             status = Colors.GREEN if phase_success == phase_total else Colors.YELLOW
-            print(f"  {status}{phase}:{Colors.END} {phase_success}/{phase_total} suites, {phase_passed} passed, {phase_failed} failed")
+            print(
+                f"  {status}{phase}:{Colors.END} {phase_success}/{phase_total} suites, {phase_passed} passed, {phase_failed} failed"
+            )
 
     # Failed suites detail
     failed_suites = [s for s in suites if not s.success and not s.skipped]
@@ -292,7 +287,7 @@ def print_summary(suites: List[TestSuite]):
             print(f"  {Colors.RED}✗{Colors.END} {suite.name} ({suite.phase})")
 
 
-def generate_stakeholder_report(suites: List[TestSuite], output_file: str):
+def generate_stakeholder_report(suites: list[TestSuite], output_file: str):
     """Generate stakeholder-friendly HTML report"""
     summary = generate_summary(suites)
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -451,7 +446,11 @@ def generate_stakeholder_report(suites: List[TestSuite], output_file: str):
             phase_success = sum(1 for s in phase_suites if s.success)
             phase_total = len(phase_suites)
 
-            badge_class = "success" if phase_success == phase_total else "warning" if phase_success > 0 else "error"
+            badge_class = (
+                "success"
+                if phase_success == phase_total
+                else "warning" if phase_success > 0 else "error"
+            )
 
             html += f"""
     <div class="phase-section">
@@ -462,7 +461,9 @@ def generate_stakeholder_report(suites: List[TestSuite], output_file: str):
 """
 
             for suite in phase_suites:
-                status_class = "success" if suite.success else "skipped" if suite.skipped else "failed"
+                status_class = (
+                    "success" if suite.success else "skipped" if suite.skipped else "failed"
+                )
 
                 html += f"""
         <div class="test-suite {status_class}">
@@ -482,7 +483,7 @@ def generate_stakeholder_report(suites: List[TestSuite], output_file: str):
                 <div class="stat duration">⏱ {suite.duration:.2f}s</div>
 """
                 else:
-                    html += f"""
+                    html += """
                 <div class="stat">⊘ Skipped</div>
 """
 
@@ -495,7 +496,7 @@ def generate_stakeholder_report(suites: List[TestSuite], output_file: str):
     </div>
 """
 
-    html += f"""
+    html += """
     <div class="footer">
         <p><strong>NEXUS Platform</strong> - Enterprise-Grade AI Agent Orchestration</p>
         <p>Production-Ready • Compliant • Explainable</p>
@@ -524,7 +525,7 @@ def main():
     args = parser.parse_args()
 
     print_header("NEXUS Platform - Comprehensive Test Suite")
-    print_info(f"Running tests for all phases...")
+    print_info("Running tests for all phases...")
     print_info(f"Coverage: {'Enabled' if args.coverage else 'Disabled'}")
     print_info(f"Mode: {'Fast (no slow tests)' if args.fast else 'Complete'}")
 

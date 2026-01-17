@@ -18,30 +18,28 @@ Usage:
 
 import argparse
 import sys
-from datetime import datetime, timedelta
-from typing import Optional
 
 # Add parent directory to path for imports
-sys.path.insert(0, '.')
+sys.path.insert(0, ".")
+
+from neutron.compliance.audit_logger import AuditLogger
 
 from neutron.compliance.auditors import (
     lgpd_art18_explanation_guardrail,
     lgpd_art20_portability_guardrail,
-    LGPD_GUARDRAILS
 )
 from neutron.compliance.sentinel import AgentOutput, ComplianceViolation
-from neutron.compliance.audit_logger import AuditLogger
-
 
 # =============================================================================
 # Demo Scenarios
 # =============================================================================
 
+
 def print_header(title: str):
     """Print formatted section header"""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print(f"  {title}")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
 
 def print_success(message: str):
@@ -77,7 +75,7 @@ def demo_article18_non_compliant():
         has_explanation=False,
         explanation=None,
         explanation_quality=0.0,
-        model_name="loan-decision-v1"
+        model_name="loan-decision-v1",
     )
 
     print(f"Agent Output: '{output.content}'")
@@ -86,7 +84,7 @@ def demo_article18_non_compliant():
 
     # Try to enforce
     try:
-        enforced = lgpd_art18_explanation_guardrail.enforce(output)
+        lgpd_art18_explanation_guardrail.enforce(output)
         print_error("UNEXPECTED: Output should have been blocked!")
         return False
     except ComplianceViolation as e:
@@ -125,7 +123,7 @@ def demo_article18_compliant():
             "and employment stability (5 years same employer)."
         ),
         explanation_quality=0.88,
-        model_name="loan-decision-v1"
+        model_name="loan-decision-v1",
     )
 
     print(f"Agent Output: '{output.content}'")
@@ -139,12 +137,12 @@ def demo_article18_compliant():
         print_success(f"Output PASSED: {enforced.guardrail_name}")
         print_info(f"Validation: {enforced.validation_result.details}")
         print_info(f"Audit ID: {enforced.audit_id}")
-        print_info(f"Logged to immutable audit trail")
+        print_info("Logged to immutable audit trail")
         print()
         print("✨ Output approved for delivery to customer")
         return True
     except ComplianceViolation as e:
-        print_error(f"UNEXPECTED: Output should have passed!")
+        print_error("UNEXPECTED: Output should have passed!")
         print_error(f"Reason: {e.result.details}")
         return False
 
@@ -172,7 +170,7 @@ def demo_article20_non_compliant():
         ),
         explanation_quality=0.82,
         metadata=None,  # Missing portability info
-        model_name="risk-assessment-v2"
+        model_name="risk-assessment-v2",
     )
 
     print(f"Agent Output: '{output.content}'")
@@ -218,10 +216,10 @@ def demo_article20_compliant():
             "data_structure": {
                 "customer_id": "string",
                 "risk_score": "float (0.0-1.0)",
-                "risk_level": "string (LOW|MEDIUM|HIGH)"
-            }
+                "risk_level": "string (LOW|MEDIUM|HIGH)",
+            },
         },
-        model_name="risk-assessment-v2"
+        model_name="risk-assessment-v2",
     )
 
     print(f"Agent Output: {output.content}")
@@ -239,7 +237,7 @@ def demo_article20_compliant():
         print("✨ Data is portable and can be exported to other services")
         return True
     else:
-        print_error(f"UNEXPECTED: Should have passed!")
+        print_error("UNEXPECTED: Should have passed!")
         return False
 
 
@@ -261,22 +259,22 @@ def demo_batch_validation():
             has_explanation=True,
             explanation="Approved based on strong credit score and stable income.",
             explanation_quality=0.85,
-            model_name="model-a"
+            model_name="model-a",
         ),
         AgentOutput(
             content="Model B prediction: Deny",
             has_explanation=False,  # Non-compliant
             explanation=None,
             explanation_quality=0.0,
-            model_name="model-b"
+            model_name="model-b",
         ),
         AgentOutput(
             content="Model C prediction: Approve",
             has_explanation=True,
             explanation="Approved due to low debt-to-income ratio and excellent payment history.",
             explanation_quality=0.90,
-            model_name="model-c"
-        )
+            model_name="model-c",
+        ),
     ]
 
     # Validate each
@@ -288,7 +286,7 @@ def demo_batch_validation():
 
         try:
             enforced = lgpd_art18_explanation_guardrail.enforce(output)
-            print_success(f"  PASSED")
+            print_success("  PASSED")
             results.append((i, True, enforced.audit_id))
         except ComplianceViolation as e:
             print_error(f"  BLOCKED: {e.result.details[:60]}...")
@@ -319,10 +317,7 @@ def demo_audit_trail_query():
     # Query recent audits
     try:
         print("Querying recent audit logs...")
-        recent_audits = logger.query_audits(
-            regulation="LGPD",
-            limit=10
-        )
+        recent_audits = logger.query_audits(regulation="LGPD", limit=10)
 
         if not recent_audits:
             print_info("No audit logs found (database may not be set up)")
@@ -340,11 +335,7 @@ def demo_audit_trail_query():
 
         # Query violations
         print("\nQuerying violations only...")
-        violations = logger.query_audits(
-            regulation="LGPD",
-            passed=False,
-            limit=5
-        )
+        violations = logger.query_audits(regulation="LGPD", passed=False, limit=5)
 
         print(f"Found {len(violations)} violations:")
         for v in violations:
@@ -354,7 +345,7 @@ def demo_audit_trail_query():
         print("\nGetting compliance summary...")
         summary = logger.get_violations_summary(regulation="LGPD", days_back=7)
 
-        print(f"\nLast 7 days summary:")
+        print("\nLast 7 days summary:")
         print(f"  Total audits: {summary.get('total_audits', 0)}")
         print(f"  Violations: {summary.get('total_violations', 0)}")
         print(f"  Compliance rate: {summary.get('compliance_rate', 0):.1%}")
@@ -402,6 +393,7 @@ def demo_all():
 # Main
 # =============================================================================
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="SENTINEL Compliance Demo - LGPD Guardrails",
@@ -412,29 +404,25 @@ Examples:
   python scripts/demo_sentinel.py --demo article18   # Run Article 18 demos
   python scripts/demo_sentinel.py --demo article20   # Run Article 20 demos
   python scripts/demo_sentinel.py --demo audit       # Run audit trail demo
-        """
+        """,
     )
 
     parser.add_argument(
         "--demo",
         choices=["all", "article18", "article20", "batch", "audit"],
         default="all",
-        help="Which demo to run (default: all)"
+        help="Which demo to run (default: all)",
     )
 
-    parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable verbose output"
-    )
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
 
     args = parser.parse_args()
 
     # Print banner
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("  SENTINEL COMPLIANCE DEMO")
     print("  LGPD Guardrails - Brazil Data Protection Law")
-    print("="*70)
+    print("=" * 70)
 
     # Run selected demo
     if args.demo == "all":
@@ -451,12 +439,12 @@ Examples:
         success = demo_audit_trail_query()
 
     # Exit
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     if success:
         print("  ✅ Demo completed successfully!")
     else:
         print("  ⚠️  Demo completed with warnings")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
 
     sys.exit(0 if success else 1)
 

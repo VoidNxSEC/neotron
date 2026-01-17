@@ -6,34 +6,35 @@ Phase 1 MVP: Majority voting, confidence weighting, and basic debate.
 """
 
 import asyncio
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
-from collections import Counter
 import time
-import math
+from collections import Counter
+from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
 class ProviderResponse:
     """Single provider's response"""
+
     provider: str
     answer: str
-    reasoning: Optional[str] = None
+    reasoning: str | None = None
     confidence: float = 0.0
     latency_ms: float = 0.0
     tokens_used: int = 0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
 class EnsembleResult:
     """Aggregated result from ensemble"""
+
     answer: str
     confidence: float
-    provider_votes: Dict[str, str]
+    provider_votes: dict[str, str]
     reasoning: str
     strategy_used: str
-    individual_responses: List[ProviderResponse] = field(default_factory=list)
+    individual_responses: list[ProviderResponse] = field(default_factory=list)
     total_latency_ms: float = 0.0
     total_tokens_used: int = 0
 
@@ -49,7 +50,7 @@ class EnsembleReasoner:
     - best_of_n: Select highest confidence response
     """
 
-    def __init__(self, providers: List[str]):
+    def __init__(self, providers: list[str]):
         """
         Initialize ensemble with provider names.
 
@@ -65,7 +66,7 @@ class EnsembleReasoner:
         strategy: str = "majority",
         temperature: float = 0.7,
         max_tokens: int = 512,
-        timeout: int = 30
+        timeout: int = 30,
     ) -> EnsembleResult:
         """
         Execute task across all providers and aggregate results.
@@ -83,12 +84,13 @@ class EnsembleReasoner:
         start_time = time.time()
 
         # Execute on all providers in parallel
-        responses = await asyncio.gather(*[
-            self._execute_on_provider(
-                provider, task, temperature, max_tokens, timeout
-            )
-            for provider in self.providers
-        ], return_exceptions=True)
+        responses = await asyncio.gather(
+            *[
+                self._execute_on_provider(provider, task, temperature, max_tokens, timeout)
+                for provider in self.providers
+            ],
+            return_exceptions=True,
+        )
 
         # Filter out exceptions and failed responses
         valid_responses = []
@@ -96,10 +98,7 @@ class EnsembleReasoner:
             if isinstance(resp, Exception):
                 # Create error response
                 error_resp = ProviderResponse(
-                    provider=self.providers[i],
-                    answer="",
-                    error=str(resp),
-                    confidence=0.0
+                    provider=self.providers[i], answer="", error=str(resp), confidence=0.0
                 )
                 valid_responses.append(error_resp)
             else:
@@ -130,21 +129,12 @@ class EnsembleReasoner:
         result.strategy_used = strategy
 
         # Track history
-        self.history.append({
-            "task": task,
-            "result": result,
-            "timestamp": time.time()
-        })
+        self.history.append({"task": task, "result": result, "timestamp": time.time()})
 
         return result
 
     async def _execute_on_provider(
-        self,
-        provider: str,
-        task: str,
-        temperature: float,
-        max_tokens: int,
-        timeout: int
+        self, provider: str, task: str, temperature: float, max_tokens: int, timeout: int
     ) -> ProviderResponse:
         """Execute task on a single provider"""
         from .dspy_adapter import DSPyProviderAdapter
@@ -158,12 +148,9 @@ class EnsembleReasoner:
             # Execute with timeout
             response = await asyncio.wait_for(
                 asyncio.to_thread(
-                    adapter.basic_request,
-                    task,
-                    temperature=temperature,
-                    max_tokens=max_tokens
+                    adapter.basic_request, task, temperature=temperature, max_tokens=max_tokens
                 ),
-                timeout=timeout
+                timeout=timeout,
             )
 
             latency = (time.time() - start_time) * 1000
@@ -176,16 +163,16 @@ class EnsembleReasoner:
                 answer=response.strip(),
                 confidence=confidence,
                 latency_ms=latency,
-                tokens_used=len(response.split())  # Rough estimate
+                tokens_used=len(response.split()),  # Rough estimate
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return ProviderResponse(
                 provider=provider,
                 answer="",
                 error=f"Timeout after {timeout}s",
                 confidence=0.0,
-                latency_ms=(time.time() - start_time) * 1000
+                latency_ms=(time.time() - start_time) * 1000,
             )
         except Exception as e:
             return ProviderResponse(
@@ -193,7 +180,7 @@ class EnsembleReasoner:
                 answer="",
                 error=str(e),
                 confidence=0.0,
-                latency_ms=(time.time() - start_time) * 1000
+                latency_ms=(time.time() - start_time) * 1000,
             )
 
     def _estimate_confidence(self, response: str) -> float:
@@ -226,7 +213,7 @@ class EnsembleReasoner:
         # Clamp to [0, 1]
         return max(0.0, min(1.0, confidence))
 
-    def _majority_vote(self, responses: List[ProviderResponse]) -> EnsembleResult:
+    def _majority_vote(self, responses: list[ProviderResponse]) -> EnsembleResult:
         """Simple majority voting"""
         answers = [r.answer for r in responses]
         answer_counts = Counter(answers)
@@ -247,13 +234,13 @@ class EnsembleReasoner:
             confidence=confidence,
             provider_votes={r.provider: r.answer for r in responses},
             reasoning=reasoning,
-            strategy_used="majority"
+            strategy_used="majority",
         )
 
-    def _confidence_weighted(self, responses: List[ProviderResponse]) -> EnsembleResult:
+    def _confidence_weighted(self, responses: list[ProviderResponse]) -> EnsembleResult:
         """Confidence-weighted voting"""
         # Group responses by answer
-        answer_groups: Dict[str, List[ProviderResponse]] = {}
+        answer_groups: dict[str, list[ProviderResponse]] = {}
         for r in responses:
             if r.answer not in answer_groups:
                 answer_groups[r.answer] = []
@@ -267,9 +254,11 @@ class EnsembleReasoner:
         # Select highest weighted answer
         winning_answer = max(weighted_scores, key=weighted_scores.get)
         total_confidence = sum(weighted_scores.values())
-        normalized_confidence = weighted_scores[winning_answer] / total_confidence if total_confidence > 0 else 0
+        normalized_confidence = (
+            weighted_scores[winning_answer] / total_confidence if total_confidence > 0 else 0
+        )
 
-        reasoning = f"Confidence-weighted vote:\n"
+        reasoning = "Confidence-weighted vote:\n"
         for answer, score in weighted_scores.items():
             reasoning += f"  '{answer[:50]}...': {score:.2f}\n"
 
@@ -278,10 +267,10 @@ class EnsembleReasoner:
             confidence=normalized_confidence,
             provider_votes={r.provider: r.answer for r in responses},
             reasoning=reasoning,
-            strategy_used="confidence_weighted"
+            strategy_used="confidence_weighted",
         )
 
-    def _unanimous(self, responses: List[ProviderResponse]) -> EnsembleResult:
+    def _unanimous(self, responses: list[ProviderResponse]) -> EnsembleResult:
         """Require unanimous agreement"""
         answers = [r.answer for r in responses]
         unique_answers = set(answers)
@@ -293,7 +282,7 @@ class EnsembleReasoner:
                 confidence=1.0,
                 provider_votes={r.provider: r.answer for r in responses},
                 reasoning=f"Unanimous agreement across all {len(responses)} providers",
-                strategy_used="unanimous"
+                strategy_used="unanimous",
             )
         else:
             # No consensus
@@ -302,10 +291,10 @@ class EnsembleReasoner:
                 confidence=0.0,
                 provider_votes={r.provider: r.answer for r in responses},
                 reasoning=f"No unanimous agreement. Got {len(unique_answers)} different answers: {unique_answers}",
-                strategy_used="unanimous"
+                strategy_used="unanimous",
             )
 
-    def _best_of_n(self, responses: List[ProviderResponse]) -> EnsembleResult:
+    def _best_of_n(self, responses: list[ProviderResponse]) -> EnsembleResult:
         """Select response with highest confidence"""
         best_response = max(responses, key=lambda r: r.confidence)
 
@@ -314,14 +303,14 @@ class EnsembleReasoner:
             confidence=best_response.confidence,
             provider_votes={r.provider: r.answer for r in responses},
             reasoning=f"Highest confidence response from {best_response.provider} ({best_response.confidence:.2f})",
-            strategy_used="best_of_n"
+            strategy_used="best_of_n",
         )
 
-    def get_history(self) -> List[Dict[str, Any]]:
+    def get_history(self) -> list[dict[str, Any]]:
         """Get reasoning history"""
         return self.history
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get statistics across all history"""
         if not self.history:
             return {"total_queries": 0}
@@ -347,5 +336,5 @@ class EnsembleReasoner:
             "provider_success_rates": {
                 p: stats["success"] / stats["total"] if stats["total"] > 0 else 0
                 for p, stats in provider_success_rates.items()
-            }
+            },
         }

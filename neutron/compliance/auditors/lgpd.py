@@ -13,17 +13,15 @@ Reference: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2018/lei/l13709.h
 """
 
 from neutron.compliance.sentinel import (
-    ComplianceGuardrail,
     AgentOutput,
+    ComplianceGuardrail,
     ValidationResult,
-    create_guardrail
 )
-from typing import List
-
 
 # =============================================================================
 # LGPD Article 18 - Right to Explanation
 # =============================================================================
+
 
 def check_lgpd_article_18_explanation(output: AgentOutput) -> ValidationResult:
     """
@@ -58,8 +56,8 @@ def check_lgpd_article_18_explanation(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "LGPD Article 18",
                 "requirement": "explanation_presence",
-                "violation_type": "missing_explanation"
-            }
+                "violation_type": "missing_explanation",
+            },
         )
 
     # Check 2: Explanation not empty
@@ -74,8 +72,8 @@ def check_lgpd_article_18_explanation(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "LGPD Article 18",
                 "requirement": "explanation_content",
-                "violation_type": "empty_explanation"
-            }
+                "violation_type": "empty_explanation",
+            },
         )
 
     # Check 3: Explanation quality threshold
@@ -94,8 +92,8 @@ def check_lgpd_article_18_explanation(output: AgentOutput) -> ValidationResult:
                 "requirement": "explanation_quality",
                 "violation_type": "low_quality_explanation",
                 "quality_score": output.explanation_quality,
-                "threshold": quality_threshold
-            }
+                "threshold": quality_threshold,
+            },
         )
 
     # Check 4: Minimum explanation length (basic heuristic)
@@ -113,8 +111,8 @@ def check_lgpd_article_18_explanation(output: AgentOutput) -> ValidationResult:
                 "requirement": "explanation_length",
                 "violation_type": "insufficient_explanation",
                 "length": len(output.explanation),
-                "min_length": min_length
-            }
+                "min_length": min_length,
+            },
         )
 
     # All checks passed
@@ -128,14 +126,15 @@ def check_lgpd_article_18_explanation(output: AgentOutput) -> ValidationResult:
         metadata={
             "article": "LGPD Article 18",
             "quality_score": output.explanation_quality,
-            "explanation_length": len(output.explanation)
-        }
+            "explanation_length": len(output.explanation),
+        },
     )
 
 
 # =============================================================================
 # LGPD Article 20 - Data Portability
 # =============================================================================
+
 
 def check_lgpd_article_20_portability(output: AgentOutput) -> ValidationResult:
     """
@@ -172,8 +171,8 @@ def check_lgpd_article_20_portability(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "LGPD Article 20",
                 "requirement": "metadata_presence",
-                "violation_type": "missing_metadata"
-            }
+                "violation_type": "missing_metadata",
+            },
         )
 
     # Check 2: Exportable format specified
@@ -189,14 +188,21 @@ def check_lgpd_article_20_portability(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "LGPD Article 20",
                 "requirement": "format_specification",
-                "violation_type": "missing_format"
-            }
+                "violation_type": "missing_format",
+            },
         )
 
     # Check 3: Format is machine-readable
     machine_readable_formats = {
-        "json", "csv", "xml", "parquet", "avro",
-        "yaml", "toml", "jsonl", "tsv"
+        "json",
+        "csv",
+        "xml",
+        "parquet",
+        "avro",
+        "yaml",
+        "toml",
+        "jsonl",
+        "tsv",
     }
 
     format_lower = str(exportable_format).lower()
@@ -213,8 +219,8 @@ def check_lgpd_article_20_portability(output: AgentOutput) -> ValidationResult:
                 "requirement": "machine_readable_format",
                 "violation_type": "invalid_format",
                 "provided_format": exportable_format,
-                "valid_formats": list(machine_readable_formats)
-            }
+                "valid_formats": list(machine_readable_formats),
+            },
         )
 
     # Check 4: Data structure documented
@@ -230,8 +236,8 @@ def check_lgpd_article_20_portability(output: AgentOutput) -> ValidationResult:
             metadata={
                 "article": "LGPD Article 20",
                 "requirement": "structure_documentation",
-                "violation_type": "missing_schema"
-            }
+                "violation_type": "missing_schema",
+            },
         )
 
     # All checks passed
@@ -245,8 +251,8 @@ def check_lgpd_article_20_portability(output: AgentOutput) -> ValidationResult:
         metadata={
             "article": "LGPD Article 20",
             "exportable_format": exportable_format,
-            "data_structure": data_structure
-        }
+            "data_structure": data_structure,
+        },
     )
 
 
@@ -265,7 +271,7 @@ lgpd_art18_explanation_guardrail = ComplianceGuardrail(
         "Ensures automated decisions include clear, adequate explanations "
         "of the criteria and procedures used. This is a BLOCKING guardrail - "
         "outputs without proper explanations will be rejected."
-    )
+    ),
 )
 
 # LGPD Article 20 - Data Portability (WARNING)
@@ -279,13 +285,13 @@ lgpd_art20_portability_guardrail = ComplianceGuardrail(
         "Ensures outputs are in machine-readable formats that can be exported "
         "and transferred. This is a WARNING guardrail - violations are logged "
         "but do not block output."
-    )
+    ),
 )
 
 # Combined LGPD guardrail suite
-LGPD_GUARDRAILS: List[ComplianceGuardrail] = [
+LGPD_GUARDRAILS: list[ComplianceGuardrail] = [
     lgpd_art18_explanation_guardrail,
-    lgpd_art20_portability_guardrail
+    lgpd_art20_portability_guardrail,
 ]
 
 
@@ -293,7 +299,8 @@ LGPD_GUARDRAILS: List[ComplianceGuardrail] = [
 # Convenience Functions
 # =============================================================================
 
-def get_lgpd_guardrails() -> List[ComplianceGuardrail]:
+
+def get_lgpd_guardrails() -> list[ComplianceGuardrail]:
     """
     Get all LGPD compliance guardrails
 
@@ -316,10 +323,7 @@ def get_lgpd_guardrail_by_article(article_number: int) -> ComplianceGuardrail:
     Raises:
         ValueError: If article number is not implemented
     """
-    guardrail_map = {
-        18: lgpd_art18_explanation_guardrail,
-        20: lgpd_art20_portability_guardrail
-    }
+    guardrail_map = {18: lgpd_art18_explanation_guardrail, 20: lgpd_art20_portability_guardrail}
 
     if article_number not in guardrail_map:
         raise ValueError(
@@ -330,7 +334,7 @@ def get_lgpd_guardrail_by_article(article_number: int) -> ComplianceGuardrail:
     return guardrail_map[article_number]
 
 
-def validate_with_lgpd(output: AgentOutput) -> List[ValidationResult]:
+def validate_with_lgpd(output: AgentOutput) -> list[ValidationResult]:
     """
     Validate output against all LGPD guardrails
 

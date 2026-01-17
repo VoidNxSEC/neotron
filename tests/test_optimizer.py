@@ -1,16 +1,15 @@
 """
 Tests for hyperparameter optimizer
 """
-import pytest
+
+from neutron.core.models import OptimizationState, SearchStrategy
 from neutron.optimization.optimizer import HyperparameterOptimizer
-from neutron.core.models import SearchStrategy, OptimizationState
 
 
 def test_optimizer_initialization(sample_hyperparameter_space):
     """Test optimizer initialization"""
     optimizer = HyperparameterOptimizer(
-        hyperparameter_space=sample_hyperparameter_space,
-        strategy=SearchStrategy.RANDOM
+        hyperparameter_space=sample_hyperparameter_space, strategy=SearchStrategy.RANDOM
     )
     assert optimizer.strategy == SearchStrategy.RANDOM
     assert optimizer.hyperparameter_space == sample_hyperparameter_space
@@ -19,21 +18,14 @@ def test_optimizer_initialization(sample_hyperparameter_space):
 def test_random_search_suggestions(sample_hyperparameter_space):
     """Test random search strategy"""
     optimizer = HyperparameterOptimizer(
-        hyperparameter_space=sample_hyperparameter_space,
-        strategy=SearchStrategy.RANDOM
+        hyperparameter_space=sample_hyperparameter_space, strategy=SearchStrategy.RANDOM
     )
 
     state = OptimizationState(
-        current_strategy=SearchStrategy.RANDOM,
-        trials_completed=0,
-        best_accuracy=0.0
+        current_strategy=SearchStrategy.RANDOM, trials_completed=0, best_accuracy=0.0
     )
 
-    configs = optimizer.suggest_configs(
-        num=3,
-        state=state,
-        experiment_id="test-exp"
-    )
+    configs = optimizer.suggest_configs(num=3, state=state, experiment_id="test-exp")
 
     assert len(configs) == 3
     for config in configs:
@@ -44,20 +36,13 @@ def test_random_search_suggestions(sample_hyperparameter_space):
 def test_grid_search_suggestions(sample_hyperparameter_space):
     """Test grid search strategy"""
     optimizer = HyperparameterOptimizer(
-        hyperparameter_space=sample_hyperparameter_space,
-        strategy=SearchStrategy.GRID
+        hyperparameter_space=sample_hyperparameter_space, strategy=SearchStrategy.GRID
     )
 
     state = OptimizationState(
-        current_strategy=SearchStrategy.GRID,
-        trials_completed=0,
-        best_accuracy=0.0
+        current_strategy=SearchStrategy.GRID, trials_completed=0, best_accuracy=0.0
     )
 
-    configs = optimizer.suggest_configs(
-        num=5,
-        state=state,
-        experiment_id="test-exp"
-    )
+    configs = optimizer.suggest_configs(num=5, state=state, experiment_id="test-exp")
 
     assert len(configs) <= 5

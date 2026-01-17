@@ -9,30 +9,29 @@ Tests cover:
 - Layered enforcement (SENTINEL + BASTION)
 """
 
-import pytest
 import os
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from neutron.compliance.bastion import (
-    KernelPolicy,
-    ComplianceCapability,
-    LayeredPolicy,
-    BPFProgram,
-    BPFInstruction,
-    grant_capability,
-    revoke_capability,
-    has_capability,
-    SYSCALL_NR,
     SECCOMP_RET_ALLOW,
-    SECCOMP_RET_ERRNO,
-    SECCOMP_RET_KILL_PROCESS,
+    SYSCALL_NR,
+    BPFInstruction,
+    BPFProgram,
+    ComplianceCapability,
+    KernelPolicy,
+    LayeredPolicy,
+    grant_capability,
+    has_capability,
+    revoke_capability,
 )
-
 
 # =============================================================================
 # BPF Program Tests
 # =============================================================================
+
 
 class TestBPFProgram:
     """Tests for BPF program builder"""
@@ -108,21 +107,22 @@ class TestBPFProgram:
 # BPF Instruction Tests
 # =============================================================================
 
+
 class TestBPFInstruction:
     """Tests for BPF instruction structure"""
 
     def test_create_instruction(self):
         """Test creating BPF instruction"""
-        instr = BPFInstruction(code=0x06, jt=0, jf=0, k=0x7fff0000)
+        instr = BPFInstruction(code=0x06, jt=0, jf=0, k=0x7FFF0000)
 
         assert instr.code == 0x06
         assert instr.jt == 0
         assert instr.jf == 0
-        assert instr.k == 0x7fff0000
+        assert instr.k == 0x7FFF0000
 
     def test_pack_instruction(self):
         """Test packing instruction to binary"""
-        instr = BPFInstruction(code=0x06, jt=0, jf=0, k=0x7fff0000)
+        instr = BPFInstruction(code=0x06, jt=0, jf=0, k=0x7FFF0000)
         packed = instr.pack()
 
         assert isinstance(packed, bytes)
@@ -134,6 +134,7 @@ class TestBPFInstruction:
 # KernelPolicy Tests
 # =============================================================================
 
+
 class TestKernelPolicy:
     """Tests for kernel-level policy enforcement"""
 
@@ -143,7 +144,7 @@ class TestKernelPolicy:
             name="test_policy",
             regulation="LGPD",
             blocked_syscalls=["open", "read"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN
+            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
         )
 
         assert policy.name == "test_policy"
@@ -154,28 +155,18 @@ class TestKernelPolicy:
     def test_policy_validation_no_syscalls(self):
         """Test that policy requires at least one syscall"""
         with pytest.raises(ValueError, match="must block at least one syscall"):
-            KernelPolicy(
-                name="invalid",
-                regulation="LGPD",
-                blocked_syscalls=[]
-            )
+            KernelPolicy(name="invalid", regulation="LGPD", blocked_syscalls=[])
 
     def test_policy_validation_unknown_syscall(self):
         """Test that policy rejects unknown syscalls"""
         with pytest.raises(ValueError, match="Unknown syscall"):
             KernelPolicy(
-                name="invalid",
-                regulation="LGPD",
-                blocked_syscalls=["nonexistent_syscall"]
+                name="invalid", regulation="LGPD", blocked_syscalls=["nonexistent_syscall"]
             )
 
     def test_policy_default_description(self):
         """Test that policy generates default description"""
-        policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"]
-        )
+        policy = KernelPolicy(name="test", regulation="LGPD", blocked_syscalls=["open"])
 
         assert "LGPD" in policy.description
         assert "open" in policy.description
@@ -186,18 +177,14 @@ class TestKernelPolicy:
             name="test",
             regulation="LGPD",
             blocked_syscalls=["open"],
-            description="Custom description"
+            description="Custom description",
         )
 
         assert policy.description == "Custom description"
 
     def test_build_bpf_program(self):
         """Test building BPF program from policy"""
-        policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open", "read"]
-        )
+        policy = KernelPolicy(name="test", regulation="LGPD", blocked_syscalls=["open", "read"])
 
         prog = policy.build_bpf_program()
 
@@ -207,11 +194,7 @@ class TestKernelPolicy:
     def test_bpf_program_blocks_syscalls(self):
         """Test that BPF program blocks specified syscalls"""
         policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            action="ERRNO",
-            errno=13
+            name="test", regulation="LGPD", blocked_syscalls=["open"], action="ERRNO", errno=13
         )
 
         prog = policy.build_bpf_program()
@@ -222,11 +205,7 @@ class TestKernelPolicy:
     def test_policy_action_errno(self):
         """Test policy with ERRNO action"""
         policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            action="ERRNO",
-            errno=13
+            name="test", regulation="LGPD", blocked_syscalls=["open"], action="ERRNO", errno=13
         )
 
         assert policy.action == "ERRNO"
@@ -235,10 +214,7 @@ class TestKernelPolicy:
     def test_policy_action_kill(self):
         """Test policy with KILL action"""
         policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["execve"],
-            action="KILL"
+            name="test", regulation="LGPD", blocked_syscalls=["execve"], action="KILL"
         )
 
         assert policy.action == "KILL"
@@ -249,7 +225,7 @@ class TestKernelPolicy:
             name="test",
             regulation="LGPD",
             blocked_syscalls=["open"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN
+            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
         )
 
         # Grant capability
@@ -266,7 +242,7 @@ class TestKernelPolicy:
             name="test",
             regulation="LGPD",
             blocked_syscalls=["open"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN
+            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
         )
 
         # Ensure capability is revoked
@@ -277,10 +253,7 @@ class TestKernelPolicy:
     def test_check_capability_not_required(self):
         """Test checking when no capability required"""
         policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            required_capability=None
+            name="test", regulation="LGPD", blocked_syscalls=["open"], required_capability=None
         )
 
         # Should always return True when no capability required
@@ -294,7 +267,7 @@ class TestKernelPolicy:
             regulation="LGPD",
             blocked_syscalls=["open"],
             required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False  # Disable audit for cleaner test
+            audit=False,  # Disable audit for cleaner test
         )
 
         # Ensure no capability
@@ -314,7 +287,7 @@ class TestKernelPolicy:
             regulation="LGPD",
             blocked_syscalls=["open"],
             required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False
+            audit=False,
         )
 
         # Grant capability
@@ -333,6 +306,7 @@ class TestKernelPolicy:
 # =============================================================================
 # Capability Management Tests
 # =============================================================================
+
 
 class TestCapabilityManagement:
     """Tests for compliance capability management"""
@@ -396,6 +370,7 @@ class TestCapabilityManagement:
 # LayeredPolicy Tests
 # =============================================================================
 
+
 class TestLayeredPolicy:
     """Tests for layered enforcement (SENTINEL + BASTION)"""
 
@@ -406,16 +381,14 @@ class TestLayeredPolicy:
         app_guardrail.name = "test_app_guardrail"
 
         kernel_policy = KernelPolicy(
-            name="test_kernel",
-            regulation="LGPD",
-            blocked_syscalls=["open"]
+            name="test_kernel", regulation="LGPD", blocked_syscalls=["open"]
         )
 
         layered = LayeredPolicy(
             name="test_layered",
             regulation="LGPD",
             application_check=app_guardrail,
-            kernel_policy=kernel_policy
+            kernel_policy=kernel_policy,
         )
 
         assert layered.name == "test_layered"
@@ -433,14 +406,14 @@ class TestLayeredPolicy:
             regulation="LGPD",
             blocked_syscalls=["open"],
             required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False
+            audit=False,
         )
 
         layered = LayeredPolicy(
             name="test_layered",
             regulation="LGPD",
             application_check=app_guardrail,
-            kernel_policy=kernel_policy
+            kernel_policy=kernel_policy,
         )
 
         # Revoke capability to trigger kernel enforcement
@@ -457,6 +430,7 @@ class TestLayeredPolicy:
 # Integration Tests
 # =============================================================================
 
+
 class TestIntegration:
     """Integration tests combining multiple components"""
 
@@ -470,7 +444,7 @@ class TestIntegration:
             required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
             action="ERRNO",
             errno=13,
-            audit=False
+            audit=False,
         )
 
         # Ensure no consent
@@ -493,7 +467,7 @@ class TestIntegration:
             regulation="LGPD",
             blocked_syscalls=["open", "read"],
             required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False
+            audit=False,
         )
 
         # Grant consent
@@ -514,17 +488,11 @@ class TestIntegration:
     def test_multiple_policies_different_syscalls(self):
         """Test multiple policies blocking different syscalls"""
         policy1 = KernelPolicy(
-            name="policy1",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            audit=False
+            name="policy1", regulation="LGPD", blocked_syscalls=["open"], audit=False
         )
 
         policy2 = KernelPolicy(
-            name="policy2",
-            regulation="LGPD",
-            blocked_syscalls=["unlink"],
-            audit=False
+            name="policy2", regulation="LGPD", blocked_syscalls=["unlink"], audit=False
         )
 
         # Both should compile successfully
@@ -543,8 +511,8 @@ class TestIntegration:
             metadata={
                 "article": "LGPD Article 7",
                 "severity": "BLOCKING",
-                "author": "compliance_team"
-            }
+                "author": "compliance_team",
+            },
         )
 
         assert policy.metadata["article"] == "LGPD Article 7"
@@ -555,6 +523,7 @@ class TestIntegration:
 # =============================================================================
 # Error Handling Tests
 # =============================================================================
+
 
 class TestErrorHandling:
     """Tests for error handling and edge cases"""
@@ -568,30 +537,18 @@ class TestErrorHandling:
     def test_empty_syscall_list(self):
         """Test that empty syscall list raises error"""
         with pytest.raises(ValueError):
-            KernelPolicy(
-                name="test",
-                regulation="LGPD",
-                blocked_syscalls=[]
-            )
+            KernelPolicy(name="test", regulation="LGPD", blocked_syscalls=[])
 
     def test_invalid_syscall_name(self):
         """Test that invalid syscall name raises error"""
         with pytest.raises(ValueError, match="Unknown syscall"):
-            KernelPolicy(
-                name="test",
-                regulation="LGPD",
-                blocked_syscalls=["invalid_syscall_name"]
-            )
+            KernelPolicy(name="test", regulation="LGPD", blocked_syscalls=["invalid_syscall_name"])
 
     def test_negative_errno(self):
         """Test policy with negative errno"""
         # Should accept (errno can be any int)
         policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            action="ERRNO",
-            errno=-1
+            name="test", regulation="LGPD", blocked_syscalls=["open"], action="ERRNO", errno=-1
         )
 
         assert policy.errno == -1

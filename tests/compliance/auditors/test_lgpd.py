@@ -5,27 +5,22 @@ Tests for Lei Geral de Proteção de Dados (Brazil's GDPR) compliance guardrails
 """
 
 import pytest
-from datetime import datetime
 
-from neutron.compliance.sentinel import (
-    AgentOutput,
-    ValidationResult,
-    ComplianceViolation
-)
 from neutron.compliance.auditors.lgpd import (
     check_lgpd_article_18_explanation,
     check_lgpd_article_20_portability,
+    get_lgpd_guardrail_by_article,
+    get_lgpd_guardrails,
     lgpd_art18_explanation_guardrail,
     lgpd_art20_portability_guardrail,
-    get_lgpd_guardrails,
-    get_lgpd_guardrail_by_article,
-    validate_with_lgpd
+    validate_with_lgpd,
 )
-
+from neutron.compliance.sentinel import AgentOutput, ComplianceViolation
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def compliant_output_art18():
@@ -40,7 +35,7 @@ def compliant_output_art18():
             "and 8 years of credit history."
         ),
         explanation_quality=0.85,
-        model_name="risk-assessment-v2"
+        model_name="risk-assessment-v2",
     )
 
 
@@ -52,7 +47,7 @@ def non_compliant_output_no_explanation():
         has_explanation=False,
         explanation=None,
         explanation_quality=0.0,
-        model_name="risk-assessment-v2"
+        model_name="risk-assessment-v2",
     )
 
 
@@ -64,7 +59,7 @@ def non_compliant_output_low_quality():
         has_explanation=True,
         explanation="Approved.",
         explanation_quality=0.3,
-        model_name="risk-assessment-v2"
+        model_name="risk-assessment-v2",
     )
 
 
@@ -75,12 +70,9 @@ def compliant_output_art20():
         content='{"customer_id": "12345", "risk_score": 0.85}',
         metadata={
             "exportable_format": "json",
-            "data_structure": {
-                "customer_id": "string",
-                "risk_score": "float"
-            }
+            "data_structure": {"customer_id": "string", "risk_score": "float"},
         },
-        model_name="risk-assessment-v2"
+        model_name="risk-assessment-v2",
     )
 
 
@@ -90,13 +82,14 @@ def non_compliant_output_no_format():
     return AgentOutput(
         content="Customer risk is high",
         metadata={"some_field": "value"},
-        model_name="risk-assessment-v2"
+        model_name="risk-assessment-v2",
     )
 
 
 # =============================================================================
 # LGPD Article 18 Tests - Right to Explanation
 # =============================================================================
+
 
 class TestLGPDArticle18:
     """Tests for LGPD Article 18 - Right to Explanation"""
@@ -125,7 +118,7 @@ class TestLGPDArticle18:
             content="Decision made",
             has_explanation=True,
             explanation="   ",  # Empty/whitespace only
-            explanation_quality=0.8
+            explanation_quality=0.8,
         )
 
         result = check_lgpd_article_18_explanation(output)
@@ -150,7 +143,7 @@ class TestLGPDArticle18:
             content="Decision made",
             has_explanation=True,
             explanation="Approved.",  # Too short
-            explanation_quality=0.8
+            explanation_quality=0.8,
         )
 
         result = check_lgpd_article_18_explanation(output)
@@ -166,7 +159,7 @@ class TestLGPDArticle18:
             content="Decision",
             has_explanation=True,
             explanation="This is a sufficient explanation for testing purposes.",
-            explanation_quality=0.69
+            explanation_quality=0.69,
         )
         result_below = check_lgpd_article_18_explanation(output_below)
         assert result_below.passed is False
@@ -176,7 +169,7 @@ class TestLGPDArticle18:
             content="Decision",
             has_explanation=True,
             explanation="This is a sufficient explanation for testing purposes.",
-            explanation_quality=0.7
+            explanation_quality=0.7,
         )
         result_at = check_lgpd_article_18_explanation(output_at)
         assert result_at.passed is True
@@ -185,6 +178,7 @@ class TestLGPDArticle18:
 # =============================================================================
 # LGPD Article 20 Tests - Data Portability
 # =============================================================================
+
 
 class TestLGPDArticle20:
     """Tests for LGPD Article 20 - Data Portability"""
@@ -200,10 +194,7 @@ class TestLGPDArticle20:
 
     def test_missing_metadata_fails(self):
         """Test that missing metadata fails Article 20 check"""
-        output = AgentOutput(
-            content="Some data",
-            metadata=None
-        )
+        output = AgentOutput(content="Some data", metadata=None)
 
         result = check_lgpd_article_20_portability(output)
 
@@ -225,8 +216,8 @@ class TestLGPDArticle20:
             content="Some data",
             metadata={
                 "exportable_format": "pdf",  # Not machine-readable
-                "data_structure": {"field": "type"}
-            }
+                "data_structure": {"field": "type"},
+            },
         )
 
         result = check_lgpd_article_20_portability(output)
@@ -243,7 +234,7 @@ class TestLGPDArticle20:
             metadata={
                 "exportable_format": "json"
                 # Missing data_structure
-            }
+            },
         )
 
         result = check_lgpd_article_20_portability(output)
@@ -259,10 +250,7 @@ class TestLGPDArticle20:
         for fmt in valid_formats:
             output = AgentOutput(
                 content="Data",
-                metadata={
-                    "exportable_format": fmt,
-                    "data_structure": {"field": "type"}
-                }
+                metadata={"exportable_format": fmt, "data_structure": {"field": "type"}},
             )
             result = check_lgpd_article_20_portability(output)
             assert result.passed is True, f"Format {fmt} should be valid"
@@ -273,8 +261,8 @@ class TestLGPDArticle20:
             content="Data",
             metadata={
                 "exportable_format": "JSON",  # Uppercase
-                "data_structure": {"field": "type"}
-            }
+                "data_structure": {"field": "type"},
+            },
         )
 
         result = check_lgpd_article_20_portability(output)
@@ -284,6 +272,7 @@ class TestLGPDArticle20:
 # =============================================================================
 # Guardrail Enforcement Tests
 # =============================================================================
+
 
 class TestLGPDGuardrailEnforcement:
     """Tests for LGPD guardrail enforcement"""
@@ -331,6 +320,7 @@ class TestLGPDGuardrailEnforcement:
 # =============================================================================
 # Convenience Function Tests
 # =============================================================================
+
 
 class TestLGPDConvenienceFunctions:
     """Tests for LGPD convenience functions"""
@@ -382,6 +372,7 @@ class TestLGPDConvenienceFunctions:
 # Integration Tests
 # =============================================================================
 
+
 class TestLGPDIntegration:
     """Integration tests for LGPD guardrails"""
 
@@ -397,12 +388,9 @@ class TestLGPDIntegration:
             explanation_quality=0.85,
             metadata={
                 "exportable_format": "json",
-                "data_structure": {
-                    "loan_decision": "string",
-                    "amount": "integer"
-                }
+                "data_structure": {"loan_decision": "string", "amount": "integer"},
             },
-            model_name="loan-decision-v1"
+            model_name="loan-decision-v1",
         )
 
         # Should pass both guardrails
@@ -418,7 +406,7 @@ class TestLGPDIntegration:
             content="Loan denied",
             has_explanation=False,
             metadata=None,
-            model_name="loan-decision-v1"
+            model_name="loan-decision-v1",
         )
 
         # Should fail Art 18 (blocking)

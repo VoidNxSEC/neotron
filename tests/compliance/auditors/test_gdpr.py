@@ -4,42 +4,39 @@ Tests for GDPR Compliance Auditors
 Tests GDPR Articles 22, 15, and 17 compliance guardrails.
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, patch
 
-from neutron.compliance.sentinel import (
-    AgentOutput,
-    ValidationResult,
-    ComplianceViolation,
-)
+import pytest
+
 from neutron.compliance.auditors.gdpr import (
-    # Article 22 - Human Oversight
-    check_gdpr_article_22_human_oversight,
-    gdpr_art22_human_oversight_guardrail,
-
-    # Article 15 - Right to Access
-    check_gdpr_article_15_data_access,
-    gdpr_art15_data_access_guardrail,
-
-    # Article 17 - Right to Erasure
-    check_gdpr_article_17_erasure_support,
-    gdpr_art17_erasure_support_guardrail,
-
-    # Convenience functions
-    get_gdpr_guardrails,
-    get_gdpr_guardrail_by_article,
-    validate_with_gdpr,
     GDPR_GUARDRAILS,
-
     # Erasure handler
     GDPRErasureHandler,
+    # Article 15 - Right to Access
+    check_gdpr_article_15_data_access,
+    # Article 17 - Right to Erasure
+    check_gdpr_article_17_erasure_support,
+    # Article 22 - Human Oversight
+    check_gdpr_article_22_human_oversight,
+    gdpr_art15_data_access_guardrail,
+    gdpr_art17_erasure_support_guardrail,
+    gdpr_art22_human_oversight_guardrail,
+    get_gdpr_guardrail_by_article,
+    # Convenience functions
+    get_gdpr_guardrails,
+    validate_with_gdpr,
 )
-
+from neutron.compliance.sentinel import (
+    AgentOutput,
+    ComplianceViolation,
+    ValidationResult,
+)
 
 # =============================================================================
 # GDPR Article 22 - Automated Decision-Making & Human Oversight
 # =============================================================================
+
 
 class TestGDPRArticle22HumanOversight:
     """Tests for GDPR Article 22 compliance"""
@@ -48,7 +45,7 @@ class TestGDPRArticle22HumanOversight:
         """Low-risk automated decisions don't require human oversight"""
         output = AgentOutput(
             content="Recommendation: Consider diversifying portfolio",
-            metadata={"risk_level": "low"}
+            metadata={"risk_level": "low"},
         )
 
         result = check_gdpr_article_22_human_oversight(output)
@@ -62,10 +59,7 @@ class TestGDPRArticle22HumanOversight:
         """High-risk decisions require human oversight"""
         output = AgentOutput(
             content="Loan application denied",
-            metadata={
-                "risk_level": "high",
-                "human_reviewed": False
-            }
+            metadata={"risk_level": "high", "human_reviewed": False},
         )
 
         result = check_gdpr_article_22_human_oversight(output)
@@ -79,10 +73,7 @@ class TestGDPRArticle22HumanOversight:
         """Medium-risk decisions also require human oversight"""
         output = AgentOutput(
             content="Credit limit reduced",
-            metadata={
-                "risk_level": "medium",
-                "human_reviewed": False
-            }
+            metadata={"risk_level": "medium", "human_reviewed": False},
         )
 
         result = check_gdpr_article_22_human_oversight(output)
@@ -99,8 +90,8 @@ class TestGDPRArticle22HumanOversight:
                 "risk_level": "high",
                 "human_reviewed": True,
                 # Missing reviewer_id
-                "review_timestamp": datetime.utcnow().isoformat()
-            }
+                "review_timestamp": datetime.utcnow().isoformat(),
+            },
         )
 
         result = check_gdpr_article_22_human_oversight(output)
@@ -119,7 +110,7 @@ class TestGDPRArticle22HumanOversight:
                 "human_reviewed": True,
                 "reviewer_id": "reviewer_001",
                 # Missing review_timestamp
-            }
+            },
         )
 
         result = check_gdpr_article_22_human_oversight(output)
@@ -138,8 +129,8 @@ class TestGDPRArticle22HumanOversight:
                 "risk_level": "high",
                 "human_reviewed": True,
                 "reviewer_id": "reviewer_001",
-                "review_timestamp": timestamp
-            }
+                "review_timestamp": timestamp,
+            },
         )
 
         result = check_gdpr_article_22_human_oversight(output)
@@ -152,10 +143,7 @@ class TestGDPRArticle22HumanOversight:
 
     def test_unknown_risk_level_fails(self):
         """Unknown risk levels should fail (fail-safe)"""
-        output = AgentOutput(
-            content="Decision made",
-            metadata={"risk_level": "super-duper-high"}
-        )
+        output = AgentOutput(content="Decision made", metadata={"risk_level": "super-duper-high"})
 
         result = check_gdpr_article_22_human_oversight(output)
 
@@ -166,10 +154,7 @@ class TestGDPRArticle22HumanOversight:
 
     def test_missing_metadata_fails(self):
         """Missing metadata should fail"""
-        output = AgentOutput(
-            content="Decision made",
-            metadata=None
-        )
+        output = AgentOutput(content="Decision made", metadata=None)
 
         result = check_gdpr_article_22_human_oversight(output)
 
@@ -182,6 +167,7 @@ class TestGDPRArticle22HumanOversight:
 # GDPR Article 15 - Right to Access
 # =============================================================================
 
+
 class TestGDPRArticle15DataAccess:
     """Tests for GDPR Article 15 compliance"""
 
@@ -193,8 +179,8 @@ class TestGDPRArticle15DataAccess:
                 "data_access_enabled": True,
                 "data_categories": ["name", "email", "preferences"],
                 "retention_period": "90 days",
-                "export_format": "JSON"
-            }
+                "export_format": "JSON",
+            },
         )
 
         result = check_gdpr_article_15_data_access(output)
@@ -208,10 +194,7 @@ class TestGDPRArticle15DataAccess:
 
     def test_missing_metadata_fails(self):
         """Missing metadata fails Article 15"""
-        output = AgentOutput(
-            content="Data processed",
-            metadata=None
-        )
+        output = AgentOutput(content="Data processed", metadata=None)
 
         result = check_gdpr_article_15_data_access(output)
 
@@ -221,10 +204,7 @@ class TestGDPRArticle15DataAccess:
 
     def test_data_access_disabled_fails(self):
         """Disabled data access fails"""
-        output = AgentOutput(
-            content="Data processed",
-            metadata={"data_access_enabled": False}
-        )
+        output = AgentOutput(content="Data processed", metadata={"data_access_enabled": False})
 
         result = check_gdpr_article_15_data_access(output)
 
@@ -241,8 +221,8 @@ class TestGDPRArticle15DataAccess:
                 "data_access_enabled": True,
                 # Missing data_categories
                 "retention_period": "90 days",
-                "export_format": "JSON"
-            }
+                "export_format": "JSON",
+            },
         )
 
         result = check_gdpr_article_15_data_access(output)
@@ -260,8 +240,8 @@ class TestGDPRArticle15DataAccess:
                 "data_access_enabled": True,
                 "data_categories": ["name", "email"],
                 # Missing retention_period
-                "export_format": "JSON"
-            }
+                "export_format": "JSON",
+            },
         )
 
         result = check_gdpr_article_15_data_access(output)
@@ -280,7 +260,7 @@ class TestGDPRArticle15DataAccess:
                 "data_categories": ["name", "email"],
                 "retention_period": "90 days",
                 # Missing export_format
-            }
+            },
         )
 
         result = check_gdpr_article_15_data_access(output)
@@ -295,15 +275,13 @@ class TestGDPRArticle15DataAccess:
 # GDPR Article 17 - Right to Erasure
 # =============================================================================
 
+
 class TestGDPRArticle17ErasureSupport:
     """Tests for GDPR Article 17 compliance"""
 
     def test_no_metadata_passes(self):
         """No metadata means no personal data, should pass"""
-        output = AgentOutput(
-            content="Generic response",
-            metadata=None
-        )
+        output = AgentOutput(content="Generic response", metadata=None)
 
         result = check_gdpr_article_17_erasure_support(output)
 
@@ -314,8 +292,7 @@ class TestGDPRArticle17ErasureSupport:
     def test_no_personal_data_passes(self):
         """No personal data means no erasure requirement"""
         output = AgentOutput(
-            content="Generic response",
-            metadata={"processes_personal_data": False}
+            content="Generic response", metadata={"processes_personal_data": False}
         )
 
         result = check_gdpr_article_17_erasure_support(output)
@@ -331,8 +308,8 @@ class TestGDPRArticle17ErasureSupport:
             metadata={
                 "processes_personal_data": True,
                 "erasure_supported": True,
-                "erasure_endpoint": "/api/v1/customers/{id}/delete"
-            }
+                "erasure_endpoint": "/api/v1/customers/{id}/delete",
+            },
         )
 
         result = check_gdpr_article_17_erasure_support(output)
@@ -346,10 +323,7 @@ class TestGDPRArticle17ErasureSupport:
         """Personal data without erasure support fails"""
         output = AgentOutput(
             content="Customer data stored",
-            metadata={
-                "processes_personal_data": True,
-                "erasure_supported": False
-            }
+            metadata={"processes_personal_data": True, "erasure_supported": False},
         )
 
         result = check_gdpr_article_17_erasure_support(output)
@@ -367,7 +341,7 @@ class TestGDPRArticle17ErasureSupport:
                 "processes_personal_data": True,
                 "erasure_supported": True,
                 # Missing erasure_endpoint
-            }
+            },
         )
 
         result = check_gdpr_article_17_erasure_support(output)
@@ -382,17 +356,14 @@ class TestGDPRArticle17ErasureSupport:
 # Pre-configured Guardrails
 # =============================================================================
 
+
 class TestGDPRGuardrails:
     """Tests for pre-configured GDPR guardrails"""
 
     def test_article_22_guardrail_blocks_high_risk_without_review(self):
         """Article 22 guardrail blocks high-risk decisions without review"""
         output = AgentOutput(
-            content="Loan denied",
-            metadata={
-                "risk_level": "high",
-                "human_reviewed": False
-            }
+            content="Loan denied", metadata={"risk_level": "high", "human_reviewed": False}
         )
 
         with pytest.raises(ComplianceViolation) as exc_info:
@@ -404,10 +375,7 @@ class TestGDPRGuardrails:
 
     def test_article_22_guardrail_allows_low_risk(self):
         """Article 22 guardrail allows low-risk decisions"""
-        output = AgentOutput(
-            content="Recommendation provided",
-            metadata={"risk_level": "low"}
-        )
+        output = AgentOutput(content="Recommendation provided", metadata={"risk_level": "low"})
 
         # Should not raise exception
         enforced = gdpr_art22_human_oversight_guardrail.enforce(output)
@@ -415,10 +383,7 @@ class TestGDPRGuardrails:
 
     def test_article_15_guardrail_warns_on_violation(self):
         """Article 15 guardrail warns but doesn't block"""
-        output = AgentOutput(
-            content="Data processed",
-            metadata={"data_access_enabled": False}
-        )
+        output = AgentOutput(content="Data processed", metadata={"data_access_enabled": False})
 
         # Should not raise (warn severity)
         enforced = gdpr_art15_data_access_guardrail.enforce(output)
@@ -428,10 +393,7 @@ class TestGDPRGuardrails:
         """Article 17 guardrail warns but doesn't block"""
         output = AgentOutput(
             content="Data stored",
-            metadata={
-                "processes_personal_data": True,
-                "erasure_supported": False
-            }
+            metadata={"processes_personal_data": True, "erasure_supported": False},
         )
 
         # Should not raise (warn severity)
@@ -460,6 +422,7 @@ class TestGDPRGuardrails:
 # =============================================================================
 # Convenience Functions
 # =============================================================================
+
 
 class TestConvenienceFunctions:
     """Tests for convenience functions"""
@@ -518,8 +481,8 @@ class TestConvenienceFunctions:
                 "export_format": "JSON",
                 "processes_personal_data": True,
                 "erasure_supported": True,
-                "erasure_endpoint": "/api/delete"
-            }
+                "erasure_endpoint": "/api/delete",
+            },
         )
 
         results = validate_with_gdpr(output)
@@ -537,8 +500,8 @@ class TestConvenienceFunctions:
                 "human_reviewed": False,
                 "data_access_enabled": False,
                 "processes_personal_data": True,
-                "erasure_supported": False
-            }
+                "erasure_supported": False,
+            },
         )
 
         results = validate_with_gdpr(output)
@@ -562,13 +525,16 @@ class TestConvenienceFunctions:
 # GDPRErasureHandler Integration Tests
 # =============================================================================
 
+
 class TestGDPRErasureHandler:
     """Tests for GDPR erasure handler"""
 
-    @patch('neutron.compliance.auditors.gdpr.MemoryStore')
-    @patch('neutron.compliance.auditors.gdpr.AuditLogger')
-    @patch('neutron.compliance.auditors.gdpr.datetime')
-    def test_erase_customer_data(self, mock_datetime, mock_audit_logger_class, mock_memory_store_class):
+    @patch("neutron.compliance.auditors.gdpr.MemoryStore")
+    @patch("neutron.compliance.auditors.gdpr.AuditLogger")
+    @patch("neutron.compliance.auditors.gdpr.datetime")
+    def test_erase_customer_data(
+        self, mock_datetime, mock_audit_logger_class, mock_memory_store_class
+    ):
         """Test erasing customer data"""
         # Mock datetime
         mock_datetime.utcnow.return_value.isoformat.return_value = "2024-01-01T00:00:00Z"
@@ -607,7 +573,7 @@ class TestGDPRErasureHandler:
         assert result["audit_id"] == "audit_123"
         assert result["status"] == "completed"
 
-    @patch('neutron.compliance.auditors.gdpr.AuditLogger')
+    @patch("neutron.compliance.auditors.gdpr.AuditLogger")
     def test_erase_customer_data_with_provided_memory_store(self, mock_audit_logger_class):
         """Test erasure with provided memory store"""
         # Mock MemoryStore
@@ -637,6 +603,7 @@ class TestGDPRErasureHandler:
 # Integration Tests
 # =============================================================================
 
+
 class TestGDPRIntegration:
     """Integration tests for GDPR compliance"""
 
@@ -653,8 +620,8 @@ class TestGDPRIntegration:
                 "export_format": "JSON",
                 "processes_personal_data": True,
                 "erasure_supported": True,
-                "erasure_endpoint": "/api/customers/{id}/delete"
-            }
+                "erasure_endpoint": "/api/customers/{id}/delete",
+            },
         )
 
         # Validate with all GDPR guardrails
@@ -678,8 +645,8 @@ class TestGDPRIntegration:
                 "export_format": "PDF",
                 "processes_personal_data": True,
                 "erasure_supported": True,
-                "erasure_endpoint": "/api/loans/{id}/delete"
-            }
+                "erasure_endpoint": "/api/loans/{id}/delete",
+            },
         )
 
         # All guardrails should pass
@@ -693,11 +660,7 @@ class TestGDPRIntegration:
     def test_non_compliant_high_risk_blocks(self):
         """Test non-compliant high-risk decision blocks"""
         output = AgentOutput(
-            content="Credit denied",
-            metadata={
-                "risk_level": "high",
-                "human_reviewed": False
-            }
+            content="Credit denied", metadata={"risk_level": "high", "human_reviewed": False}
         )
 
         # Article 22 should block
@@ -706,8 +669,8 @@ class TestGDPRIntegration:
 
     def test_erasure_integration(self):
         """Test erasure handler integration"""
-        with patch('neutron.compliance.auditors.gdpr.MemoryStore') as mock_store_class:
-            with patch('neutron.compliance.auditors.gdpr.AuditLogger') as mock_logger_class:
+        with patch("neutron.compliance.auditors.gdpr.MemoryStore") as mock_store_class:
+            with patch("neutron.compliance.auditors.gdpr.AuditLogger") as mock_logger_class:
                 # Setup mocks
                 mock_store = MagicMock()
                 mock_store.delete_by_customer.return_value = 10

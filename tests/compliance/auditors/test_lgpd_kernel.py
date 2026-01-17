@@ -9,35 +9,33 @@ Tests cover:
 - Convenience functions for consent management
 """
 
-import pytest
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
+from neutron.compliance.auditors.lgpd_kernel import (
+    check_lgpd_consent,
+    get_lgpd_kernel_policies,
+    get_lgpd_layered_policies,
+    grant_lgpd_consent,
+    lgpd_art7_consent_policy,
+    lgpd_art16_data_access_policy,
+    lgpd_art18_layered,
+    lgpd_art20_layered,
+    lgpd_art46_retention_policy,
+    revoke_lgpd_consent,
+)
 from neutron.compliance.bastion import (
-    KernelPolicy,
     ComplianceCapability,
+    KernelPolicy,
     LayeredPolicy,
     grant_capability,
     revoke_capability,
 )
 
-from neutron.compliance.auditors.lgpd_kernel import (
-    lgpd_art7_consent_policy,
-    lgpd_art16_data_access_policy,
-    lgpd_art46_retention_policy,
-    lgpd_art18_layered,
-    lgpd_art20_layered,
-    grant_lgpd_consent,
-    revoke_lgpd_consent,
-    check_lgpd_consent,
-    get_lgpd_kernel_policies,
-    get_lgpd_layered_policies,
-)
-
-
 # =============================================================================
 # Article 7 - Consent Enforcement Tests
 # =============================================================================
+
 
 class TestArticle7ConsentPolicy:
     """Tests for LGPD Article 7 consent enforcement"""
@@ -104,6 +102,7 @@ class TestArticle7ConsentPolicy:
 # Article 16 - Data Access Control Tests
 # =============================================================================
 
+
 class TestArticle16DataAccessPolicy:
     """Tests for LGPD Article 16 data access control"""
 
@@ -143,6 +142,7 @@ class TestArticle16DataAccessPolicy:
 # Article 46 - Data Retention Tests
 # =============================================================================
 
+
 class TestArticle46RetentionPolicy:
     """Tests for LGPD Article 46 data retention enforcement"""
 
@@ -181,6 +181,7 @@ class TestArticle46RetentionPolicy:
 # =============================================================================
 # Layered Enforcement Tests
 # =============================================================================
+
 
 class TestLayeredEnforcement:
     """Tests for layered enforcement (application + kernel)"""
@@ -242,6 +243,7 @@ class TestLayeredEnforcement:
 # Convenience Functions Tests
 # =============================================================================
 
+
 class TestConvenienceFunctions:
     """Tests for LGPD consent management convenience functions"""
 
@@ -300,6 +302,7 @@ class TestConvenienceFunctions:
 # Policy Collection Tests
 # =============================================================================
 
+
 class TestPolicyCollections:
     """Tests for policy collection functions"""
 
@@ -346,6 +349,7 @@ class TestPolicyCollections:
 # =============================================================================
 # Integration Tests
 # =============================================================================
+
 
 class TestIntegration:
     """Integration tests for LGPD kernel enforcement"""
@@ -417,6 +421,7 @@ class TestIntegration:
 # =============================================================================
 # Edge Cases and Error Handling
 # =============================================================================
+
 
 class TestEdgeCases:
     """Tests for edge cases and error handling"""

@@ -1,8 +1,8 @@
 """
 Tests for Temporal workflows
 """
-import pytest
 
+import pytest
 
 # Note: These tests require Temporal server to be running
 # Mark as integration tests
