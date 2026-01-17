@@ -147,7 +147,7 @@ class EnsembleReasoner:
         timeout: int
     ) -> ProviderResponse:
         """Execute task on a single provider"""
-        from dspy_adapter import DSPyProviderAdapter
+        from .dspy_adapter import DSPyProviderAdapter
 
         start_time = time.time()
 

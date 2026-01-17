@@ -1,0 +1,114 @@
+name: Production Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.11"
+  POETRY_VERSION: "1.7.1"
+
+jobs:
+  # Stage: Build
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Install Dependencies
+        run: poetry install --no-interaction --no-root
+
+      - name: Compile Code (Build Package)
+        run: poetry build
+
+      - name: Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-dist
+          path: dist/
+          retention-days: 5
+
+  # Stage: Test
+  test:
+    name: Run Tests
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: neutron_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: ${{ env.POETRY_VERSION }}
+
+      - name: Install Dependencies
+        run: poetry install --no-interaction
+
+      - name: Run Unit Tests
+        run: |
+          poetry run pytest tests/compliance/ tests/reasoning/ tests/orchestration/ -v -m "not integration"
+
+      - name: Run Integration Tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/neutron_test
+        run: |
+          poetry run pytest tests/integration/ -v
+
+  # Stage: Deploy
+  deploy:
+    name: Deploy Artifacts
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-dist
+          path: dist/
+
+      - name: Push Artifacts (Simulation)
+        run: |
+          echo "Simulating deployment to PyPI or Internal Registry..."
+          ls -la dist/
+          # In a real scenario, we would use:
+          # poetry publish --username $PYPI_USERNAME --password $PYPI_PASSWORD
+          echo "Deployment complete."
