@@ -22,6 +22,13 @@ import asyncio
 from collections import Counter
 import statistics
 
+# ORACLE integration for explainability
+from neutron.reasoning import (
+    ExplanationType,
+    ExplanationResult,
+    explain_agent_decision,
+)
+
 
 # =============================================================================
 # Data Models
@@ -96,6 +103,7 @@ class SwarmResult:
         consensus_strategy: Strategy used for consensus
         agreement_score: How much agents agreed (0.0-1.0)
         timestamp: When consensus was reached
+        explanation: Optional ORACLE explanation of the consensus decision
     """
     task: Task
     consensus_output: Any
@@ -104,6 +112,7 @@ class SwarmResult:
     consensus_strategy: ConsensusStrategy
     agreement_score: float
     timestamp: datetime = field(default_factory=datetime.utcnow)
+    explanation: Optional[ExplanationResult] = None
 
     @property
     def num_agents(self) -> int:
@@ -116,6 +125,118 @@ class SwarmResult:
         if not self.individual_results:
             return 0.0
         return statistics.mean(r.confidence for r in self.individual_results)
+
+    def generate_explanation(
+        self,
+        explanation_type: ExplanationType = ExplanationType.FEATURE_IMPORTANCE,
+        include_agent_reasoning: bool = True
+    ) -> ExplanationResult:
+        """
+        Generate ORACLE explanation for the consensus decision
+
+        This method creates a structured explanation of why the swarm reached
+        its consensus, using the specified explanation strategy.
+
+        Args:
+            explanation_type: Type of explanation to generate
+            include_agent_reasoning: Whether to include individual agent explanations
+
+        Returns:
+            ExplanationResult with comprehensive explanation
+
+        Example:
+            >>> result = await swarm.execute(task)
+            >>> explanation = result.generate_explanation(
+            ...     explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+            ... )
+            >>> print(explanation.to_human_readable())
+        """
+        # Build input data from task and individual results
+        input_data = {
+            "task_type": self.task.type,
+            "task_input": str(self.task.input),
+            "num_agents": self.num_agents,
+            "consensus_strategy": self.consensus_strategy.value,
+        }
+
+        # Build output data from consensus
+        output_data = {
+            "consensus_output": self.consensus_output,
+            "confidence": self.consensus_confidence,
+            "agreement_score": self.agreement_score,
+            "avg_confidence": self.avg_confidence,
+        }
+
+        # Build metadata with individual agent results
+        metadata = {
+            "individual_results": [
+                {
+                    "agent_id": r.agent_id,
+                    "output": r.output,
+                    "confidence": r.confidence,
+                    "explanation": r.explanation,
+                }
+                for r in self.individual_results
+            ],
+            "timestamp": self.timestamp.isoformat(),
+        }
+
+        # Add reasoning steps for chain-of-thought explanations
+        if explanation_type == ExplanationType.CHAIN_OF_THOUGHT:
+            reasoning_steps = [
+                f"Step 1: Received task of type '{self.task.type}' with {self.num_agents} agents",
+                f"Step 2: All agents executed task in parallel",
+                f"Step 3: Applied {self.consensus_strategy.value} consensus strategy",
+                f"Step 4: Reached consensus with {self.agreement_score:.1%} agreement",
+                f"Step 5: Final decision: {self.consensus_output} (confidence: {self.consensus_confidence:.2f})",
+            ]
+            if include_agent_reasoning:
+                for i, result in enumerate(self.individual_results, 1):
+                    reasoning_steps.append(
+                        f"  Agent {result.agent_id}: {result.output} "
+                        f"(conf: {result.confidence:.2f}) - {result.explanation}"
+                    )
+            metadata["reasoning_steps"] = reasoning_steps
+
+        # Add similar cases for example-based explanations
+        if explanation_type == ExplanationType.EXAMPLE_BASED:
+            similar_cases = [
+                {
+                    "case_id": r.agent_id,
+                    "outcome": r.output,
+                    "similarity": r.confidence,
+                    "explanation": r.explanation,
+                }
+                for r in self.individual_results
+            ]
+            metadata["similar_cases"] = similar_cases
+
+        # Add rules for rule-based explanations
+        if explanation_type == ExplanationType.RULE_BASED:
+            rules = [
+                f"IF consensus_strategy == '{self.consensus_strategy.value}' THEN apply_{self.consensus_strategy.value}",
+                f"IF agreement_score >= 0.5 THEN consensus_reached",
+                f"IF agreement_score >= 0.8 THEN high_confidence",
+            ]
+            metadata["rules"] = rules
+
+        # Add counterfactual threshold for counterfactual explanations
+        if explanation_type == ExplanationType.COUNTERFACTUAL:
+            metadata["threshold"] = self.consensus_confidence * 0.8  # 80% of current confidence
+
+        # Generate explanation using ORACLE
+        explanation = explain_agent_decision(
+            decision=f"Swarm consensus: {self.consensus_output}",
+            input_data=input_data,
+            output_data=output_data,
+            explanation_type=explanation_type,
+            metadata=metadata,
+        )
+
+        # Store explanation in result
+        self.explanation = explanation
+
+        return explanation
 
 
 # =============================================================================
@@ -333,12 +454,19 @@ class AgentSwarm:
         self.name = name or f"swarm_{len(agents)}_agents"
         self._consensus_engine = ConsensusEngine()
 
-    async def execute(self, task: Task) -> SwarmResult:
+    async def execute(
+        self,
+        task: Task,
+        generate_explanation: bool = False,
+        explanation_type: ExplanationType = ExplanationType.FEATURE_IMPORTANCE
+    ) -> SwarmResult:
         """
         Execute task across swarm and reach consensus
 
         Args:
             task: Task to execute
+            generate_explanation: Whether to auto-generate ORACLE explanation
+            explanation_type: Type of explanation to generate (if enabled)
 
         Returns:
             SwarmResult with consensus output and individual results
@@ -346,6 +474,14 @@ class AgentSwarm:
         Raises:
             ValueError: If consensus cannot be reached
             asyncio.TimeoutError: If agents don't respond in time
+
+        Example:
+            >>> result = await swarm.execute(
+            ...     task,
+            ...     generate_explanation=True,
+            ...     explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+            ... )
+            >>> print(result.explanation.to_human_readable())
         """
         # Execute task with all agents in parallel
         individual_results = await self._execute_parallel(task)
@@ -356,8 +492,8 @@ class AgentSwarm:
             task.consensus_strategy
         )
 
-        # Return swarm result
-        return SwarmResult(
+        # Create swarm result
+        result = SwarmResult(
             task=task,
             consensus_output=consensus_output,
             consensus_confidence=consensus_confidence,
@@ -365,6 +501,12 @@ class AgentSwarm:
             consensus_strategy=task.consensus_strategy,
             agreement_score=agreement_score
         )
+
+        # Generate explanation if requested
+        if generate_explanation:
+            result.generate_explanation(explanation_type=explanation_type)
+
+        return result
 
     async def _execute_parallel(self, task: Task) -> List[AgentResult]:
         """

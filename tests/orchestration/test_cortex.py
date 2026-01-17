@@ -19,6 +19,7 @@ from neutron.orchestration.cortex import (
     ConsensusEngine,
     create_swarm,
 )
+from neutron.reasoning import ExplanationType
 
 
 # =============================================================================
@@ -623,3 +624,357 @@ class TestCortexIntegration:
         # Trust the most confident expert
         assert result.consensus_output == "high_risk"
         assert result.consensus_confidence == 0.95
+
+# =============================================================================
+# ORACLE Integration Tests
+# =============================================================================
+
+
+class TestOracleIntegration:
+    """Tests for ORACLE explainability integration with CORTEX"""
+
+    @pytest.mark.asyncio
+    async def test_generate_explanation_feature_importance(self):
+        """Test generating feature importance explanation for consensus"""
+        agents = [
+            MockAgent("agent_a", "approved", 0.9),
+            MockAgent("agent_b", "approved", 0.85),
+            MockAgent("agent_c", "denied", 0.6),
+        ]
+
+        task = Task(
+            type="loan_decision",
+            input={"credit_score": 750, "income": 80000},
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+
+        # Generate explanation
+        explanation = result.generate_explanation(
+            explanation_type=ExplanationType.FEATURE_IMPORTANCE
+        )
+
+        assert explanation is not None
+        assert explanation.decision == "Swarm consensus: approved"
+        assert explanation.explanation_type == ExplanationType.FEATURE_IMPORTANCE
+        assert explanation.confidence == result.consensus_confidence
+        assert len(explanation.evidence) > 0
+
+        # Check that explanation is stored in result
+        assert result.explanation is not None
+        assert result.explanation == explanation
+
+    @pytest.mark.asyncio
+    async def test_generate_explanation_chain_of_thought(self):
+        """Test generating chain-of-thought explanation"""
+        agents = [
+            MockAgent("classifier_a", "spam", 0.95),
+            MockAgent("classifier_b", "spam", 0.9),
+        ]
+
+        task = Task(
+            type="spam_detection",
+            input={"email": "test"},
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+
+        explanation = result.generate_explanation(
+            explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+        )
+
+        assert explanation.explanation_type == ExplanationType.CHAIN_OF_THOUGHT
+        
+        # Should have reasoning steps
+        assert len(explanation.evidence) >= 5  # At least 5 steps
+
+        # Verify step structure
+        step_features = [e.feature for e in explanation.evidence]
+        assert "step_1" in step_features
+        assert "step_2" in step_features
+
+    @pytest.mark.asyncio
+    async def test_generate_explanation_example_based(self):
+        """Test generating example-based explanation with agent results"""
+        agents = [
+            MockAgent("expert_1", "high_risk", 0.92),
+            MockAgent("expert_2", "high_risk", 0.88),
+            MockAgent("expert_3", "medium_risk", 0.75),
+        ]
+
+        task = Task(
+            type="risk_assessment",
+            input={"transaction": "large_transfer"},
+            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+
+        explanation = result.generate_explanation(
+            explanation_type=ExplanationType.EXAMPLE_BASED
+        )
+
+        assert explanation.explanation_type == ExplanationType.EXAMPLE_BASED
+        
+        # Should use individual agent results as "similar cases"
+        assert len(explanation.evidence) == 3  # 3 agents = 3 similar cases
+
+        # Evidence should be sorted by importance (confidence)
+        importances = [e.importance for e in explanation.evidence]
+        assert importances == sorted(importances, reverse=True)
+
+    @pytest.mark.asyncio
+    async def test_generate_explanation_rule_based(self):
+        """Test generating rule-based explanation"""
+        agents = [
+            MockAgent("rule_engine_1", "allow", 0.99),
+            MockAgent("rule_engine_2", "allow", 1.0),
+        ]
+
+        task = Task(
+            type="access_control",
+            input={"user": "admin"},
+            consensus_strategy=ConsensusStrategy.UNANIMOUS
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+
+        explanation = result.generate_explanation(
+            explanation_type=ExplanationType.RULE_BASED
+        )
+
+        assert explanation.explanation_type == ExplanationType.RULE_BASED
+        
+        # Should have rules in evidence
+        assert len(explanation.evidence) >= 3  # At least 3 consensus rules
+
+        # All rules should have importance 1.0 (deterministic)
+        for evidence in explanation.evidence:
+            assert evidence.importance == 1.0
+
+    @pytest.mark.asyncio
+    async def test_generate_explanation_counterfactual(self):
+        """Test generating counterfactual explanation"""
+        agents = [
+            MockAgent("agent_1", "approved", 0.85),
+            MockAgent("agent_2", "approved", 0.8),
+        ]
+
+        task = Task(
+            type="decision",
+            input={"score": 750},
+            consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+
+        explanation = result.generate_explanation(
+            explanation_type=ExplanationType.COUNTERFACTUAL
+        )
+
+        assert explanation.explanation_type == ExplanationType.COUNTERFACTUAL
+        
+        # Should have counterfactuals
+        assert len(explanation.counterfactuals) > 0
+
+        # Reasoning should mention "what if"
+        assert "what if" in explanation.reasoning.lower() or "would" in explanation.reasoning.lower()
+
+    @pytest.mark.asyncio
+    async def test_auto_generate_explanation_on_execute(self):
+        """Test auto-generating explanation during execute()"""
+        agents = [
+            MockAgent("agent_a", "positive", 0.9),
+            MockAgent("agent_b", "positive", 0.85),
+        ]
+
+        task = Task(
+            type="sentiment_analysis",
+            input={"text": "Great product!"},
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        )
+
+        swarm = AgentSwarm(agents)
+        
+        # Execute with auto-explanation
+        result = await swarm.execute(
+            task,
+            generate_explanation=True,
+            explanation_type=ExplanationType.FEATURE_IMPORTANCE
+        )
+
+        # Explanation should be automatically generated
+        assert result.explanation is not None
+        assert result.explanation.explanation_type == ExplanationType.FEATURE_IMPORTANCE
+        assert result.explanation.confidence == result.consensus_confidence
+
+    @pytest.mark.asyncio
+    async def test_auto_generate_explanation_chain_of_thought(self):
+        """Test auto-generating chain-of-thought explanation"""
+        agents = [
+            MockAgent("analyzer_1", "fraudulent", 0.95),
+            MockAgent("analyzer_2", "fraudulent", 0.92),
+            MockAgent("analyzer_3", "legitimate", 0.6),
+        ]
+
+        task = Task(
+            type="fraud_detection",
+            input={"transaction": "suspicious"},
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(
+            task,
+            generate_explanation=True,
+            explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+        )
+
+        # Should have chain-of-thought explanation
+        assert result.explanation is not None
+        assert result.explanation.explanation_type == ExplanationType.CHAIN_OF_THOUGHT
+
+        # Should include agent reasoning in steps
+        evidence_descriptions = " ".join([e.description for e in result.explanation.evidence])
+        assert "analyzer_1" in evidence_descriptions or "analyzer" in evidence_descriptions
+
+    @pytest.mark.asyncio
+    async def test_explanation_includes_agent_metadata(self):
+        """Test that explanation includes individual agent results"""
+        agents = [
+            MockAgent("agent_1", "class_a", 0.8),
+            MockAgent("agent_2", "class_b", 0.75),
+        ]
+
+        task = Task(
+            type="classification",
+            input={"data": "test"},
+            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+        explanation = result.generate_explanation()
+
+        # Check that input_data includes task metadata
+        human_readable = explanation.to_human_readable()
+        assert "classification" in human_readable or "task" in human_readable.lower()
+
+    @pytest.mark.asyncio
+    async def test_explanation_without_auto_generate(self):
+        """Test that explanation is None without auto-generate"""
+        agents = [MockAgent("agent_1", "result", 0.9)]
+
+        task = Task(
+            type="task",
+            input={},
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task, generate_explanation=False)
+
+        # Explanation should not be auto-generated
+        assert result.explanation is None
+
+        # But can still generate manually
+        explanation = result.generate_explanation()
+        assert explanation is not None
+
+    @pytest.mark.asyncio
+    async def test_explanation_to_multiple_formats(self):
+        """Test converting explanation to different formats"""
+        agents = [
+            MockAgent("agent_1", "approved", 0.9),
+            MockAgent("agent_2", "approved", 0.85),
+        ]
+
+        task = Task(
+            type="approval",
+            input={"request": "test"},
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+        explanation = result.generate_explanation(
+            explanation_type=ExplanationType.FEATURE_IMPORTANCE
+        )
+
+        # Test all output formats
+        human_readable = explanation.to_human_readable()
+        json_output = explanation.to_json()
+        markdown = explanation.to_markdown()
+
+        assert "approved" in human_readable
+        assert "approved" in json_output
+        assert "approved" in markdown
+
+        # JSON should be valid
+        import json
+        parsed = json.loads(json_output)
+        assert parsed["decision"] == "Swarm consensus: approved"
+
+    @pytest.mark.asyncio
+    async def test_explanation_with_include_agent_reasoning(self):
+        """Test controlling agent reasoning inclusion in explanations"""
+        agents = [
+            MockAgent("agent_a", "yes", 0.9),
+            MockAgent("agent_b", "yes", 0.85),
+        ]
+
+        task = Task(
+            type="binary_decision",
+            input={},
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+
+        # With agent reasoning
+        explanation_with = result.generate_explanation(
+            explanation_type=ExplanationType.CHAIN_OF_THOUGHT,
+            include_agent_reasoning=True
+        )
+
+        # Should include agent details in evidence
+        evidence_text = " ".join([e.description for e in explanation_with.evidence])
+        assert len(explanation_with.evidence) > 5  # 5 base steps + agent details
+
+        # Without agent reasoning
+        explanation_without = result.generate_explanation(
+            explanation_type=ExplanationType.CHAIN_OF_THOUGHT,
+            include_agent_reasoning=False
+        )
+
+        # Should only have base reasoning steps
+        assert len(explanation_without.evidence) == 5  # Only 5 base steps
+
+    @pytest.mark.asyncio
+    async def test_explanation_confidence_matches_consensus(self):
+        """Test that explanation confidence matches consensus confidence"""
+        agents = [
+            MockAgent("agent_1", 0.8, 0.9),  # output=0.8, confidence=0.9
+            MockAgent("agent_2", 0.75, 0.85),
+        ]
+
+        task = Task(
+            type="prediction",
+            input={},
+            consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE
+        )
+
+        swarm = AgentSwarm(agents)
+        result = await swarm.execute(task)
+        explanation = result.generate_explanation()
+
+        # Explanation confidence should match consensus confidence
+        assert explanation.confidence == result.consensus_confidence
