@@ -31,6 +31,19 @@ from neutron.compliance.auditors.gdpr import (
     GDPRErasureHandler
 )
 
+from neutron.compliance.auditors.ai_act import (
+    AISystemRiskLevel,
+    classify_ai_system_risk,
+    check_ai_act_article_13_transparency,
+    check_ai_act_article_14_human_oversight,
+    check_ai_act_prohibited_practices,
+    ARTICLE_13_TRANSPARENCY,
+    ARTICLE_14_HUMAN_OVERSIGHT,
+    ARTICLE_5_PROHIBITED_PRACTICES,
+    get_ai_act_guardrails,
+    validate_ai_act_compliance,
+)
+
 __all__ = [
     # LGPD guardrails
     "lgpd_art18_explanation_guardrail",
@@ -49,4 +62,16 @@ __all__ = [
     "get_gdpr_guardrail_by_article",
     "validate_with_gdpr",
     "GDPRErasureHandler",
+
+    # EU AI Act guardrails
+    "AISystemRiskLevel",
+    "classify_ai_system_risk",
+    "check_ai_act_article_13_transparency",
+    "check_ai_act_article_14_human_oversight",
+    "check_ai_act_prohibited_practices",
+    "ARTICLE_13_TRANSPARENCY",
+    "ARTICLE_14_HUMAN_OVERSIGHT",
+    "ARTICLE_5_PROHIBITED_PRACTICES",
+    "get_ai_act_guardrails",
+    "validate_ai_act_compliance",
 ]
