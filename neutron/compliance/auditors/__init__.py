@@ -20,6 +20,17 @@ from neutron.compliance.auditors.lgpd import (
     validate_with_lgpd
 )
 
+from neutron.compliance.auditors.gdpr import (
+    gdpr_art22_human_oversight_guardrail,
+    gdpr_art15_data_access_guardrail,
+    gdpr_art17_erasure_support_guardrail,
+    GDPR_GUARDRAILS,
+    get_gdpr_guardrails,
+    get_gdpr_guardrail_by_article,
+    validate_with_gdpr,
+    GDPRErasureHandler
+)
+
 __all__ = [
     # LGPD guardrails
     "lgpd_art18_explanation_guardrail",
@@ -28,4 +39,14 @@ __all__ = [
     "get_lgpd_guardrails",
     "get_lgpd_guardrail_by_article",
     "validate_with_lgpd",
+
+    # GDPR guardrails
+    "gdpr_art22_human_oversight_guardrail",
+    "gdpr_art15_data_access_guardrail",
+    "gdpr_art17_erasure_support_guardrail",
+    "GDPR_GUARDRAILS",
+    "get_gdpr_guardrails",
+    "get_gdpr_guardrail_by_article",
+    "validate_with_gdpr",
+    "GDPRErasureHandler",
 ]
