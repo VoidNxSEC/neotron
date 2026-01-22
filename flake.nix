@@ -116,6 +116,12 @@
               zlib
               pkg-config
 
+              # Blockchain development (Foundry)
+              foundry-bin  # forge, cast, anvil, chisel
+
+              # Decentralized storage
+              kubo  # IPFS daemon and CLI (ipfs)
+
               # Monitoring tools
               htop
               nvtopPackages.full
@@ -160,10 +166,16 @@
               echo "  uv: $(uv --version)"
               echo "  CUDA: ${pkgs.cudaPackages.cudatoolkit.version}"
               echo ""
+              echo "⛓️  Blockchain Development:"
+              echo "  Foundry: $(forge --version | head -n1)"
+              echo "  IPFS: $(ipfs --version)"
+              echo "  Commands: forge, cast, anvil, chisel, ipfs"
+              echo ""
               echo "📦 Available commands:"
               echo "  just --list         # List all tasks"
               echo "  uv sync             # Install dependencies"
               echo "  uv run <cmd>        # Run command in venv"
+              echo "  forge test          # Run smart contract tests"
               echo ""
               echo "🌐 Services (after 'just infra-up'):"
               echo "  Temporal UI: http://localhost:8088"
