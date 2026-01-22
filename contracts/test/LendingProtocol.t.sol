@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Test, console2} from "forge-std/Test.sol";
 import {LendingProtocol} from "../src/LendingProtocol.sol";
+import {ComplianceGuardrail} from "../src/ComplianceGuardrail.sol";
 
 /**
  * @title LendingProtocolTest
@@ -133,7 +134,7 @@ contract LendingProtocolTest is Test {
         vm.prank(borrower1);
         vm.expectRevert(
             abi.encodeWithSelector(
-                LendingProtocol.LGPD_Article7_ConsentRequired.selector,
+                ComplianceGuardrail.LGPD_Article7_ConsentRequired.selector,
                 borrower1
             )
         );

@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {ComplianceGuardrail} from "./ComplianceGuardrail.sol";
-
 /**
  * @title AuditLogger
  * @author NEXUS Platform
@@ -23,7 +21,7 @@ import {ComplianceGuardrail} from "./ComplianceGuardrail.sol";
  * This contract works alongside ComplianceGuardrail to provide
  * comprehensive audit trails for all compliance checks.
  */
-contract AuditLogger is ComplianceGuardrail {
+contract AuditLogger {
     // ============ Structs ============
 
     /**
@@ -108,13 +106,13 @@ contract AuditLogger is ComplianceGuardrail {
     function logCompliance(
         bytes32 logId,
         address user,
-        string calldata regulation,
+        string memory regulation,
         uint8 article,
         bool passed,
-        string calldata ipfsCID,
-        string calldata arweaveTxId,
+        string memory ipfsCID,
+        string memory arweaveTxId,
         bool permanent
-    ) external {
+    ) public {
         // Check if log already exists
         if (auditLogs[logId].timestamp != 0) {
             revert LogAlreadyExists(logId);
@@ -155,19 +153,6 @@ contract AuditLogger is ComplianceGuardrail {
             permanent,
             block.timestamp
         );
-
-        // Also emit base compliance event
-        if (passed) {
-            emit CompliancePass(user, regulation, article, block.timestamp);
-        } else {
-            emit ComplianceViolation(
-                user,
-                regulation,
-                article,
-                "See off-chain log for details",
-                block.timestamp
-            );
-        }
     }
 
     /**
@@ -179,8 +164,8 @@ contract AuditLogger is ComplianceGuardrail {
      */
     function updateLogReferences(
         bytes32 logId,
-        string calldata newIpfsCID,
-        string calldata newArweaveTxId
+        string memory newIpfsCID,
+        string memory newArweaveTxId
     ) external {
         AuditLog storage log = auditLogs[logId];
 
@@ -253,35 +238,4 @@ contract AuditLogger is ComplianceGuardrail {
         return (totalLogs, totalViolations, complianceRate);
     }
 
-    // ============ Placeholder Implementations ============
-
-    /// @notice Not implemented (use LGPDConsent contract)
-    function hasConsent(address) internal pure override returns (bool) {
-        return true;
-    }
-
-    /// @notice Not implemented (use LGPDConsent contract)
-    function hasDataAccess(address, address) internal pure override returns (bool) {
-        return true;
-    }
-
-    /// @notice Not implemented (use LGPDConsent contract)
-    function withinRetentionPeriod(address) internal pure override returns (bool) {
-        return true;
-    }
-
-    /// @notice Not implemented (use GDPR contract)
-    function hasHumanReview(bytes32) internal pure override returns (bool) {
-        return true;
-    }
-
-    /// @notice Not implemented (use AI Act contract)
-    function hasTransparencyInfo(bytes32) internal pure override returns (bool) {
-        return true;
-    }
-
-    /// @notice Not implemented (use AI Act contract)
-    function hasHumanOversight(bytes32) internal pure override returns (bool) {
-        return true;
-    }
 }

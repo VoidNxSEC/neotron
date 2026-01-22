@@ -87,7 +87,7 @@ contract DeployScript is Script {
         require(lendingProtocol.INTEREST_RATE() == 500, "Invalid interest rate");
         require(lendingProtocol.LIQUIDATION_THRESHOLD() == 120, "Invalid liquidation threshold");
 
-        console2.log("✓ LendingProtocol deployment verified");
+        console2.log("[OK] LendingProtocol deployment verified");
     }
 
     /**

@@ -117,7 +117,7 @@
               pkg-config
 
               # Blockchain development (Foundry)
-              foundry-bin  # forge, cast, anvil, chisel
+              foundry  # forge, cast, anvil, chisel
 
               # Decentralized storage
               kubo  # IPFS daemon and CLI (ipfs)

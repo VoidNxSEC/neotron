@@ -1,0 +1,19 @@
+# Environment variables (NEVER commit private keys!)
+.env
+
+# Build artifacts
+out/
+cache/
+
+# Foundry files
+broadcast/*/dry-run/
+
+# Node modules (if using npm/yarn later)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

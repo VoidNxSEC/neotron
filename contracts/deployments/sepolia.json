@@ -1,0 +1,14 @@
+{
+  "network": "sepolia",
+  "chainId": 11155111,
+  "timestamp": 1769117436,
+  "deployer": "0x017d2F22c2Ac860b775Ad6e9c1E3C1945ac69BE7",
+  "contracts": {
+    "LendingProtocol": "0x35fF603BD286E287f932356316271D59a4ADa779"
+  },
+  "config": {
+    "collateralRatio": 150,
+    "interestRate": 500,
+    "liquidationThreshold": 120
+  }
+}
