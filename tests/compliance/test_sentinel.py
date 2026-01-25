@@ -1,22 +1,24 @@
 """
 Tests for SENTINEL core engine
 """
-import pytest
+
 from datetime import datetime
 
-from neutron.compliance.sentinel import (
-    ComplianceGuardrail,
-    AgentOutput,
-    ValidationResult,
-    EnforcedOutput,
-    ComplianceViolation,
-    create_guardrail
-)
+import pytest
 
+from neutron.compliance.sentinel import (
+    AgentOutput,
+    ComplianceGuardrail,
+    ComplianceViolation,
+    EnforcedOutput,
+    ValidationResult,
+    create_guardrail,
+)
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_output():
@@ -27,31 +29,27 @@ def sample_output():
         has_explanation=True,
         explanation="This is a test explanation",
         explanation_quality=0.85,
-        model_name="test-model"
+        model_name="test-model",
     )
 
 
 @pytest.fixture
 def passing_check():
     """Check function that always passes"""
+
     def check(output: AgentOutput) -> ValidationResult:
-        return ValidationResult(
-            passed=True,
-            details="Check passed",
-            confidence=1.0
-        )
+        return ValidationResult(passed=True, details="Check passed", confidence=1.0)
+
     return check
 
 
 @pytest.fixture
 def failing_check():
     """Check function that always fails"""
+
     def check(output: AgentOutput) -> ValidationResult:
-        return ValidationResult(
-            passed=False,
-            details="Check failed",
-            confidence=1.0
-        )
+        return ValidationResult(passed=False, details="Check failed", confidence=1.0)
+
     return check
 
 
@@ -59,13 +57,10 @@ def failing_check():
 # Tests for Data Models
 # =============================================================================
 
+
 def test_validation_result_creation():
     """Test creating a ValidationResult"""
-    result = ValidationResult(
-        passed=True,
-        details="Test passed",
-        confidence=0.95
-    )
+    result = ValidationResult(passed=True, details="Test passed", confidence=0.95)
     assert result.passed is True
     assert result.details == "Test passed"
     assert result.confidence == 0.95
@@ -74,9 +69,7 @@ def test_validation_result_creation():
 def test_agent_output_creation():
     """Test creating an AgentOutput"""
     output = AgentOutput(
-        content="Test content",
-        has_explanation=True,
-        explanation="Test explanation"
+        content="Test content", has_explanation=True, explanation="Test explanation"
     )
     assert output.content == "Test content"
     assert output.has_explanation is True
@@ -95,13 +88,11 @@ def test_agent_output_without_explanation():
 # Tests for ComplianceGuardrail
 # =============================================================================
 
+
 def test_guardrail_creation(passing_check):
     """Test creating a compliance guardrail"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=passing_check,
-        severity="block"
+        name="test_guardrail", regulation="LGPD", check=passing_check, severity="block"
     )
     assert guardrail.name == "test_guardrail"
     assert guardrail.regulation == "LGPD"
@@ -112,10 +103,7 @@ def test_guardrail_creation(passing_check):
 def test_guardrail_enforce_passing(passing_check, sample_output):
     """Test guardrail enforcement with passing check"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=passing_check,
-        severity="block"
+        name="test_guardrail", regulation="LGPD", check=passing_check, severity="block"
     )
 
     enforced = guardrail.enforce(sample_output)
@@ -130,10 +118,7 @@ def test_guardrail_enforce_passing(passing_check, sample_output):
 def test_guardrail_enforce_failing_block(failing_check, sample_output):
     """Test guardrail enforcement with failing check and block severity"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=failing_check,
-        severity="block"
+        name="test_guardrail", regulation="LGPD", check=failing_check, severity="block"
     )
 
     with pytest.raises(ComplianceViolation) as exc_info:
@@ -147,10 +132,7 @@ def test_guardrail_enforce_failing_block(failing_check, sample_output):
 def test_guardrail_enforce_failing_warn(failing_check, sample_output):
     """Test guardrail enforcement with failing check and warn severity"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=failing_check,
-        severity="warn"
+        name="test_guardrail", regulation="LGPD", check=failing_check, severity="warn"
     )
 
     # Should not raise exception, just log warning
@@ -163,10 +145,7 @@ def test_guardrail_enforce_failing_warn(failing_check, sample_output):
 def test_guardrail_enforce_failing_audit(failing_check, sample_output):
     """Test guardrail enforcement with failing check and audit severity"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=failing_check,
-        severity="audit"
+        name="test_guardrail", regulation="LGPD", check=failing_check, severity="audit"
     )
 
     # Should not raise exception, just log for audit
@@ -183,7 +162,7 @@ def test_guardrail_disabled(failing_check, sample_output):
         regulation="LGPD",
         check=failing_check,
         severity="block",
-        enabled=False
+        enabled=False,
     )
 
     enforced = guardrail.enforce(sample_output)
@@ -196,10 +175,7 @@ def test_guardrail_disabled(failing_check, sample_output):
 def test_guardrail_enable_disable(passing_check):
     """Test enabling and disabling guardrails"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=passing_check,
-        severity="block"
+        name="test_guardrail", regulation="LGPD", check=passing_check, severity="block"
     )
 
     assert guardrail.enabled is True
@@ -214,10 +190,7 @@ def test_guardrail_enable_disable(passing_check):
 def test_output_hashing(passing_check, sample_output):
     """Test that output hashing is consistent"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=passing_check,
-        severity="block"
+        name="test_guardrail", regulation="LGPD", check=passing_check, severity="block"
     )
 
     hash1 = guardrail._hash_output(sample_output)
@@ -230,10 +203,7 @@ def test_output_hashing(passing_check, sample_output):
 def test_output_hashing_changes_with_content(passing_check):
     """Test that different content produces different hashes"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=passing_check,
-        severity="block"
+        name="test_guardrail", regulation="LGPD", check=passing_check, severity="block"
     )
 
     output1 = AgentOutput(content="Content 1")
@@ -249,6 +219,7 @@ def test_output_hashing_changes_with_content(passing_check):
 # Tests for Convenience Functions
 # =============================================================================
 
+
 def test_create_guardrail_convenience(passing_check):
     """Test create_guardrail convenience function"""
     guardrail = create_guardrail(
@@ -256,7 +227,7 @@ def test_create_guardrail_convenience(passing_check):
         regulation="LGPD",
         check_function=passing_check,
         severity="warn",
-        description="Test description"
+        description="Test description",
     )
 
     assert isinstance(guardrail, ComplianceGuardrail)
@@ -269,13 +240,11 @@ def test_create_guardrail_convenience(passing_check):
 # Tests for ComplianceViolation Exception
 # =============================================================================
 
+
 def test_compliance_violation_exception(failing_check, sample_output):
     """Test ComplianceViolation exception details"""
     guardrail = ComplianceGuardrail(
-        name="test_guardrail",
-        regulation="LGPD",
-        check=failing_check,
-        severity="block"
+        name="test_guardrail", regulation="LGPD", check=failing_check, severity="block"
     )
 
     try:
@@ -294,18 +263,17 @@ def test_compliance_violation_exception(failing_check, sample_output):
 # Integration Tests
 # =============================================================================
 
+
 def test_full_workflow_passing():
     """Test full workflow with passing guardrail"""
+
     def check_has_content(output: AgentOutput) -> ValidationResult:
         if output.content:
             return ValidationResult(True, "Content present")
         return ValidationResult(False, "No content")
 
     guardrail = ComplianceGuardrail(
-        name="content_check",
-        regulation="LGPD",
-        check=check_has_content,
-        severity="block"
+        name="content_check", regulation="LGPD", check=check_has_content, severity="block"
     )
 
     output = AgentOutput(content="Valid content")
@@ -316,16 +284,14 @@ def test_full_workflow_passing():
 
 def test_full_workflow_failing():
     """Test full workflow with failing guardrail"""
+
     def check_has_content(output: AgentOutput) -> ValidationResult:
         if output.content:
             return ValidationResult(True, "Content present")
         return ValidationResult(False, "No content")
 
     guardrail = ComplianceGuardrail(
-        name="content_check",
-        regulation="LGPD",
-        check=check_has_content,
-        severity="block"
+        name="content_check", regulation="LGPD", check=check_has_content, severity="block"
     )
 
     output = AgentOutput(content="")

@@ -4,22 +4,22 @@ Tests for SYNAPSE Memory Store
 Tests semantic search, memory storage, and GDPR compliance features.
 """
 
-import pytest
-import numpy as np
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import numpy as np
+import pytest
 from neutron.memory import (
-    MemoryStore,
     Memory,
     MemorySearchResult,
+    MemoryStore,
     create_memory_store,
 )
-
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mock_connection():
@@ -48,13 +48,14 @@ def sample_memory(sample_embedding):
         timestamp=datetime.utcnow(),
         importance_score=0.75,
         memory_type="episodic",
-        tags=["preference", "investment"]
+        tags=["preference", "investment"],
     )
 
 
 # =============================================================================
 # Memory Data Model Tests
 # =============================================================================
+
 
 class TestMemory:
     """Tests for Memory data model"""
@@ -67,7 +68,7 @@ class TestMemory:
             content="Test memory",
             embedding=sample_embedding,
             metadata={"key": "value"},
-            importance_score=0.8
+            importance_score=0.8,
         )
 
         assert memory.id == 1
@@ -85,19 +86,22 @@ class TestMemory:
 
         # Invalid scores
         with pytest.raises(ValueError, match="Importance score"):
-            Memory(id=None, agent_id="a", content="x", embedding=sample_embedding, importance_score=-0.1)
+            Memory(
+                id=None,
+                agent_id="a",
+                content="x",
+                embedding=sample_embedding,
+                importance_score=-0.1,
+            )
 
         with pytest.raises(ValueError, match="Importance score"):
-            Memory(id=None, agent_id="a", content="x", embedding=sample_embedding, importance_score=1.1)
+            Memory(
+                id=None, agent_id="a", content="x", embedding=sample_embedding, importance_score=1.1
+            )
 
     def test_memory_defaults(self, sample_embedding):
         """Test memory default values"""
-        memory = Memory(
-            id=None,
-            agent_id="agent_1",
-            content="Test",
-            embedding=sample_embedding
-        )
+        memory = Memory(id=None, agent_id="agent_1", content="Test", embedding=sample_embedding)
 
         assert memory.metadata == {}
         assert memory.importance_score == 0.5
@@ -110,10 +114,11 @@ class TestMemory:
 # MemoryStore Tests (Mocked)
 # =============================================================================
 
+
 class TestMemoryStoreMocked:
     """Tests for MemoryStore with mocked database"""
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_store_memory(self, mock_connect, mock_connection, sample_embedding):
         """Test storing memory"""
         mock_conn, mock_cursor = mock_connection
@@ -127,27 +132,24 @@ class TestMemoryStoreMocked:
             embedding=sample_embedding,
             metadata={"key": "value"},
             importance_score=0.8,
-            tags=["tag1", "tag2"]
+            tags=["tag1", "tag2"],
         )
 
         assert memory_id == 42
         assert mock_cursor.execute.called
         assert mock_conn.commit.called
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_store_invalid_importance(self, mock_connect, sample_embedding):
         """Test storing memory with invalid importance score"""
         store = MemoryStore()
 
         with pytest.raises(ValueError, match="Importance"):
             store.store(
-                agent_id="agent_1",
-                content="Test",
-                embedding=sample_embedding,
-                importance_score=1.5
+                agent_id="agent_1", content="Test", embedding=sample_embedding, importance_score=1.5
             )
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_search_memories(self, mock_connect, mock_connection, sample_embedding):
         """Test searching memories"""
         mock_conn, mock_cursor = mock_connection
@@ -156,37 +158,33 @@ class TestMemoryStoreMocked:
         # Mock search results
         mock_cursor.fetchall.return_value = [
             {
-                'id': 1,
-                'agent_id': 'agent_1',
-                'content': 'Memory 1',
-                'embedding': sample_embedding.tolist(),
-                'metadata': {'key': 'value'},
-                'timestamp': datetime.utcnow(),
-                'importance_score': 0.8,
-                'memory_type': 'episodic',
-                'tags': ['tag1'],
-                'similarity': 0.95
+                "id": 1,
+                "agent_id": "agent_1",
+                "content": "Memory 1",
+                "embedding": sample_embedding.tolist(),
+                "metadata": {"key": "value"},
+                "timestamp": datetime.utcnow(),
+                "importance_score": 0.8,
+                "memory_type": "episodic",
+                "tags": ["tag1"],
+                "similarity": 0.95,
             },
             {
-                'id': 2,
-                'agent_id': 'agent_1',
-                'content': 'Memory 2',
-                'embedding': sample_embedding.tolist(),
-                'metadata': {},
-                'timestamp': datetime.utcnow(),
-                'importance_score': 0.7,
-                'memory_type': 'semantic',
-                'tags': [],
-                'similarity': 0.85
-            }
+                "id": 2,
+                "agent_id": "agent_1",
+                "content": "Memory 2",
+                "embedding": sample_embedding.tolist(),
+                "metadata": {},
+                "timestamp": datetime.utcnow(),
+                "importance_score": 0.7,
+                "memory_type": "semantic",
+                "tags": [],
+                "similarity": 0.85,
+            },
         ]
 
         store = MemoryStore()
-        results = store.search(
-            query_embedding=sample_embedding,
-            agent_id="agent_1",
-            top_k=10
-        )
+        results = store.search(query_embedding=sample_embedding, agent_id="agent_1", top_k=10)
 
         assert len(results) == 2
         assert isinstance(results[0], MemorySearchResult)
@@ -194,22 +192,22 @@ class TestMemoryStoreMocked:
         assert results[0].rank == 1
         assert results[1].rank == 2
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_get_by_id(self, mock_connect, mock_connection, sample_embedding):
         """Test getting memory by ID"""
         mock_conn, mock_cursor = mock_connection
         mock_connect.return_value = mock_conn
 
         mock_cursor.fetchone.return_value = {
-            'id': 1,
-            'agent_id': 'agent_1',
-            'content': 'Test memory',
-            'embedding': sample_embedding.tolist(),
-            'metadata': {'key': 'value'},
-            'timestamp': datetime.utcnow(),
-            'importance_score': 0.8,
-            'memory_type': 'episodic',
-            'tags': ['tag1']
+            "id": 1,
+            "agent_id": "agent_1",
+            "content": "Test memory",
+            "embedding": sample_embedding.tolist(),
+            "metadata": {"key": "value"},
+            "timestamp": datetime.utcnow(),
+            "importance_score": 0.8,
+            "memory_type": "episodic",
+            "tags": ["tag1"],
         }
 
         store = MemoryStore()
@@ -217,10 +215,10 @@ class TestMemoryStoreMocked:
 
         assert memory is not None
         assert memory.id == 1
-        assert memory.content == 'Test memory'
+        assert memory.content == "Test memory"
         assert memory.importance_score == 0.8
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_get_by_id_not_found(self, mock_connect, mock_connection):
         """Test getting non-existent memory"""
         mock_conn, mock_cursor = mock_connection
@@ -232,38 +230,31 @@ class TestMemoryStoreMocked:
 
         assert memory is None
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_log_access(self, mock_connect, mock_connection):
         """Test logging memory access"""
         mock_conn, mock_cursor = mock_connection
         mock_connect.return_value = mock_conn
 
         store = MemoryStore()
-        store.log_access(
-            memory_id=1,
-            agent_id="agent_1",
-            context={"query": "test"}
-        )
+        store.log_access(memory_id=1, agent_id="agent_1", context={"query": "test"})
 
         assert mock_cursor.execute.called
         assert mock_conn.commit.called
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_delete_memory(self, mock_connect, mock_connection):
         """Test soft deleting memory"""
         mock_conn, mock_cursor = mock_connection
         mock_connect.return_value = mock_conn
 
         store = MemoryStore()
-        store.delete_memory(
-            memory_id=1,
-            reason="Test deletion"
-        )
+        store.delete_memory(memory_id=1, reason="Test deletion")
 
         assert mock_cursor.execute.called
         assert mock_conn.commit.called
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_delete_by_customer(self, mock_connect, mock_connection):
         """Test GDPR Right to Erasure"""
         mock_conn, mock_cursor = mock_connection
@@ -279,30 +270,30 @@ class TestMemoryStoreMocked:
         assert mock_cursor.execute.called
         assert mock_conn.commit.called
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_get_statistics(self, mock_connect, mock_connection):
         """Test getting memory statistics"""
         mock_conn, mock_cursor = mock_connection
         mock_connect.return_value = mock_conn
 
         mock_cursor.fetchone.return_value = {
-            'agent_id': 'agent_1',
-            'total_memories': 100,
-            'active_memories': 95,
-            'deleted_memories': 5,
-            'avg_importance': 0.75,
-            'last_memory_at': datetime.utcnow(),
-            'first_memory_at': datetime.utcnow() - timedelta(days=30)
+            "agent_id": "agent_1",
+            "total_memories": 100,
+            "active_memories": 95,
+            "deleted_memories": 5,
+            "avg_importance": 0.75,
+            "last_memory_at": datetime.utcnow(),
+            "first_memory_at": datetime.utcnow() - timedelta(days=30),
         }
 
         store = MemoryStore()
         stats = store.get_statistics(agent_id="agent_1")
 
-        assert stats['total_memories'] == 100
-        assert stats['active_memories'] == 95
-        assert stats['avg_importance'] == 0.75
+        assert stats["total_memories"] == 100
+        assert stats["active_memories"] == 95
+        assert stats["avg_importance"] == 0.75
 
-    @patch('neutron.memory.memory_store.psycopg2.connect')
+    @patch("neutron.memory.memory_store.psycopg2.connect")
     def test_consolidate_memories(self, mock_connect, mock_connection, sample_embedding):
         """Test memory consolidation"""
         mock_conn, mock_cursor = mock_connection
@@ -314,13 +305,13 @@ class TestMemoryStoreMocked:
         store = MemoryStore()
 
         # Mock the store method
-        with patch.object(store, 'store', return_value=42):
+        with patch.object(store, "store", return_value=42):
             consolidated_id = store.consolidate_memories(
                 agent_id="agent_1",
                 source_memory_ids=[1, 2, 3],
                 consolidated_content="Consolidated memory",
                 consolidated_embedding=sample_embedding,
-                strategy="summarization"
+                strategy="summarization",
             )
 
             assert consolidated_id == 42
@@ -332,16 +323,13 @@ class TestMemoryStoreMocked:
 # MemorySearchResult Tests
 # =============================================================================
 
+
 class TestMemorySearchResult:
     """Tests for MemorySearchResult"""
 
     def test_search_result(self, sample_memory):
         """Test creating search result"""
-        result = MemorySearchResult(
-            memory=sample_memory,
-            similarity=0.95,
-            rank=1
-        )
+        result = MemorySearchResult(memory=sample_memory, similarity=0.95, rank=1)
 
         assert result.memory == sample_memory
         assert result.similarity == 0.95
@@ -351,6 +339,7 @@ class TestMemorySearchResult:
 # =============================================================================
 # Integration Tests (Require Real Database)
 # =============================================================================
+
 
 @pytest.mark.integration
 class TestMemoryStoreIntegration:
@@ -375,7 +364,7 @@ class TestMemoryStoreIntegration:
             content="Integration test memory",
             embedding=sample_embedding,
             metadata={"test": True},
-            importance_score=0.9
+            importance_score=0.9,
         )
 
         assert memory_id > 0
@@ -393,23 +382,14 @@ class TestMemoryStoreIntegration:
         embedding2 = np.random.rand(1536)
 
         id1 = store.store(
-            agent_id="test_agent",
-            content="Customer likes stocks",
-            embedding=embedding1
+            agent_id="test_agent", content="Customer likes stocks", embedding=embedding1
         )
 
-        id2 = store.store(
-            agent_id="test_agent",
-            content="Customer prefers bonds",
-            embedding=embedding2
-        )
+        store.store(agent_id="test_agent", content="Customer prefers bonds", embedding=embedding2)
 
         # Search with similar embedding to embedding1
         results = store.search(
-            query_embedding=embedding1,
-            agent_id="test_agent",
-            top_k=5,
-            similarity_threshold=0.5
+            query_embedding=embedding1, agent_id="test_agent", top_k=5, similarity_threshold=0.5
         )
 
         assert len(results) > 0
@@ -424,7 +404,7 @@ class TestMemoryStoreIntegration:
             agent_id="test_agent",
             content="Test memory",
             embedding=sample_embedding,
-            importance_score=0.5
+            importance_score=0.5,
         )
 
         # Log access
@@ -441,7 +421,7 @@ class TestMemoryStoreIntegration:
             agent_id="test_agent",
             content="Customer data",
             embedding=sample_embedding,
-            metadata={"customer_id": "test_customer_123"}
+            metadata={"customer_id": "test_customer_123"},
         )
 
         # Delete by customer
@@ -456,6 +436,7 @@ class TestMemoryStoreIntegration:
 # =============================================================================
 # Utility Function Tests
 # =============================================================================
+
 
 class TestUtilityFunctions:
     """Tests for utility functions"""

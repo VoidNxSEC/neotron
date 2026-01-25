@@ -25,36 +25,35 @@ Requirements:
 """
 
 import asyncio
-import numpy as np
 from datetime import datetime
-from typing import List, Dict, Any
 
-# CORTEX - Multi-Agent
-from neutron.orchestration.cortex import (
-    Task,
-    AgentResult,
-    ConsensusEngine,
-)
+import numpy as np
 
 # SYNAPSE - Memory
 from neutron.memory import MemoryStore
 
-# GDPR - Compliance
-from neutron.compliance.sentinel import ComplianceViolation
-from neutron.compliance.auditors import validate_with_gdpr
+# CORTEX - Multi-Agent
+from neutron.orchestration.cortex import (
+    AgentResult,
+    ConsensusEngine,
+    Task,
+)
 
 # NEXUS - Integrated Workflow
 from neutron.orchestration.nexus_workflow import (
     NexusAgent,
-    NexusSwarm,
     create_nexus_swarm,
-    execute_nexus_workflow,
 )
 
+from neutron.compliance.auditors import validate_with_gdpr
+
+# GDPR - Compliance
+from neutron.compliance.sentinel import ComplianceViolation
 
 # =============================================================================
 # Demo Utilities
 # =============================================================================
+
 
 def print_header(title: str):
     """Print demo section header"""
@@ -85,6 +84,7 @@ async def mock_agent_execute(task: Task, context: str = "") -> str:
 # Demo 1: Multi-Agent Consensus (CORTEX Only)
 # =============================================================================
 
+
 def demo_1_cortex_consensus():
     """
     Demo 1: Multi-Agent Consensus
@@ -100,16 +100,16 @@ def demo_1_cortex_consensus():
         AgentResult(agent_id="agent_3", output="ham", confidence=0.7),
     ]
 
-    print(f"\nIndividual agent outputs:")
+    print("\nIndividual agent outputs:")
     for result in agents_results:
         print(f"  - {result.agent_id}: {result.output} (confidence: {result.confidence})")
 
     print("\n🔄 Applying majority_vote consensus...")
-    consensus_output, consensus_confidence, agreement_score = (
-        ConsensusEngine.majority_vote(agents_results)
+    consensus_output, consensus_confidence, agreement_score = ConsensusEngine.majority_vote(
+        agents_results
     )
 
-    print(f"\n✅ Consensus Result:")
+    print("\n✅ Consensus Result:")
     print(f"  Output: {consensus_output}")
     print(f"  Confidence: {consensus_confidence:.2f}")
     print(f"  Agreement: {agreement_score:.2f} (2/3 agents agreed)")
@@ -118,6 +118,7 @@ def demo_1_cortex_consensus():
 # =============================================================================
 # Demo 2: Memory-Enabled Agent (SYNAPSE Integration)
 # =============================================================================
+
 
 async def demo_2_memory_enabled_agent():
     """
@@ -141,7 +142,7 @@ async def demo_2_memory_enabled_agent():
         agent_id="financial_advisor",
         name="Financial Advisor AI",
         memory_store=memory_store,
-        enable_gdpr=False  # Disabled for this demo
+        enable_gdpr=False,  # Disabled for this demo
     )
 
     print("\n📝 Storing past customer interactions as memories...")
@@ -157,7 +158,7 @@ async def demo_2_memory_enabled_agent():
             content=memory_content,
             embedding=create_mock_embedding(seed=100 + i),
             metadata={"customer_id": "customer_123"},
-            importance_score=0.8
+            importance_score=0.8,
         )
         print(f"  ✓ Stored memory {memory_id}: {memory_content}")
 
@@ -169,17 +170,14 @@ async def demo_2_memory_enabled_agent():
             "query_embedding": create_mock_embedding(seed=100),  # Similar to stored
             "output_embedding": create_mock_embedding(seed=200),
         },
-        consensus_strategy="majority_vote"
+        consensus_strategy="majority_vote",
     )
 
     result = await agent.execute_with_memory(
-        task=task,
-        customer_id="customer_123",
-        retrieve_k=3,
-        store_result=True
+        task=task, customer_id="customer_123", retrieve_k=3, store_result=True
     )
 
-    print(f"\n✅ Agent Result (with memory context):")
+    print("\n✅ Agent Result (with memory context):")
     print(f"  Output: {result.output}")
     print(f"  Confidence: {result.confidence}")
     print(f"  Memories used: {result.metadata['memory_count']}")
@@ -192,6 +190,7 @@ async def demo_2_memory_enabled_agent():
 # =============================================================================
 # Demo 3: GDPR Compliant Low-Risk Decision
 # =============================================================================
+
 
 def demo_3_gdpr_low_risk():
     """
@@ -214,14 +213,14 @@ def demo_3_gdpr_low_risk():
             "export_format": "JSON",
             "processes_personal_data": True,
             "erasure_supported": True,
-            "erasure_endpoint": "/api/v1/customers/{id}/delete"
-        }
+            "erasure_endpoint": "/api/v1/customers/{id}/delete",
+        },
     )
 
     print("\n🔍 Validating with GDPR guardrails...")
     results = validate_with_gdpr(output)
 
-    print(f"\n✅ GDPR Validation Results:")
+    print("\n✅ GDPR Validation Results:")
     for result in results:
         status = "✅ PASS" if result.passed else "❌ FAIL"
         article = result.metadata.get("article", "Unknown")
@@ -238,6 +237,7 @@ def demo_3_gdpr_low_risk():
 # =============================================================================
 # Demo 4: GDPR Compliant High-Risk Decision (with Human Review)
 # =============================================================================
+
 
 def demo_4_gdpr_high_risk_compliant():
     """
@@ -264,20 +264,20 @@ def demo_4_gdpr_high_risk_compliant():
             "export_format": "PDF",
             "processes_personal_data": True,
             "erasure_supported": True,
-            "erasure_endpoint": "/api/v1/loans/{id}/delete"
-        }
+            "erasure_endpoint": "/api/v1/loans/{id}/delete",
+        },
     )
 
-    print(f"\n📋 Decision metadata:")
-    print(f"  Risk Level: high")
-    print(f"  Human Reviewed: ✅ Yes")
-    print(f"  Reviewer: compliance_officer_001")
+    print("\n📋 Decision metadata:")
+    print("  Risk Level: high")
+    print("  Human Reviewed: ✅ Yes")
+    print("  Reviewer: compliance_officer_001")
     print(f"  Review Time: {timestamp}")
 
     print("\n🔍 Validating with GDPR guardrails...")
     results = validate_with_gdpr(output)
 
-    print(f"\n✅ GDPR Validation Results:")
+    print("\n✅ GDPR Validation Results:")
     for result in results:
         status = "✅ PASS" if result.passed else "❌ FAIL"
         article = result.metadata.get("article", "Unknown")
@@ -295,6 +295,7 @@ def demo_4_gdpr_high_risk_compliant():
 # Demo 5: GDPR Violation - High-Risk without Review (BLOCKED)
 # =============================================================================
 
+
 def demo_5_gdpr_violation():
     """
     Demo 5: GDPR Violation - High-Risk without Human Review
@@ -304,39 +305,40 @@ def demo_5_gdpr_violation():
     print_header("DEMO 5: GDPR Violation - High-Risk without Review (BLOCKED)")
 
     print("Creating high-risk decision WITHOUT human review...")
-    from neutron.compliance.sentinel import AgentOutput
     from neutron.compliance.auditors import gdpr_art22_human_oversight_guardrail
+    from neutron.compliance.sentinel import AgentOutput
 
     output = AgentOutput(
         content="Credit card application DENIED",
         metadata={
             "risk_level": "high",  # High risk
             "human_reviewed": False,  # ❌ MISSING HUMAN REVIEW
-        }
+        },
     )
 
-    print(f"\n📋 Decision metadata:")
-    print(f"  Risk Level: high")
-    print(f"  Human Reviewed: ❌ No")
+    print("\n📋 Decision metadata:")
+    print("  Risk Level: high")
+    print("  Human Reviewed: ❌ No")
 
     print("\n🔍 Attempting to enforce GDPR Article 22...")
 
     try:
-        enforced = gdpr_art22_human_oversight_guardrail.enforce(output)
+        gdpr_art22_human_oversight_guardrail.enforce(output)
         print("\n⚠️  Unexpectedly passed (should have been blocked)")
     except ComplianceViolation as e:
-        print(f"\n✅ BLOCKED by GDPR Article 22!")
-        print(f"\n❌ Violation Details:")
+        print("\n✅ BLOCKED by GDPR Article 22!")
+        print("\n❌ Violation Details:")
         print(f"  Guardrail: {e.guardrail.name}")
         print(f"  Regulation: {e.guardrail.regulation}")
         print(f"  Severity: {e.guardrail.severity}")
         print(f"  Reason: {e.result.details}")
-        print(f"\n🚫 Output delivery prevented - compliance violation!")
+        print("\n🚫 Output delivery prevented - compliance violation!")
 
 
 # =============================================================================
 # Demo 6: Customer Data Erasure (GDPR Article 17)
 # =============================================================================
+
 
 async def demo_6_gdpr_erasure():
     """
@@ -370,28 +372,29 @@ async def demo_6_gdpr_erasure():
             content=content,
             embedding=create_mock_embedding(seed=300 + i),
             metadata={"customer_id": customer_id},
-            importance_score=0.7
+            importance_score=0.7,
         )
         print(f"  ✓ Stored: {content}")
 
-    print(f"\n🗑️  Customer requests data erasure (GDPR Article 17)...")
+    print("\n🗑️  Customer requests data erasure (GDPR Article 17)...")
 
     from neutron.compliance.auditors import GDPRErasureHandler
 
     handler = GDPRErasureHandler(memory_store=memory_store)
     result = handler.erase_customer_data(customer_id)
 
-    print(f"\n✅ Erasure Complete:")
+    print("\n✅ Erasure Complete:")
     print(f"  Customer ID: {result['customer_id']}")
     print(f"  Memories Deleted: {result['deleted_memories']}")
     print(f"  Audit ID: {result['audit_id']}")
     print(f"  Status: {result['status']}")
-    print(f"\n🎉 Customer data successfully erased!")
+    print("\n🎉 Customer data successfully erased!")
 
 
 # =============================================================================
 # Demo 7: Full NEXUS Workflow - Complete Integration
 # =============================================================================
+
 
 async def demo_7_full_nexus_workflow():
     """
@@ -423,7 +426,7 @@ async def demo_7_full_nexus_workflow():
         ],
         memory_store=memory_store,
         enable_gdpr=True,
-        consensus_strategy="majority_vote"
+        consensus_strategy="majority_vote",
     )
     print(f"  ✓ Created swarm with {len(swarm.agents)} agents\n")
 
@@ -442,7 +445,7 @@ async def demo_7_full_nexus_workflow():
                 content=content,
                 embedding=create_mock_embedding(seed=400 + i),
                 metadata={"customer_id": customer_id},
-                importance_score=0.8
+                importance_score=0.8,
             )
             print(f"  ✓ {content}")
 
@@ -455,7 +458,7 @@ async def demo_7_full_nexus_workflow():
             "output_embedding": create_mock_embedding(seed=500),
         },
         metadata={"risk_level": "low"},  # Low risk = no human review needed
-        consensus_strategy="majority_vote"
+        consensus_strategy="majority_vote",
     )
 
     print("\n🔄 Executing NEXUS workflow...")
@@ -469,47 +472,48 @@ async def demo_7_full_nexus_workflow():
         task=task,
         customer_id=customer_id if memory_store else None,
         retrieve_k=3,
-        human_reviewer_id=None  # Low risk doesn't need review
+        human_reviewer_id=None,  # Low risk doesn't need review
     )
 
-    print(f"\n✅ NEXUS Workflow Complete!")
-    print(f"\n📊 Consensus Result:")
+    print("\n✅ NEXUS Workflow Complete!")
+    print("\n📊 Consensus Result:")
     print(f"  Output: {result['consensus_output']}")
     print(f"  Confidence: {result['consensus_confidence']:.2f}")
     print(f"  Agreement: {result['agreement_score']:.2f}")
 
-    print(f"\n🔒 Compliance Status:")
+    print("\n🔒 Compliance Status:")
     print(f"  GDPR Enabled: {result['metadata']['gdpr_enabled']}")
     print(f"  Compliance Passed: {'✅ Yes' if result['compliance_passed'] else '❌ No'}")
 
-    if result['validation_results']:
-        print(f"\n  GDPR Validation:")
-        for validation in result['validation_results']:
+    if result["validation_results"]:
+        print("\n  GDPR Validation:")
+        for validation in result["validation_results"]:
             status = "✅" if validation.passed else "❌"
             article = validation.metadata.get("article", "Unknown")
             print(f"    {status} {article}")
 
-    print(f"\n💾 Memory:")
+    print("\n💾 Memory:")
     print(f"  Memory ID: {result['memory_id']}")
     print(f"  Customer ID: {result['metadata']['customer_id']}")
 
-    print(f"\n🎯 Agent Consensus:")
-    for i, agent_result in enumerate(result['individual_results'], 1):
+    print("\n🎯 Agent Consensus:")
+    for i, agent_result in enumerate(result["individual_results"], 1):
         print(f"  Agent {i}: {agent_result.metadata.get('agent_name')}")
         print(f"    - Memories used: {agent_result.metadata.get('memory_count', 0)}")
         print(f"    - Confidence: {agent_result.confidence:.2f}")
 
     if memory_store and customer_id:
-        print(f"\n🧹 Cleaning up demo data...")
+        print("\n🧹 Cleaning up demo data...")
         deleted = memory_store.delete_by_customer(customer_id)
         print(f"  ✓ Deleted {deleted} memories")
 
-    print(f"\n🎉 Full NEXUS integration demonstrated successfully!")
+    print("\n🎉 Full NEXUS integration demonstrated successfully!")
 
 
 # =============================================================================
 # Main Demo Runner
 # =============================================================================
+
 
 async def main():
     """Run all demos"""
@@ -548,6 +552,7 @@ async def main():
         except Exception as e:
             print(f"\n❌ Demo error: {e}")
             import traceback
+
             traceback.print_exc()
 
         print("\n" + "─" * 70)

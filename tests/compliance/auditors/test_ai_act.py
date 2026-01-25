@@ -5,21 +5,19 @@ Tests risk classification, transparency requirements (Article 13),
 human oversight (Article 14), and prohibited practices (Article 5).
 """
 
-import pytest
-from neutron.compliance.sentinel import AgentOutput, ValidationResult
 from neutron.compliance.auditors.ai_act import (
+    ARTICLE_5_PROHIBITED_PRACTICES,
+    ARTICLE_13_TRANSPARENCY,
+    ARTICLE_14_HUMAN_OVERSIGHT,
     AISystemRiskLevel,
-    classify_ai_system_risk,
     check_ai_act_article_13_transparency,
     check_ai_act_article_14_human_oversight,
     check_ai_act_prohibited_practices,
-    ARTICLE_13_TRANSPARENCY,
-    ARTICLE_14_HUMAN_OVERSIGHT,
-    ARTICLE_5_PROHIBITED_PRACTICES,
+    classify_ai_system_risk,
     get_ai_act_guardrails,
     validate_ai_act_compliance,
 )
-
+from neutron.compliance.sentinel import AgentOutput
 
 # =============================================================================
 # Risk Classification Tests
@@ -92,8 +90,7 @@ class TestRiskClassification:
     def test_classify_with_metadata(self):
         """Test risk classification with additional metadata"""
         risk = classify_ai_system_risk(
-            "decision_system",
-            metadata={"sector": "financial_services", "impact": "high"}
+            "decision_system", metadata={"sector": "financial_services", "impact": "high"}
         )
         # Should still classify based on use_case if no keywords match
         assert risk == AISystemRiskLevel.MINIMAL
@@ -109,10 +106,7 @@ class TestArticle13Transparency:
 
     def test_transparency_no_metadata(self):
         """Test that missing metadata fails transparency check"""
-        output = AgentOutput(
-            content="Decision made",
-            metadata=None
-        )
+        output = AgentOutput(content="Decision made", metadata=None)
         result = check_ai_act_article_13_transparency(output)
 
         assert not result.passed
@@ -121,10 +115,7 @@ class TestArticle13Transparency:
 
     def test_transparency_missing_ai_disclosure(self):
         """Test that missing AI disclosure fails"""
-        output = AgentOutput(
-            content="Decision",
-            metadata={"other_field": "value"}
-        )
+        output = AgentOutput(content="Decision", metadata={"other_field": "value"})
         result = check_ai_act_article_13_transparency(output)
 
         assert not result.passed
@@ -132,10 +123,7 @@ class TestArticle13Transparency:
 
     def test_transparency_missing_system_info(self):
         """Test that missing system info fails"""
-        output = AgentOutput(
-            content="Decision",
-            metadata={"ai_disclosure": True}
-        )
+        output = AgentOutput(content="Decision", metadata={"ai_disclosure": True})
         result = check_ai_act_article_13_transparency(output)
 
         assert not result.passed
@@ -148,8 +136,8 @@ class TestArticle13Transparency:
             metadata={
                 "ai_disclosure": True,
                 "system_info": "AI spam detection system",
-                "use_case": "spam_filter"
-            }
+                "use_case": "spam_filter",
+            },
         )
         result = check_ai_act_article_13_transparency(output)
 
@@ -163,8 +151,8 @@ class TestArticle13Transparency:
             metadata={
                 "ai_disclosure": True,
                 "system_info": "AI credit scoring system",
-                "use_case": "loan_approval"
-            }
+                "use_case": "loan_approval",
+            },
         )
         result = check_ai_act_article_13_transparency(output)
 
@@ -179,8 +167,8 @@ class TestArticle13Transparency:
                 "ai_disclosure": True,
                 "system_info": "AI credit scoring",
                 "use_case": "loan_approval",
-                "capabilities": "Evaluates creditworthiness based on history"
-            }
+                "capabilities": "Evaluates creditworthiness based on history",
+            },
         )
         result = check_ai_act_article_13_transparency(output)
 
@@ -196,8 +184,8 @@ class TestArticle13Transparency:
                 "system_info": "AI credit scoring system v2.1",
                 "use_case": "loan_approval",
                 "capabilities": "Evaluates creditworthiness using 50+ financial indicators",
-                "limitations": "Does not account for recent life events or non-financial factors"
-            }
+                "limitations": "Does not account for recent life events or non-financial factors",
+            },
         )
         result = check_ai_act_article_13_transparency(output)
 
@@ -213,8 +201,8 @@ class TestArticle13Transparency:
                 "ai_disclosure": True,
                 "system_info": "Text generation AI",
                 "use_case": "content_generation",
-                "synthetic_content": True
-            }
+                "synthetic_content": True,
+            },
         )
         result = check_ai_act_article_13_transparency(output)
 
@@ -230,8 +218,8 @@ class TestArticle13Transparency:
                 "system_info": "AI content generator",
                 "use_case": "content_generation",
                 "synthetic_content": True,
-                "synthetic_content_warning": "This content was generated by AI"
-            }
+                "synthetic_content_warning": "This content was generated by AI",
+            },
         )
         result = check_ai_act_article_13_transparency(output)
 
@@ -244,8 +232,8 @@ class TestArticle13Transparency:
             metadata={
                 "ai_disclosure": True,
                 "system_info": "Customer service AI assistant",
-                "use_case": "chatbot"
-            }
+                "use_case": "chatbot",
+            },
         )
         result = check_ai_act_article_13_transparency(output)
 
@@ -263,10 +251,7 @@ class TestArticle14HumanOversight:
 
     def test_oversight_no_metadata(self):
         """Test that missing metadata fails oversight check"""
-        output = AgentOutput(
-            content="Decision",
-            metadata=None
-        )
+        output = AgentOutput(content="Decision", metadata=None)
         result = check_ai_act_article_14_human_oversight(output)
 
         assert not result.passed
@@ -274,10 +259,7 @@ class TestArticle14HumanOversight:
 
     def test_oversight_minimal_risk_not_required(self):
         """Test that minimal risk systems don't require oversight"""
-        output = AgentOutput(
-            content="Spam",
-            metadata={"use_case": "spam_filter"}
-        )
+        output = AgentOutput(content="Spam", metadata={"use_case": "spam_filter"})
         result = check_ai_act_article_14_human_oversight(output)
 
         assert result.passed
@@ -285,10 +267,7 @@ class TestArticle14HumanOversight:
 
     def test_oversight_limited_risk_not_required(self):
         """Test that limited risk systems don't require oversight"""
-        output = AgentOutput(
-            content="Response",
-            metadata={"use_case": "chatbot"}
-        )
+        output = AgentOutput(content="Response", metadata={"use_case": "chatbot"})
         result = check_ai_act_article_14_human_oversight(output)
 
         assert result.passed
@@ -298,10 +277,7 @@ class TestArticle14HumanOversight:
         """Test that high-risk system without oversight fails"""
         output = AgentOutput(
             content="Loan approved",
-            metadata={
-                "use_case": "loan_approval",
-                "human_oversight_enabled": False
-            }
+            metadata={"use_case": "loan_approval", "human_oversight_enabled": False},
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -312,10 +288,7 @@ class TestArticle14HumanOversight:
         """Test that high-risk system without mechanism fails"""
         output = AgentOutput(
             content="Hire candidate",
-            metadata={
-                "use_case": "recruitment",
-                "human_oversight_enabled": True
-            }
+            metadata={"use_case": "recruitment", "human_oversight_enabled": True},
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -329,8 +302,8 @@ class TestArticle14HumanOversight:
             metadata={
                 "use_case": "credit_score",
                 "human_oversight_enabled": True,
-                "oversight_mechanism": "invalid_mechanism"
-            }
+                "oversight_mechanism": "invalid_mechanism",
+            },
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -344,8 +317,8 @@ class TestArticle14HumanOversight:
             metadata={
                 "use_case": "loan",
                 "human_oversight_enabled": True,
-                "oversight_mechanism": "human_in_the_loop"
-            }
+                "oversight_mechanism": "human_in_the_loop",
+            },
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -360,8 +333,8 @@ class TestArticle14HumanOversight:
                 "use_case": "employment",
                 "human_oversight_enabled": True,
                 "oversight_mechanism": "human_on_the_loop",
-                "overseer_id": "reviewer_123"
-            }
+                "overseer_id": "reviewer_123",
+            },
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -377,8 +350,8 @@ class TestArticle14HumanOversight:
                 "human_oversight_enabled": True,
                 "oversight_mechanism": "human_in_the_loop",
                 "overseer_id": "loan_officer_456",
-                "can_override": True
-            }
+                "can_override": True,
+            },
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -394,8 +367,8 @@ class TestArticle14HumanOversight:
                 "human_oversight_enabled": True,
                 "oversight_mechanism": "human_on_the_loop",
                 "overseer_id": "risk_manager_789",
-                "can_override": True
-            }
+                "can_override": True,
+            },
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -411,8 +384,8 @@ class TestArticle14HumanOversight:
                 "human_oversight_enabled": True,
                 "oversight_mechanism": "human_in_command",
                 "overseer_id": "hr_manager_101",
-                "can_override": True
-            }
+                "can_override": True,
+            },
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -429,8 +402,8 @@ class TestArticle14HumanOversight:
                 "oversight_mechanism": "human_in_command",
                 "overseer_id": "hiring_manager_202",
                 "can_override": True,
-                "human_decision_authority": True
-            }
+                "human_decision_authority": True,
+            },
         )
         result = check_ai_act_article_14_human_oversight(output)
 
@@ -448,10 +421,7 @@ class TestArticle5ProhibitedPractices:
 
     def test_prohibited_no_metadata(self):
         """Test prohibited practices check without metadata"""
-        output = AgentOutput(
-            content="Decision",
-            metadata=None
-        )
+        output = AgentOutput(content="Decision", metadata=None)
         result = check_ai_act_prohibited_practices(output)
 
         # Should pass but with warning
@@ -461,8 +431,7 @@ class TestArticle5ProhibitedPractices:
     def test_prohibited_social_scoring(self):
         """Test that social scoring is blocked"""
         output = AgentOutput(
-            content="Citizen score: 650/1000",
-            metadata={"use_case": "social_scoring"}
+            content="Citizen score: 650/1000", metadata={"use_case": "social_scoring"}
         )
         result = check_ai_act_prohibited_practices(output)
 
@@ -473,8 +442,7 @@ class TestArticle5ProhibitedPractices:
     def test_prohibited_biometric_surveillance(self):
         """Test that real-time biometric surveillance is blocked"""
         output = AgentOutput(
-            content="Person identified",
-            metadata={"use_case": "real_time_biometric_surveillance"}
+            content="Person identified", metadata={"use_case": "real_time_biometric_surveillance"}
         )
         result = check_ai_act_prohibited_practices(output)
 
@@ -484,8 +452,7 @@ class TestArticle5ProhibitedPractices:
     def test_prohibited_subliminal_manipulation(self):
         """Test that subliminal manipulation is blocked"""
         output = AgentOutput(
-            content="Influence applied",
-            metadata={"use_case": "subliminal_manipulation"}
+            content="Influence applied", metadata={"use_case": "subliminal_manipulation"}
         )
         result = check_ai_act_prohibited_practices(output)
 
@@ -493,10 +460,7 @@ class TestArticle5ProhibitedPractices:
 
     def test_prohibited_high_risk_allowed(self):
         """Test that high-risk (but not prohibited) systems pass"""
-        output = AgentOutput(
-            content="Loan approved",
-            metadata={"use_case": "loan_approval"}
-        )
+        output = AgentOutput(content="Loan approved", metadata={"use_case": "loan_approval"})
         result = check_ai_act_prohibited_practices(output)
 
         assert result.passed
@@ -504,10 +468,7 @@ class TestArticle5ProhibitedPractices:
 
     def test_prohibited_minimal_risk_allowed(self):
         """Test that minimal risk systems pass"""
-        output = AgentOutput(
-            content="Spam detected",
-            metadata={"use_case": "spam_filter"}
-        )
+        output = AgentOutput(content="Spam detected", metadata={"use_case": "spam_filter"})
         result = check_ai_act_prohibited_practices(output)
 
         assert result.passed
@@ -529,8 +490,8 @@ class TestConvenienceFunctions:
             metadata={
                 "use_case": "spam_filter",
                 "ai_disclosure": True,
-                "system_info": "AI spam detection"
-            }
+                "system_info": "AI spam detection",
+            },
         )
         results = validate_ai_act_compliance(output)
 
@@ -550,8 +511,8 @@ class TestConvenienceFunctions:
                 "human_oversight_enabled": True,
                 "oversight_mechanism": "human_in_the_loop",
                 "overseer_id": "officer_123",
-                "can_override": True
-            }
+                "can_override": True,
+            },
         )
         results = validate_ai_act_compliance(output)
 
@@ -561,8 +522,7 @@ class TestConvenienceFunctions:
     def test_validate_ai_act_compliance_violations(self):
         """Test validate_ai_act_compliance with violations"""
         output = AgentOutput(
-            content="Decision",
-            metadata={"use_case": "loan", "ai_disclosure": False}
+            content="Decision", metadata={"use_case": "loan", "ai_disclosure": False}
         )
         results = validate_ai_act_compliance(output)
 
@@ -607,11 +567,7 @@ class TestGuardrails:
         """Test Article 13 guardrail check function"""
         output = AgentOutput(
             content="Response",
-            metadata={
-                "ai_disclosure": True,
-                "system_info": "AI assistant",
-                "use_case": "chatbot"
-            }
+            metadata={"ai_disclosure": True, "system_info": "AI assistant", "use_case": "chatbot"},
         )
         result = ARTICLE_13_TRANSPARENCY.check(output)
         assert result.passed
@@ -622,17 +578,14 @@ class TestGuardrails:
             content="Decision",
             metadata={
                 "use_case": "spam_filter",  # Minimal risk
-            }
+            },
         )
         result = ARTICLE_14_HUMAN_OVERSIGHT.check(output)
         assert result.passed  # Minimal risk doesn't require oversight
 
     def test_article_5_guardrail_check(self):
         """Test Article 5 guardrail check function"""
-        output = AgentOutput(
-            content="Score",
-            metadata={"use_case": "social_scoring"}
-        )
+        output = AgentOutput(content="Score", metadata={"use_case": "social_scoring"})
         result = ARTICLE_5_PROHIBITED_PRACTICES.check(output)
         assert not result.passed  # Social scoring is prohibited
 
@@ -661,7 +614,7 @@ class TestIntegration:
                 "oversight_mechanism": "human_in_the_loop",
                 "overseer_id": "credit_officer_789",
                 "can_override": True,
-            }
+            },
         )
 
         # Check risk classification
@@ -675,8 +628,7 @@ class TestIntegration:
     def test_full_prohibited_workflow(self):
         """Test that prohibited practices are blocked"""
         output = AgentOutput(
-            content="Social credit score: 850",
-            metadata={"use_case": "social_credit"}
+            content="Social credit score: 850", metadata={"use_case": "social_credit"}
         )
 
         # Should be classified as unacceptable
@@ -695,8 +647,8 @@ class TestIntegration:
             metadata={
                 "use_case": "spam_filter",
                 "ai_disclosure": True,
-                "system_info": "AI spam detection system"
-            }
+                "system_info": "AI spam detection system",
+            },
         )
 
         # Check risk classification

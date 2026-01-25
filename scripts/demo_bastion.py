@@ -25,50 +25,44 @@ Competitive Advantage:
 """
 
 import asyncio
-import os
 import sys
-from datetime import datetime
-
-# BASTION - Kernel enforcement
-from neutron.compliance.bastion import (
-    KernelPolicy,
-    ComplianceCapability,
-    LayeredPolicy,
-    grant_capability,
-    revoke_capability,
-    has_capability,
-)
 
 # LGPD Kernel enforcement
 from neutron.compliance.auditors.lgpd_kernel import (
-    lgpd_art7_consent_policy,
-    lgpd_art16_data_access_policy,
-    lgpd_art46_retention_policy,
-    lgpd_art18_layered,
-    lgpd_art20_layered,
-    grant_lgpd_consent,
-    revoke_lgpd_consent,
     check_lgpd_consent,
     get_lgpd_kernel_policies,
-    get_lgpd_layered_policies,
+    grant_lgpd_consent,
+    lgpd_art7_consent_policy,
+    lgpd_art18_layered,
+    revoke_lgpd_consent,
 )
 
+# BASTION - Kernel enforcement
+from neutron.compliance.bastion import (
+    ComplianceCapability,
+    KernelPolicy,
+    grant_capability,
+    has_capability,
+    revoke_capability,
+)
 
 # =============================================================================
 # Colors for Terminal Output
 # =============================================================================
 
+
 class Colors:
     """ANSI color codes"""
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    END = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    END = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 def print_header(text: str):
@@ -113,6 +107,7 @@ def print_blocked(text: str):
 # Demo 1: Architecture Overview
 # =============================================================================
 
+
 async def demo_architecture():
     """Show BASTION architecture"""
     print_header("Demo 1: BASTION Architecture - Defense-in-Depth Compliance")
@@ -152,6 +147,7 @@ async def demo_architecture():
 # Demo 2: Kernel Policy Creation
 # =============================================================================
 
+
 async def demo_kernel_policy():
     """Demonstrate kernel policy creation"""
     print_header("Demo 2: Creating Kernel-Level Compliance Policies")
@@ -166,7 +162,7 @@ async def demo_kernel_policy():
         required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
         action="ERRNO",
         errno=13,  # EACCES - Permission denied
-        description="Demo: Blocks file access without LGPD consent"
+        description="Demo: Blocks file access without LGPD consent",
     )
 
     print_success("Policy created successfully")
@@ -179,14 +175,15 @@ async def demo_kernel_policy():
     print(f"  Description:       {policy.description}")
 
     print_info("\nThis policy will:")
-    print(f"  1. Block 'open' and 'read' syscalls")
-    print(f"  2. Require CAP_CONSENT_TOKEN to bypass")
-    print(f"  3. Return EACCES (Permission denied) if no token")
+    print("  1. Block 'open' and 'read' syscalls")
+    print("  2. Require CAP_CONSENT_TOKEN to bypass")
+    print("  3. Return EACCES (Permission denied) if no token")
 
 
 # =============================================================================
 # Demo 3: LGPD Article 7 Enforcement
 # =============================================================================
+
 
 async def demo_lgpd_article_7():
     """Demonstrate LGPD Article 7 consent enforcement"""
@@ -242,6 +239,7 @@ async def demo_lgpd_article_7():
 # Demo 4: Layered Enforcement
 # =============================================================================
 
+
 async def demo_layered_enforcement():
     """Demonstrate layered enforcement (application + kernel)"""
     print_header("Demo 4: Layered Enforcement - Application + Kernel")
@@ -260,8 +258,8 @@ async def demo_layered_enforcement():
     revoke_lgpd_consent("customer_456")
 
     print_info("Enforcing BOTH layers...")
-    print(f"  Layer 1 (Application): SENTINEL validates business logic")
-    print(f"  Layer 2 (Kernel):      BASTION blocks syscalls")
+    print("  Layer 1 (Application): SENTINEL validates business logic")
+    print("  Layer 2 (Kernel):      BASTION blocks syscalls")
 
     with lgpd_art18_layered.enforce():
         if not lgpd_art18_layered.kernel_policy.check_capability():
@@ -289,6 +287,7 @@ async def demo_layered_enforcement():
 # Demo 5: Multiple Policies
 # =============================================================================
 
+
 async def demo_multiple_policies():
     """Demonstrate multiple kernel policies"""
     print_header("Demo 5: Multiple Kernel Policies - Complete LGPD Coverage")
@@ -300,8 +299,12 @@ async def demo_multiple_policies():
     for i, policy in enumerate(policies, 1):
         print(f"\n{Colors.CYAN}{i}. {policy.name}{Colors.END}")
         print(f"   Regulation:       {policy.regulation}")
-        print(f"   Blocked Syscalls: {', '.join(policy.blocked_syscalls[:3])}{' ...' if len(policy.blocked_syscalls) > 3 else ''}")
-        print(f"   Required Cap:     {policy.required_capability.value if policy.required_capability else 'None'}")
+        print(
+            f"   Blocked Syscalls: {', '.join(policy.blocked_syscalls[:3])}{' ...' if len(policy.blocked_syscalls) > 3 else ''}"
+        )
+        print(
+            f"   Required Cap:     {policy.required_capability.value if policy.required_capability else 'None'}"
+        )
         print(f"   Action:           {policy.action} (errno={policy.errno})")
         print(f"   Description:      {policy.description[:60]}...")
 
@@ -311,6 +314,7 @@ async def demo_multiple_policies():
 # =============================================================================
 # Demo 6: Capability Management
 # =============================================================================
+
 
 async def demo_capability_management():
     """Demonstrate compliance capability management"""
@@ -356,6 +360,7 @@ async def demo_capability_management():
 # Demo 7: Comparison with Competition
 # =============================================================================
 
+
 async def demo_comparison():
     """Compare BASTION with competitors"""
     print_header("Demo 7: BASTION vs. Competition - Why Kernel Matters")
@@ -377,18 +382,23 @@ async def demo_comparison():
         status = "✓" if framework == "NEXUS BASTION" else "✗"
         print(f"{framework:<20} {enforcement:<20} {resistance:<35} {color}{status}{Colors.END}")
 
-    print(f"\n{Colors.GREEN}{Colors.BOLD}NEXUS BASTION: The ONLY framework with kernel-level enforcement{Colors.END}")
+    print(
+        f"\n{Colors.GREEN}{Colors.BOLD}NEXUS BASTION: The ONLY framework with kernel-level enforcement{Colors.END}"
+    )
 
     print(f"\n{Colors.CYAN}Why Kernel Enforcement Matters:{Colors.END}")
     print(f"  {Colors.GREEN}✓{Colors.END} Application layer: 'Should not do' (can be bypassed)")
     print(f"  {Colors.GREEN}✓{Colors.END} Kernel layer: 'Cannot do' (mathematically impossible)")
-    print(f"  {Colors.GREEN}✓{Colors.END} seccomp-BPF: Same technology used by Chrome, Docker, systemd")
+    print(
+        f"  {Colors.GREEN}✓{Colors.END} seccomp-BPF: Same technology used by Chrome, Docker, systemd"
+    )
     print(f"  {Colors.GREEN}✓{Colors.END} Compliance: Regulations enforced by Linux kernel itself")
 
 
 # =============================================================================
 # Demo 8: Platform Detection
 # =============================================================================
+
 
 async def demo_platform():
     """Show platform-specific behavior"""
@@ -408,14 +418,15 @@ async def demo_platform():
         print_info("In production, deploy on Linux for real kernel enforcement")
 
     print(f"\n{Colors.CYAN}Deployment Recommendations:{Colors.END}")
-    print(f"  Production:  Linux (Ubuntu 20.04+, NixOS, etc.)")
-    print(f"  Development: Any platform (simulation mode)")
-    print(f"  CI/CD:       Linux containers (real enforcement in tests)")
+    print("  Production:  Linux (Ubuntu 20.04+, NixOS, etc.)")
+    print("  Development: Any platform (simulation mode)")
+    print("  CI/CD:       Linux containers (real enforcement in tests)")
 
 
 # =============================================================================
 # Main Demo Runner
 # =============================================================================
+
 
 async def main():
     """Run all BASTION demos"""
@@ -446,6 +457,7 @@ async def main():
             print_error(f"Demo {i}/{len(demos)} failed: {name}")
             print(f"{Colors.RED}Error: {e}{Colors.END}")
             import traceback
+
             traceback.print_exc()
 
     # Final Summary
@@ -457,13 +469,15 @@ async def main():
     print_success("✓ Compliance capability management")
     print_success("✓ World's ONLY AI framework with kernel enforcement")
 
-    print(f"\n{Colors.BOLD}NEXUS BASTION: Compliance That's Physically Impossible to Violate{Colors.END}")
+    print(
+        f"\n{Colors.BOLD}NEXUS BASTION: Compliance That's Physically Impossible to Violate{Colors.END}"
+    )
 
     print(f"\n{Colors.CYAN}Next Steps:{Colors.END}")
-    print(f"  1. Review kernel policy configurations")
-    print(f"  2. Deploy on Linux for real kernel enforcement")
-    print(f"  3. Integrate with your AI agent workflows")
-    print(f"  4. Show this to investors/stakeholders - it's UNIQUE")
+    print("  1. Review kernel policy configurations")
+    print("  2. Deploy on Linux for real kernel enforcement")
+    print("  3. Integrate with your AI agent workflows")
+    print("  4. Show this to investors/stakeholders - it's UNIQUE")
 
     print()
 

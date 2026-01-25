@@ -14,63 +14,50 @@ with enterprise-grade explainability and compliance.
 """
 
 import asyncio
-from datetime import datetime
-from typing import Dict, Any
-import json
 
-# ORACLE - Explainability Framework
-from neutron.reasoning import (
-    ExplanationType,
-    ExplanationResult,
-    FeatureImportanceExplainer,
-    CounterfactualExplainer,
-    ExampleBasedExplainer,
-    ChainOfThoughtExplainer,
-    RuleBasedExplainer,
-    explain_agent_decision,
-    create_explainer,
+# CORTEX - Multi-Agent Orchestration
+from neutron.orchestration.cortex import (
+    AgentResult,
+    AgentSwarm,
+    ConsensusStrategy,
+    Task,
 )
 
 # EU AI Act - Compliance
 from neutron.compliance.auditors.ai_act import (
     AISystemRiskLevel,
-    classify_ai_system_risk,
     check_ai_act_article_13_transparency,
     check_ai_act_article_14_human_oversight,
-    check_ai_act_prohibited_practices,
-    validate_ai_act_compliance,
-    get_ai_act_guardrails,
-)
-
-# CORTEX - Multi-Agent Orchestration
-from neutron.orchestration.cortex import (
-    Agent,
-    AgentSwarm,
-    Task,
-    AgentResult,
-    SwarmResult,
-    ConsensusStrategy,
+    classify_ai_system_risk,
 )
 
 # Compliance
-from neutron.compliance.sentinel import AgentOutput, ComplianceEngine
+from neutron.compliance.sentinel import AgentOutput
 
+# ORACLE - Explainability Framework
+from neutron.reasoning import (
+    ExplanationType,
+    create_explainer,
+    explain_agent_decision,
+)
 
 # =============================================================================
 # Colors for Terminal Output
 # =============================================================================
 
+
 class Colors:
     """ANSI color codes for terminal output"""
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    RED = '\033[91m'
-    END = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    END = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 def print_header(text: str):
@@ -110,6 +97,7 @@ def print_info(text: str):
 # Demo 1: ORACLE Explanation Strategies
 # =============================================================================
 
+
 async def demo_oracle_strategies():
     """Demonstrate all 5 ORACLE explanation strategies"""
     print_header("Demo 1: ORACLE Explanation Strategies")
@@ -146,7 +134,7 @@ async def demo_oracle_strategies():
         input_data=input_data,
         output_data=output_data,
         explanation_type=ExplanationType.COUNTERFACTUAL,
-        metadata={"threshold": 700}
+        metadata={"threshold": 700},
     )
 
     print(f"\n{explanation.to_human_readable()}\n")
@@ -167,7 +155,7 @@ async def demo_oracle_strategies():
         input_data=input_data,
         output_data=output_data,
         explanation_type=ExplanationType.EXAMPLE_BASED,
-        metadata={"similar_cases": similar_cases}
+        metadata={"similar_cases": similar_cases},
     )
 
     print(f"\n{explanation.to_human_readable()}\n")
@@ -190,7 +178,7 @@ async def demo_oracle_strategies():
         input_data=input_data,
         output_data=output_data,
         explanation_type=ExplanationType.CHAIN_OF_THOUGHT,
-        metadata={"reasoning_steps": reasoning_steps}
+        metadata={"reasoning_steps": reasoning_steps},
     )
 
     print(f"\n{explanation.to_human_readable()}\n")
@@ -211,7 +199,7 @@ async def demo_oracle_strategies():
         input_data=input_data,
         output_data=output_data,
         explanation_type=ExplanationType.RULE_BASED,
-        metadata={"rules": rules}
+        metadata={"rules": rules},
     )
 
     print(f"\n{explanation.to_human_readable()}\n")
@@ -221,6 +209,7 @@ async def demo_oracle_strategies():
 # =============================================================================
 # Demo 2: EU AI Act Risk Classification
 # =============================================================================
+
 
 async def demo_ai_act_risk_classification():
     """Demonstrate EU AI Act risk classification"""
@@ -261,6 +250,7 @@ async def demo_ai_act_risk_classification():
 # Demo 3: EU AI Act Article 13 - Transparency
 # =============================================================================
 
+
 async def demo_ai_act_article_13():
     """Demonstrate Article 13 transparency requirements"""
     print_header("Demo 3: EU AI Act Article 13 - Transparency")
@@ -276,7 +266,7 @@ async def demo_ai_act_article_13():
             "system_info": "NEXUS Credit Assessment System v3.2",
             "capabilities": "Analyzes credit history, income, employment, and debt ratios using ensemble ML models",
             "limitations": "Cannot consider contextual factors like recent life events or non-financial circumstances",
-        }
+        },
     )
 
     result = check_ai_act_article_13_transparency(output)
@@ -290,8 +280,7 @@ async def demo_ai_act_article_13():
     print_subheader("3.2 Non-Compliant System (Missing AI Disclosure)")
 
     output_bad = AgentOutput(
-        content="Decision: Approved",
-        metadata={"use_case": "loan_approval"}  # Missing disclosure
+        content="Decision: Approved", metadata={"use_case": "loan_approval"}  # Missing disclosure
     )
 
     result = check_ai_act_article_13_transparency(output_bad)
@@ -306,6 +295,7 @@ async def demo_ai_act_article_13():
 # =============================================================================
 # Demo 4: EU AI Act Article 14 - Human Oversight
 # =============================================================================
+
 
 async def demo_ai_act_article_14():
     """Demonstrate Article 14 human oversight requirements"""
@@ -322,7 +312,7 @@ async def demo_ai_act_article_14():
             "oversight_mechanism": "human_in_the_loop",
             "overseer_id": "hiring_manager_johndoe",
             "can_override": True,
-        }
+        },
     )
 
     result = check_ai_act_article_14_human_oversight(output)
@@ -340,7 +330,7 @@ async def demo_ai_act_article_14():
         metadata={
             "use_case": "credit_score",
             "human_oversight_enabled": False,  # VIOLATION
-        }
+        },
     )
 
     result = check_ai_act_article_14_human_oversight(output_bad)
@@ -354,10 +344,7 @@ async def demo_ai_act_article_14():
     # Demo 4.3: Minimal Risk (Oversight Not Required)
     print_subheader("4.3 Minimal Risk System (Oversight Not Required)")
 
-    output_minimal = AgentOutput(
-        content="This email is spam",
-        metadata={"use_case": "spam_filter"}
-    )
+    output_minimal = AgentOutput(content="This email is spam", metadata={"use_case": "spam_filter"})
 
     result = check_ai_act_article_14_human_oversight(output_minimal)
 
@@ -369,8 +356,10 @@ async def demo_ai_act_article_14():
 # Demo 5: CORTEX with ORACLE Explanations
 # =============================================================================
 
+
 class MockLoanAgent:
     """Mock loan assessment agent"""
+
     def __init__(self, agent_id: str, bias: float = 0):
         self.agent_id = agent_id
         self.bias = bias
@@ -418,9 +407,7 @@ async def demo_cortex_with_oracle():
 
     # Execute with auto-explanation
     result = await swarm.execute(
-        task,
-        generate_explanation=True,
-        explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+        task, generate_explanation=True, explanation_type=ExplanationType.CHAIN_OF_THOUGHT
     )
 
     print_success(f"Consensus reached: {result.consensus_output}")
@@ -438,6 +425,7 @@ async def demo_cortex_with_oracle():
 # =============================================================================
 # Demo 6: Full NEXUS Integration (Simulated)
 # =============================================================================
+
 
 async def demo_full_nexus_integration():
     """Demonstrate full NEXUS workflow with all Phase 3 features"""
@@ -482,7 +470,9 @@ async def demo_full_nexus_integration():
     print(f"{Colors.GREEN}Consensus: {simulated_result['consensus_output']}{Colors.END}")
     print(f"{Colors.GREEN}Confidence: {simulated_result['consensus_confidence']:.1%}{Colors.END}")
     print(f"{Colors.GREEN}Agreement: {simulated_result['agreement_score']:.1%}{Colors.END}")
-    print(f"{Colors.GREEN}Risk Level: {simulated_result['ai_system_risk_level'].upper()}{Colors.END}")
+    print(
+        f"{Colors.GREEN}Risk Level: {simulated_result['ai_system_risk_level'].upper()}{Colors.END}"
+    )
     print(f"{Colors.GREEN}GDPR Compliant: ✓{Colors.END}")
     print(f"{Colors.GREEN}EU AI Act Compliant: ✓{Colors.END}")
     print(f"{Colors.GREEN}Explanation Generated: ✓{Colors.END}\n")
@@ -491,6 +481,7 @@ async def demo_full_nexus_integration():
 # =============================================================================
 # Main Demo Runner
 # =============================================================================
+
 
 async def main():
     """Run all Phase 3 demos"""
@@ -518,6 +509,7 @@ async def main():
             print_error(f"Demo {i}/{len(demos)} failed: {name}")
             print(f"{Colors.RED}Error: {e}{Colors.END}")
             import traceback
+
             traceback.print_exc()
 
     # Final Summary

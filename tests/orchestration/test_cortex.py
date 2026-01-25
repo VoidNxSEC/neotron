@@ -4,27 +4,26 @@ Tests for CORTEX Multi-Agent Orchestration System
 Tests consensus algorithms, agent swarm coordination, and task execution.
 """
 
-import pytest
 import asyncio
-from datetime import datetime
 from typing import Any
 
+import pytest
 from neutron.orchestration.cortex import (
-    Agent,
-    AgentSwarm,
-    Task,
     AgentResult,
-    SwarmResult,
-    ConsensusStrategy,
+    AgentSwarm,
     ConsensusEngine,
+    ConsensusStrategy,
+    SwarmResult,
+    Task,
     create_swarm,
 )
-from neutron.reasoning import ExplanationType
 
+from neutron.reasoning import ExplanationType
 
 # =============================================================================
 # Mock Agents
 # =============================================================================
+
 
 class MockAgent:
     """Mock agent for testing"""
@@ -45,7 +44,7 @@ class MockAgent:
             output=self._output,
             confidence=self._confidence,
             explanation=f"Agent {self.agent_id} predicts {self._output}",
-            processing_time_ms=self._delay_ms
+            processing_time_ms=self._delay_ms,
         )
 
 
@@ -64,13 +63,14 @@ class FailingAgent:
 # Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def classification_task():
     """Task for classification (categorical output)"""
     return Task(
         type="classification",
         input={"text": "Is this spam?"},
-        consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+        consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
     )
 
 
@@ -80,7 +80,7 @@ def regression_task():
     return Task(
         type="regression",
         input={"features": [1.0, 2.0, 3.0]},
-        consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE
+        consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE,
     )
 
 
@@ -88,16 +88,14 @@ def regression_task():
 # AgentResult Tests
 # =============================================================================
 
+
 class TestAgentResult:
     """Tests for AgentResult data model"""
 
     def test_valid_agent_result(self):
         """Test creating valid agent result"""
         result = AgentResult(
-            agent_id="agent_1",
-            output="spam",
-            confidence=0.9,
-            explanation="High spam indicators"
+            agent_id="agent_1", output="spam", confidence=0.9, explanation="High spam indicators"
         )
 
         assert result.agent_id == "agent_1"
@@ -124,6 +122,7 @@ class TestAgentResult:
 # Consensus Engine Tests
 # =============================================================================
 
+
 class TestConsensusEngine:
     """Tests for consensus algorithms"""
 
@@ -139,7 +138,7 @@ class TestConsensusEngine:
 
         assert output == "spam"
         assert 0.8 <= confidence <= 0.9  # Average of agreeing agents
-        assert agreement == 2/3  # 2 out of 3 agree
+        assert agreement == 2 / 3  # 2 out of 3 agree
 
     def test_majority_vote_tie(self):
         """Test majority vote with tie (first wins)"""
@@ -157,8 +156,8 @@ class TestConsensusEngine:
         """Test weighted average with numeric outputs"""
         results = [
             AgentResult("a1", 10.0, 0.9, ""),  # High confidence
-            AgentResult("a2", 5.0, 0.3, ""),   # Low confidence
-            AgentResult("a3", 8.0, 0.6, ""),   # Medium confidence
+            AgentResult("a2", 5.0, 0.3, ""),  # Low confidence
+            AgentResult("a3", 8.0, 0.6, ""),  # Medium confidence
         ]
 
         output, confidence, agreement = ConsensusEngine.weighted_average(results)
@@ -215,7 +214,7 @@ class TestConsensusEngine:
 
         assert output == "ham"
         assert confidence == 0.95
-        assert agreement == 1/3  # Only 1 agent agrees with best
+        assert agreement == 1 / 3  # Only 1 agent agrees with best
 
     def test_empty_results_error(self):
         """Test that empty results raise error"""
@@ -229,6 +228,7 @@ class TestConsensusEngine:
 # =============================================================================
 # AgentSwarm Tests
 # =============================================================================
+
 
 class TestAgentSwarm:
     """Tests for agent swarm coordination"""
@@ -262,7 +262,7 @@ class TestAgentSwarm:
         assert result.consensus_output == "spam"
         assert result.num_agents == 3
         assert len(result.individual_results) == 3
-        assert result.agreement_score == pytest.approx(2/3, rel=0.1)
+        assert result.agreement_score == pytest.approx(2 / 3, rel=0.1)
 
     @pytest.mark.asyncio
     async def test_execute_weighted_average(self, regression_task):
@@ -292,7 +292,7 @@ class TestAgentSwarm:
         task = Task(
             type="classification",
             input={"text": "spam?"},
-            consensus_strategy=ConsensusStrategy.UNANIMOUS
+            consensus_strategy=ConsensusStrategy.UNANIMOUS,
         )
 
         swarm = AgentSwarm(agents)
@@ -312,7 +312,7 @@ class TestAgentSwarm:
         task = Task(
             type="classification",
             input={"text": "spam?"},
-            consensus_strategy=ConsensusStrategy.UNANIMOUS
+            consensus_strategy=ConsensusStrategy.UNANIMOUS,
         )
 
         swarm = AgentSwarm(agents)
@@ -332,7 +332,7 @@ class TestAgentSwarm:
         task = Task(
             type="classification",
             input={"text": "spam?"},
-            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE
+            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE,
         )
 
         swarm = AgentSwarm(agents)
@@ -355,7 +355,7 @@ class TestAgentSwarm:
             type="classification",
             input={"text": "spam?"},
             consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
-            timeout_seconds=1.0
+            timeout_seconds=1.0,
         )
 
         swarm = AgentSwarm(agents)
@@ -376,11 +376,7 @@ class TestAgentSwarm:
             MockAgent("a1", "spam", 0.9, delay_ms=2000),
         ]
 
-        task = Task(
-            type="classification",
-            input={"text": "spam?"},
-            timeout_seconds=0.5
-        )
+        task = Task(type="classification", input={"text": "spam?"}, timeout_seconds=0.5)
 
         swarm = AgentSwarm(agents)
 
@@ -397,9 +393,7 @@ class TestAgentSwarm:
         ]
 
         task = Task(
-            type="classification",
-            input={"text": "spam?"},
-            require_all_agents=False  # Default
+            type="classification", input={"text": "spam?"}, require_all_agents=False  # Default
         )
 
         swarm = AgentSwarm(agents)
@@ -419,9 +413,7 @@ class TestAgentSwarm:
         ]
 
         task = Task(
-            type="classification",
-            input={"text": "spam?"},
-            require_all_agents=True  # Require all
+            type="classification", input={"text": "spam?"}, require_all_agents=True  # Require all
         )
 
         swarm = AgentSwarm(agents)
@@ -437,10 +429,7 @@ class TestAgentSwarm:
             FailingAgent("a2"),
         ]
 
-        task = Task(
-            type="classification",
-            input={"text": "spam?"}
-        )
+        task = Task(type="classification", input={"text": "spam?"})
 
         swarm = AgentSwarm(agents)
 
@@ -457,10 +446,12 @@ class TestAgentSwarm:
 
     def test_remove_agent(self):
         """Test removing agent from swarm"""
-        swarm = AgentSwarm([
-            MockAgent("a1", "spam", 0.9),
-            MockAgent("a2", "ham", 0.8),
-        ])
+        swarm = AgentSwarm(
+            [
+                MockAgent("a1", "spam", 0.9),
+                MockAgent("a2", "ham", 0.8),
+            ]
+        )
         assert swarm.num_agents == 2
 
         swarm.remove_agent("a1")
@@ -476,6 +467,7 @@ class TestAgentSwarm:
 # =============================================================================
 # SwarmResult Tests
 # =============================================================================
+
 
 class TestSwarmResult:
     """Tests for SwarmResult data model"""
@@ -494,7 +486,7 @@ class TestSwarmResult:
             consensus_confidence=0.85,
             individual_results=results,
             consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
-            agreement_score=2/3
+            agreement_score=2 / 3,
         )
 
         assert swarm_result.num_agents == 3
@@ -504,6 +496,7 @@ class TestSwarmResult:
 # =============================================================================
 # Utility Function Tests
 # =============================================================================
+
 
 class TestUtilityFunctions:
     """Tests for utility functions"""
@@ -527,6 +520,7 @@ class TestUtilityFunctions:
 # Integration Tests
 # =============================================================================
 
+
 class TestCortexIntegration:
     """Integration tests for real-world scenarios"""
 
@@ -545,7 +539,7 @@ class TestCortexIntegration:
         task = Task(
             type="spam_classification",
             input={"email": "Buy now! Limited offer!"},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
         )
 
         swarm = AgentSwarm(agents, name="spam_ensemble")
@@ -569,7 +563,7 @@ class TestCortexIntegration:
         task = Task(
             type="price_prediction",
             input={"features": {"sqft": 2000, "bedrooms": 3}},
-            consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE
+            consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE,
         )
 
         swarm = AgentSwarm(agents, name="price_ensemble")
@@ -593,7 +587,7 @@ class TestCortexIntegration:
             type="medical_diagnosis",
             input={"scan": "data"},
             consensus_strategy=ConsensusStrategy.UNANIMOUS,
-            require_all_agents=True
+            require_all_agents=True,
         )
 
         swarm = AgentSwarm(agents, name="diagnosis_ensemble")
@@ -615,7 +609,7 @@ class TestCortexIntegration:
         task = Task(
             type="risk_assessment",
             input={"case": "complex"},
-            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE
+            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE,
         )
 
         swarm = AgentSwarm(agents, name="risk_ensemble")
@@ -624,6 +618,7 @@ class TestCortexIntegration:
         # Trust the most confident expert
         assert result.consensus_output == "high_risk"
         assert result.consensus_confidence == 0.95
+
 
 # =============================================================================
 # ORACLE Integration Tests
@@ -645,7 +640,7 @@ class TestOracleIntegration:
         task = Task(
             type="loan_decision",
             input={"credit_score": 750, "income": 80000},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
         )
 
         swarm = AgentSwarm(agents)
@@ -677,18 +672,16 @@ class TestOracleIntegration:
         task = Task(
             type="spam_detection",
             input={"email": "test"},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
         )
 
         swarm = AgentSwarm(agents)
         result = await swarm.execute(task)
 
-        explanation = result.generate_explanation(
-            explanation_type=ExplanationType.CHAIN_OF_THOUGHT
-        )
+        explanation = result.generate_explanation(explanation_type=ExplanationType.CHAIN_OF_THOUGHT)
 
         assert explanation.explanation_type == ExplanationType.CHAIN_OF_THOUGHT
-        
+
         # Should have reasoning steps
         assert len(explanation.evidence) >= 5  # At least 5 steps
 
@@ -709,18 +702,16 @@ class TestOracleIntegration:
         task = Task(
             type="risk_assessment",
             input={"transaction": "large_transfer"},
-            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE
+            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE,
         )
 
         swarm = AgentSwarm(agents)
         result = await swarm.execute(task)
 
-        explanation = result.generate_explanation(
-            explanation_type=ExplanationType.EXAMPLE_BASED
-        )
+        explanation = result.generate_explanation(explanation_type=ExplanationType.EXAMPLE_BASED)
 
         assert explanation.explanation_type == ExplanationType.EXAMPLE_BASED
-        
+
         # Should use individual agent results as "similar cases"
         assert len(explanation.evidence) == 3  # 3 agents = 3 similar cases
 
@@ -739,18 +730,16 @@ class TestOracleIntegration:
         task = Task(
             type="access_control",
             input={"user": "admin"},
-            consensus_strategy=ConsensusStrategy.UNANIMOUS
+            consensus_strategy=ConsensusStrategy.UNANIMOUS,
         )
 
         swarm = AgentSwarm(agents)
         result = await swarm.execute(task)
 
-        explanation = result.generate_explanation(
-            explanation_type=ExplanationType.RULE_BASED
-        )
+        explanation = result.generate_explanation(explanation_type=ExplanationType.RULE_BASED)
 
         assert explanation.explanation_type == ExplanationType.RULE_BASED
-        
+
         # Should have rules in evidence
         assert len(explanation.evidence) >= 3  # At least 3 consensus rules
 
@@ -769,23 +758,23 @@ class TestOracleIntegration:
         task = Task(
             type="decision",
             input={"score": 750},
-            consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE
+            consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE,
         )
 
         swarm = AgentSwarm(agents)
         result = await swarm.execute(task)
 
-        explanation = result.generate_explanation(
-            explanation_type=ExplanationType.COUNTERFACTUAL
-        )
+        explanation = result.generate_explanation(explanation_type=ExplanationType.COUNTERFACTUAL)
 
         assert explanation.explanation_type == ExplanationType.COUNTERFACTUAL
-        
+
         # Should have counterfactuals
         assert len(explanation.counterfactuals) > 0
 
         # Reasoning should mention "what if"
-        assert "what if" in explanation.reasoning.lower() or "would" in explanation.reasoning.lower()
+        assert (
+            "what if" in explanation.reasoning.lower() or "would" in explanation.reasoning.lower()
+        )
 
     @pytest.mark.asyncio
     async def test_auto_generate_explanation_on_execute(self):
@@ -798,16 +787,14 @@ class TestOracleIntegration:
         task = Task(
             type="sentiment_analysis",
             input={"text": "Great product!"},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
         )
 
         swarm = AgentSwarm(agents)
-        
+
         # Execute with auto-explanation
         result = await swarm.execute(
-            task,
-            generate_explanation=True,
-            explanation_type=ExplanationType.FEATURE_IMPORTANCE
+            task, generate_explanation=True, explanation_type=ExplanationType.FEATURE_IMPORTANCE
         )
 
         # Explanation should be automatically generated
@@ -827,14 +814,12 @@ class TestOracleIntegration:
         task = Task(
             type="fraud_detection",
             input={"transaction": "suspicious"},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
         )
 
         swarm = AgentSwarm(agents)
         result = await swarm.execute(
-            task,
-            generate_explanation=True,
-            explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+            task, generate_explanation=True, explanation_type=ExplanationType.CHAIN_OF_THOUGHT
         )
 
         # Should have chain-of-thought explanation
@@ -856,7 +841,7 @@ class TestOracleIntegration:
         task = Task(
             type="classification",
             input={"data": "test"},
-            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE
+            consensus_strategy=ConsensusStrategy.BEST_CONFIDENCE,
         )
 
         swarm = AgentSwarm(agents)
@@ -872,11 +857,7 @@ class TestOracleIntegration:
         """Test that explanation is None without auto-generate"""
         agents = [MockAgent("agent_1", "result", 0.9)]
 
-        task = Task(
-            type="task",
-            input={},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
-        )
+        task = Task(type="task", input={}, consensus_strategy=ConsensusStrategy.MAJORITY_VOTE)
 
         swarm = AgentSwarm(agents)
         result = await swarm.execute(task, generate_explanation=False)
@@ -899,7 +880,7 @@ class TestOracleIntegration:
         task = Task(
             type="approval",
             input={"request": "test"},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE,
         )
 
         swarm = AgentSwarm(agents)
@@ -919,6 +900,7 @@ class TestOracleIntegration:
 
         # JSON should be valid
         import json
+
         parsed = json.loads(json_output)
         assert parsed["decision"] == "Swarm consensus: approved"
 
@@ -931,9 +913,7 @@ class TestOracleIntegration:
         ]
 
         task = Task(
-            type="binary_decision",
-            input={},
-            consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
+            type="binary_decision", input={}, consensus_strategy=ConsensusStrategy.MAJORITY_VOTE
         )
 
         swarm = AgentSwarm(agents)
@@ -941,18 +921,16 @@ class TestOracleIntegration:
 
         # With agent reasoning
         explanation_with = result.generate_explanation(
-            explanation_type=ExplanationType.CHAIN_OF_THOUGHT,
-            include_agent_reasoning=True
+            explanation_type=ExplanationType.CHAIN_OF_THOUGHT, include_agent_reasoning=True
         )
 
         # Should include agent details in evidence
-        evidence_text = " ".join([e.description for e in explanation_with.evidence])
+
         assert len(explanation_with.evidence) > 5  # 5 base steps + agent details
 
         # Without agent reasoning
         explanation_without = result.generate_explanation(
-            explanation_type=ExplanationType.CHAIN_OF_THOUGHT,
-            include_agent_reasoning=False
+            explanation_type=ExplanationType.CHAIN_OF_THOUGHT, include_agent_reasoning=False
         )
 
         # Should only have base reasoning steps
@@ -967,9 +945,7 @@ class TestOracleIntegration:
         ]
 
         task = Task(
-            type="prediction",
-            input={},
-            consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE
+            type="prediction", input={}, consensus_strategy=ConsensusStrategy.WEIGHTED_AVERAGE
         )
 
         swarm = AgentSwarm(agents)

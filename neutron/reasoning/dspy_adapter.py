@@ -5,10 +5,10 @@ Connects DSPy framework to existing provider infrastructure (SecureLLM, Phantom)
 Phase 1 MVP: Simple adapter for quick validation.
 """
 
-import dspy
-from typing import Optional, Dict, Any, List
-import requests
 import os
+from typing import Any
+
+import dspy
 
 
 class SimpleLLMProvider:
@@ -17,16 +17,12 @@ class SimpleLLMProvider:
     Can be replaced with Phantom/SecureLLM integration later.
     """
 
-    def __init__(self, provider_name: str, api_key: Optional[str] = None):
+    def __init__(self, provider_name: str, api_key: str | None = None):
         self.provider_name = provider_name
         self.api_key = api_key or os.getenv(f"{provider_name.upper()}_API_KEY")
 
     def generate(
-        self,
-        prompt: str,
-        temperature: float = 0.7,
-        max_tokens: int = 512,
-        **kwargs
+        self, prompt: str, temperature: float = 0.7, max_tokens: int = 512, **kwargs
     ) -> str:
         """
         Generate text from prompt.
@@ -45,16 +41,14 @@ class SimpleLLMProvider:
         """Call DeepSeek API"""
         try:
             import openai
-            client = openai.OpenAI(
-                api_key=self.api_key,
-                base_url="https://api.deepseek.com"
-            )
+
+            client = openai.OpenAI(api_key=self.api_key, base_url="https://api.deepseek.com")
 
             response = client.chat.completions.create(
                 model="deepseek-chat",
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
             )
 
             return response.choices[0].message.content
@@ -65,13 +59,14 @@ class SimpleLLMProvider:
         """Call OpenAI API"""
         try:
             import openai
+
             client = openai.OpenAI(api_key=self.api_key)
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",  # Cost-effective for testing
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
             )
 
             return response.choices[0].message.content
@@ -88,21 +83,23 @@ class SimpleLLMProvider:
 
             client = openai.OpenAI(
                 api_key="not-needed",  # llama.cpp não precisa de key
-                base_url="http://localhost:8080/v1"  # API compatível com OpenAI
+                base_url="http://localhost:8080/v1",  # API compatível com OpenAI
             )
 
             response = client.chat.completions.create(
                 model="local-model",  # Nome do modelo carregado no llama.cpp
                 messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_tokens=max_tokens,
             )
 
             return response.choices[0].message.content
 
         except Exception as e:
-            raise RuntimeError(f"Local llama.cpp call failed: {e}. "
-                             f"Certifique-se que llama.cpp server está rodando em localhost:8080")
+            raise RuntimeError(
+                f"Local llama.cpp call failed: {e}. "
+                f"Certifique-se que llama.cpp server está rodando em localhost:8080"
+            )
 
 
 class DSPyProviderAdapter(dspy.LM):
@@ -114,7 +111,7 @@ class DSPyProviderAdapter(dspy.LM):
         dspy.configure(lm=provider)
     """
 
-    def __init__(self, provider_name: str, api_key: Optional[str] = None):
+    def __init__(self, provider_name: str, api_key: str | None = None):
         super().__init__(model=provider_name)
         self.provider = SimpleLLMProvider(provider_name, api_key)
         self.provider_name = provider_name
@@ -136,18 +133,18 @@ class DSPyProviderAdapter(dspy.LM):
 
         try:
             response = self.provider.generate(
-                prompt=prompt,
-                temperature=temperature,
-                max_tokens=max_tokens
+                prompt=prompt, temperature=temperature, max_tokens=max_tokens
             )
 
             # Track history for debugging
-            self.history.append({
-                "prompt": prompt,
-                "response": response,
-                "provider": self.provider_name,
-                "kwargs": kwargs
-            })
+            self.history.append(
+                {
+                    "prompt": prompt,
+                    "response": response,
+                    "provider": self.provider_name,
+                    "kwargs": kwargs,
+                }
+            )
 
             return response
 
@@ -156,7 +153,7 @@ class DSPyProviderAdapter(dspy.LM):
             print(f"⚠️  {error_msg}")
             raise
 
-    def __call__(self, prompt: str, **kwargs) -> List[str]:
+    def __call__(self, prompt: str, **kwargs) -> list[str]:
         """
         Alternative calling interface for DSPy.
         Returns list of completions (we return single completion for simplicity).
@@ -164,7 +161,7 @@ class DSPyProviderAdapter(dspy.LM):
         response = self.basic_request(prompt, **kwargs)
         return [response]
 
-    def get_history(self) -> List[Dict[str, Any]]:
+    def get_history(self) -> list[dict[str, Any]]:
         """Get generation history for debugging/analysis"""
         return self.history
 
@@ -175,14 +172,15 @@ class DSPyProviderAdapter(dspy.LM):
 
 # Convenience functions for quick setup
 
-def configure_deepseek(api_key: Optional[str] = None):
+
+def configure_deepseek(api_key: str | None = None):
     """Configure DSPy to use DeepSeek"""
     adapter = DSPyProviderAdapter("deepseek", api_key)
     dspy.configure(lm=adapter)
     return adapter
 
 
-def configure_openai(api_key: Optional[str] = None):
+def configure_openai(api_key: str | None = None):
     """Configure DSPy to use OpenAI"""
     adapter = DSPyProviderAdapter("openai", api_key)
     dspy.configure(lm=adapter)

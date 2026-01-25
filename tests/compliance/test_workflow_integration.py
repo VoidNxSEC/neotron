@@ -5,17 +5,15 @@ Tests the integration of compliance guardrails with Temporal workflow activities
 """
 
 import pytest
-from datetime import datetime
-
 from neutron.orchestration.workflows import (
+    batch_validate_outputs_activity,
     validate_agent_output_activity,
-    batch_validate_outputs_activity
 )
-
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def compliant_output():
@@ -31,13 +29,9 @@ def compliant_output():
         "explanation_quality": 0.85,
         "metadata": {
             "exportable_format": "json",
-            "data_structure": {
-                "loan_amount": "float",
-                "apr": "float",
-                "approval_status": "string"
-            }
+            "data_structure": {"loan_amount": "float", "apr": "float", "approval_status": "string"},
         },
-        "model_name": "loan-decision-v1"
+        "model_name": "loan-decision-v1",
     }
 
 
@@ -49,7 +43,7 @@ def non_compliant_output_no_explanation():
         "explanation": None,
         "explanation_quality": 0.0,
         "metadata": None,
-        "model_name": "loan-decision-v1"
+        "model_name": "loan-decision-v1",
     }
 
 
@@ -61,7 +55,7 @@ def non_compliant_output_low_quality():
         "explanation": "Approved.",
         "explanation_quality": 0.3,
         "metadata": None,
-        "model_name": "loan-decision-v1"
+        "model_name": "loan-decision-v1",
     }
 
 
@@ -76,13 +70,14 @@ def warning_level_violation():
         ),
         "explanation_quality": 0.85,
         "metadata": None,  # Missing portability info
-        "model_name": "risk-assessment-v1"
+        "model_name": "risk-assessment-v1",
     }
 
 
 # =============================================================================
 # Single Output Validation Tests
 # =============================================================================
+
 
 class TestValidateAgentOutputActivity:
     """Tests for validate_agent_output_activity"""
@@ -95,7 +90,7 @@ class TestValidateAgentOutputActivity:
             explanation=compliant_output["explanation"],
             explanation_quality=compliant_output["explanation_quality"],
             metadata=compliant_output["metadata"],
-            model_name=compliant_output["model_name"]
+            model_name=compliant_output["model_name"],
         )
 
         assert result["passed"] is True
@@ -112,7 +107,7 @@ class TestValidateAgentOutputActivity:
             explanation=non_compliant_output_no_explanation["explanation"],
             explanation_quality=non_compliant_output_no_explanation["explanation_quality"],
             metadata=non_compliant_output_no_explanation["metadata"],
-            model_name=non_compliant_output_no_explanation["model_name"]
+            model_name=non_compliant_output_no_explanation["model_name"],
         )
 
         assert result["passed"] is False
@@ -135,7 +130,7 @@ class TestValidateAgentOutputActivity:
             explanation=non_compliant_output_low_quality["explanation"],
             explanation_quality=non_compliant_output_low_quality["explanation_quality"],
             metadata=non_compliant_output_low_quality["metadata"],
-            model_name=non_compliant_output_low_quality["model_name"]
+            model_name=non_compliant_output_low_quality["model_name"],
         )
 
         assert result["passed"] is False
@@ -150,7 +145,7 @@ class TestValidateAgentOutputActivity:
             explanation=warning_level_violation["explanation"],
             explanation_quality=warning_level_violation["explanation_quality"],
             metadata=warning_level_violation["metadata"],
-            model_name=warning_level_violation["model_name"]
+            model_name=warning_level_violation["model_name"],
         )
 
         # Should pass because Article 20 is warning-level
@@ -174,7 +169,7 @@ class TestValidateAgentOutputActivity:
             explanation_quality=compliant_output["explanation_quality"],
             metadata=compliant_output["metadata"],
             model_name=compliant_output["model_name"],
-            guardrails=["lgpd_art18_explanation"]  # Only Article 18
+            guardrails=["lgpd_art18_explanation"],  # Only Article 18
         )
 
         assert result["passed"] is True
@@ -189,7 +184,7 @@ class TestValidateAgentOutputActivity:
             explanation=compliant_output["explanation"],
             explanation_quality=compliant_output["explanation_quality"],
             metadata=compliant_output["metadata"],
-            model_name=compliant_output["model_name"]
+            model_name=compliant_output["model_name"],
         )
 
         # Should have audit IDs for both guardrails
@@ -203,6 +198,7 @@ class TestValidateAgentOutputActivity:
 # =============================================================================
 # Batch Validation Tests
 # =============================================================================
+
 
 class TestBatchValidateOutputsActivity:
     """Tests for batch_validate_outputs_activity"""
@@ -220,17 +216,9 @@ class TestBatchValidateOutputsActivity:
             assert result["blocked_by"] is None
 
     @pytest.mark.asyncio
-    async def test_batch_mixed_results(
-        self,
-        compliant_output,
-        non_compliant_output_no_explanation
-    ):
+    async def test_batch_mixed_results(self, compliant_output, non_compliant_output_no_explanation):
         """Test batch validation with mixed compliant/non-compliant outputs"""
-        outputs = [
-            compliant_output,
-            non_compliant_output_no_explanation,
-            compliant_output.copy()
-        ]
+        outputs = [compliant_output, non_compliant_output_no_explanation, compliant_output.copy()]
 
         results = await batch_validate_outputs_activity(outputs)
 
@@ -260,8 +248,7 @@ class TestBatchValidateOutputsActivity:
         outputs = [compliant_output.copy() for _ in range(2)]
 
         results = await batch_validate_outputs_activity(
-            outputs,
-            guardrails=["lgpd_art18_explanation"]
+            outputs, guardrails=["lgpd_art18_explanation"]
         )
 
         assert len(results) == 2
@@ -274,6 +261,7 @@ class TestBatchValidateOutputsActivity:
 # =============================================================================
 # Integration Scenario Tests
 # =============================================================================
+
 
 class TestWorkflowIntegrationScenarios:
     """Real-world integration scenarios"""
@@ -300,10 +288,10 @@ class TestWorkflowIntegrationScenarios:
                     "churn_probability": "float",
                     "risk_level": "string",
                     "recommended_action": "string",
-                    "model_confidence": "float"
-                }
+                    "model_confidence": "float",
+                },
             },
-            "model_name": "churn-predictor-v3"
+            "model_name": "churn-predictor-v3",
         }
 
         result = await validate_agent_output_activity(**model_output)
@@ -321,9 +309,9 @@ class TestWorkflowIntegrationScenarios:
                 "explanation_quality": 0.75,
                 "metadata": {
                     "exportable_format": "json",
-                    "data_structure": {"prediction": "string"}
+                    "data_structure": {"prediction": "string"},
                 },
-                "model_name": "model-a"
+                "model_name": "model-a",
             },
             {
                 "output_text": "Model B prediction: Approve",
@@ -331,17 +319,17 @@ class TestWorkflowIntegrationScenarios:
                 "explanation_quality": 0.82,
                 "metadata": {
                     "exportable_format": "json",
-                    "data_structure": {"prediction": "string"}
+                    "data_structure": {"prediction": "string"},
                 },
-                "model_name": "model-b"
+                "model_name": "model-b",
             },
             {
                 "output_text": "Model C prediction: Deny",
                 "explanation": None,  # This model doesn't provide explanations
                 "explanation_quality": 0.0,
                 "metadata": None,
-                "model_name": "model-c"
-            }
+                "model_name": "model-c",
+            },
         ]
 
         results = await batch_validate_outputs_activity(ensemble_outputs)
@@ -352,9 +340,7 @@ class TestWorkflowIntegrationScenarios:
         assert results[2]["passed"] is False
 
         # Can use passing models for consensus, exclude non-compliant one
-        compliant_models = [
-            (i, r) for i, r in enumerate(results) if r["passed"]
-        ]
+        compliant_models = [(i, r) for i, r in enumerate(results) if r["passed"]]
         assert len(compliant_models) == 2
 
     @pytest.mark.asyncio
@@ -366,7 +352,7 @@ class TestWorkflowIntegrationScenarios:
             "explanation": None,
             "explanation_quality": 0.0,
             "metadata": None,
-            "model_name": "credit-limit-v1"
+            "model_name": "credit-limit-v1",
         }
 
         result1 = await validate_agent_output_activity(**attempt1)
@@ -385,12 +371,9 @@ class TestWorkflowIntegrationScenarios:
             "explanation_quality": 0.80,
             "metadata": {
                 "exportable_format": "json",
-                "data_structure": {
-                    "decision": "string",
-                    "current_utilization": "float"
-                }
+                "data_structure": {"decision": "string", "current_utilization": "float"},
             },
-            "model_name": "credit-limit-v1"
+            "model_name": "credit-limit-v1",
         }
 
         result2 = await validate_agent_output_activity(**attempt2)

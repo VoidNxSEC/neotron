@@ -5,20 +5,19 @@ End-to-end tests validating complete platform integration:
 - CORTEX (Multi-Agent) + SYNAPSE (Memory) + GDPR + ORACLE + EU AI Act
 """
 
-import pytest
 import asyncio
-from typing import Dict, Any
+from typing import Any
 
+import pytest
 from neutron.orchestration.cortex import (
-    Agent,
-    AgentSwarm,
-    Task,
     AgentResult,
+    AgentSwarm,
     ConsensusStrategy,
+    Task,
 )
-from neutron.reasoning import ExplanationType
-from neutron.compliance.sentinel import AgentOutput
 
+from neutron.compliance.sentinel import AgentOutput
+from neutron.reasoning import ExplanationType
 
 # =============================================================================
 # Mock Components
@@ -73,9 +72,7 @@ class TestFullWorkflowIntegration:
 
         # Execute with explanation
         result = await swarm.execute(
-            task,
-            generate_explanation=True,
-            explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+            task, generate_explanation=True, explanation_type=ExplanationType.CHAIN_OF_THOUGHT
         )
 
         # Validate consensus
@@ -117,11 +114,7 @@ class TestFullWorkflowIntegration:
         ]
 
         for exp_type in explanation_types:
-            result = await swarm.execute(
-                task,
-                generate_explanation=True,
-                explanation_type=exp_type
-            )
+            result = await swarm.execute(task, generate_explanation=True, explanation_type=exp_type)
 
             assert result.explanation is not None
             assert result.explanation.explanation_type == exp_type
@@ -131,9 +124,9 @@ class TestFullWorkflowIntegration:
     async def test_compliance_validation_integration(self):
         """Test that compliance validation works in workflow"""
         from neutron.compliance.auditors.ai_act import (
-            validate_ai_act_compliance,
-            classify_ai_system_risk,
             AISystemRiskLevel,
+            classify_ai_system_risk,
+            validate_ai_act_compliance,
         )
 
         # Create output for high-risk AI system
@@ -149,7 +142,7 @@ class TestFullWorkflowIntegration:
                 "oversight_mechanism": "human_in_the_loop",
                 "overseer_id": "loan_officer_123",
                 "can_override": True,
-            }
+            },
         )
 
         # Validate risk classification
@@ -183,9 +176,7 @@ class TestFullWorkflowIntegration:
 
         # 2. Execute with explanation
         result = await swarm.execute(
-            task,
-            generate_explanation=True,
-            explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+            task, generate_explanation=True, explanation_type=ExplanationType.CHAIN_OF_THOUGHT
         )
 
         # 3. Validate consensus reached
@@ -219,7 +210,7 @@ class TestFullWorkflowIntegration:
                 "oversight_mechanism": "human_on_the_loop",
                 "overseer_id": "fraud_analyst_456",
                 "can_override": True,
-            }
+            },
         )
 
         # 7. Validate EU AI Act compliance
@@ -238,9 +229,9 @@ class TestComplianceIntegration:
     def test_lgpd_gdpr_ai_act_interoperability(self):
         """Test that all three compliance frameworks work together"""
         from neutron.compliance.auditors import (
-            validate_with_lgpd,
-            validate_with_gdpr,
             validate_ai_act_compliance,
+            validate_with_gdpr,
+            validate_with_lgpd,
         )
 
         # Create output that should pass all three frameworks
@@ -253,7 +244,6 @@ class TestComplianceIntegration:
                 "data_export_enabled": True,
                 "export_format": "JSON",
                 "data_categories": ["personal", "financial"],
-
                 # GDPR
                 "risk_level": "low",
                 "data_access_enabled": True,
@@ -261,12 +251,11 @@ class TestComplianceIntegration:
                 "processes_personal_data": True,
                 "erasure_supported": True,
                 "erasure_endpoint": "/api/v1/customers/{id}/delete",
-
                 # EU AI Act
                 "use_case": "data_export",
                 "ai_disclosure": True,
                 "system_info": "NEXUS Data Export System",
-            }
+            },
         )
 
         # Validate all frameworks
@@ -312,9 +301,7 @@ class TestExplainabilityIntegration:
             )
 
             result = await swarm.execute(
-                task,
-                generate_explanation=True,
-                explanation_type=ExplanationType.FEATURE_IMPORTANCE
+                task, generate_explanation=True, explanation_type=ExplanationType.FEATURE_IMPORTANCE
             )
 
             assert result.explanation is not None
@@ -322,7 +309,7 @@ class TestExplainabilityIntegration:
 
     def test_explanation_formats_are_consistent(self):
         """Test that all explanation formats contain same core information"""
-        from neutron.reasoning import explain_agent_decision, ExplanationType
+        from neutron.reasoning import ExplanationType, explain_agent_decision
 
         decision = "approved"
         input_data = {"score": 750}
@@ -332,7 +319,7 @@ class TestExplainabilityIntegration:
             decision=decision,
             input_data=input_data,
             output_data=output_data,
-            explanation_type=ExplanationType.FEATURE_IMPORTANCE
+            explanation_type=ExplanationType.FEATURE_IMPORTANCE,
         )
 
         # Get all formats
@@ -363,10 +350,7 @@ class TestPerformanceIntegration:
     async def test_multi_agent_performance(self):
         """Test performance with multiple agents"""
         # Create large swarm
-        agents = [
-            MockAgent(f"agent_{i}", "result", 0.8 + (i * 0.01))
-            for i in range(10)
-        ]
+        agents = [MockAgent(f"agent_{i}", "result", 0.8 + (i * 0.01)) for i in range(10)]
 
         swarm = AgentSwarm(agents)
         task = Task(
@@ -376,12 +360,11 @@ class TestPerformanceIntegration:
         )
 
         import time
+
         start = time.time()
 
         result = await swarm.execute(
-            task,
-            generate_explanation=True,
-            explanation_type=ExplanationType.CHAIN_OF_THOUGHT
+            task, generate_explanation=True, explanation_type=ExplanationType.CHAIN_OF_THOUGHT
         )
 
         duration = time.time() - start
@@ -412,9 +395,7 @@ class TestPerformanceIntegration:
         # With explanation
         start = time.time()
         result_with_exp = await swarm.execute(
-            task,
-            generate_explanation=True,
-            explanation_type=ExplanationType.FEATURE_IMPORTANCE
+            task, generate_explanation=True, explanation_type=ExplanationType.FEATURE_IMPORTANCE
         )
         time_with_exp = time.time() - start
 

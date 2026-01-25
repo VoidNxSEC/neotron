@@ -9,16 +9,17 @@ Philosophy:
     Every decision is logged to an immutable audit trail.
 """
 
-from dataclasses import dataclass, field
-from typing import Callable, Literal, Any, Optional
-from datetime import datetime
 import hashlib
 import json
-
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Literal
 
 # =============================================================================
 # Data Models
 # =============================================================================
+
 
 @dataclass
 class ValidationResult:
@@ -31,10 +32,11 @@ class ValidationResult:
         confidence: Confidence score (0.0-1.0)
         metadata: Additional context data
     """
+
     passed: bool
     details: str
     confidence: float = 1.0
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
 
 
 @dataclass
@@ -51,12 +53,13 @@ class AgentOutput:
         model_name: Name of the model that generated this output
         timestamp: When the output was generated
     """
+
     content: str
-    metadata: Optional[dict] = None
+    metadata: dict | None = None
     has_explanation: bool = False
-    explanation: Optional[str] = None
+    explanation: str | None = None
     explanation_quality: float = 0.0
-    model_name: Optional[str] = None
+    model_name: str | None = None
     timestamp: datetime = field(default_factory=datetime.utcnow)
 
 
@@ -73,19 +76,21 @@ class EnforcedOutput:
         enforced: Whether enforcement was applied
         audit_id: ID of the audit log entry
     """
+
     original: AgentOutput
     validation_result: ValidationResult
     guardrail_name: str
     regulation: str
     enforced: bool
-    audit_id: Optional[int] = None
+    audit_id: int | None = None
 
 
 # =============================================================================
 # Exceptions
 # =============================================================================
 
-class ComplianceViolation(Exception):
+
+class ComplianceViolation(Exception):  # noqa: N818
     """
     Raised when a blocking guardrail fails
 
@@ -94,10 +99,7 @@ class ComplianceViolation(Exception):
     """
 
     def __init__(
-        self,
-        guardrail: 'ComplianceGuardrail',
-        result: ValidationResult,
-        output: AgentOutput
+        self, guardrail: "ComplianceGuardrail", result: ValidationResult, output: AgentOutput
     ):
         self.guardrail = guardrail
         self.result = result
@@ -117,6 +119,7 @@ class ComplianceViolation(Exception):
 # =============================================================================
 # Core Guardrail Class
 # =============================================================================
+
 
 @dataclass
 class ComplianceGuardrail:
@@ -165,6 +168,7 @@ class ComplianceGuardrail:
     def __post_init__(self):
         """Initialize audit logger after dataclass initialization"""
         from neutron.compliance.audit_logger import AuditLogger
+
         self._audit_logger = AuditLogger()
 
     def enforce(self, output: AgentOutput) -> EnforcedOutput:
@@ -192,12 +196,11 @@ class ComplianceGuardrail:
             return EnforcedOutput(
                 original=output,
                 validation_result=ValidationResult(
-                    passed=True,
-                    details=f"Guardrail {self.name} is disabled"
+                    passed=True, details=f"Guardrail {self.name} is disabled"
                 ),
                 guardrail_name=self.name,
                 regulation=self.regulation,
-                enforced=False
+                enforced=False,
             )
 
         # Run compliance check
@@ -207,21 +210,23 @@ class ComplianceGuardrail:
         output_hash = self._hash_output(output)
 
         # Log to immutable audit store
-        audit_id = self._audit_logger.log({
-            "timestamp": datetime.utcnow().isoformat(),
-            "guardrail_name": self.name,
-            "regulation": self.regulation,
-            "agent_output_hash": output_hash,
-            "validation_result": {
+        audit_id = self._audit_logger.log(
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "guardrail_name": self.name,
+                "regulation": self.regulation,
+                "agent_output_hash": output_hash,
+                "validation_result": {
+                    "passed": result.passed,
+                    "details": result.details,
+                    "confidence": result.confidence,
+                    "metadata": result.metadata,
+                },
+                "severity": self.severity,
                 "passed": result.passed,
-                "details": result.details,
-                "confidence": result.confidence,
-                "metadata": result.metadata
-            },
-            "severity": self.severity,
-            "passed": result.passed,
-            "model_name": output.model_name
-        })
+                "model_name": output.model_name,
+            }
+        )
 
         # Enforce based on severity
         if not result.passed and self.severity == "block":
@@ -233,7 +238,7 @@ class ComplianceGuardrail:
             guardrail_name=self.name,
             regulation=self.regulation,
             enforced=True,
-            audit_id=audit_id
+            audit_id=audit_id,
         )
 
     def _hash_output(self, output: AgentOutput) -> str:
@@ -243,11 +248,14 @@ class ComplianceGuardrail:
         This creates a cryptographic hash of the output content and metadata
         for tamper-proof audit logging.
         """
-        content = json.dumps({
-            "content": output.content,
-            "metadata": output.metadata,
-            "timestamp": output.timestamp.isoformat()
-        }, sort_keys=True)
+        content = json.dumps(
+            {
+                "content": output.content,
+                "metadata": output.metadata,
+                "timestamp": output.timestamp.isoformat(),
+            },
+            sort_keys=True,
+        )
 
         return hashlib.sha256(content.encode()).hexdigest()
 
@@ -264,12 +272,13 @@ class ComplianceGuardrail:
 # Utility Functions
 # =============================================================================
 
+
 def create_guardrail(
     name: str,
     regulation: Literal["LGPD", "GDPR", "AI_ACT", "SOC2"],
     check_function: Callable[[AgentOutput], ValidationResult],
     severity: Literal["block", "warn", "audit"] = "block",
-    description: str = ""
+    description: str = "",
 ) -> ComplianceGuardrail:
     """
     Convenience function to create a guardrail
@@ -289,5 +298,5 @@ def create_guardrail(
         regulation=regulation,
         check=check_function,
         severity=severity,
-        description=description
+        description=description,
     )

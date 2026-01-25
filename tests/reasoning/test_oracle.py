@@ -9,25 +9,22 @@ Tests cover:
 - Convenience functions
 """
 
-from typing import Any, Dict, List
 import json
+
 import pytest
 
 from neutron.reasoning import (
-    ExplanationType,
-    ExplanationEvidence,
-    ExplanationResult,
-    Explainer,
-    BaseExplainer,
-    FeatureImportanceExplainer,
+    ChainOfThoughtExplainer,
     CounterfactualExplainer,
     ExampleBasedExplainer,
-    ChainOfThoughtExplainer,
+    ExplanationEvidence,
+    ExplanationResult,
+    ExplanationType,
+    FeatureImportanceExplainer,
     RuleBasedExplainer,
     create_explainer,
     explain_agent_decision,
 )
-
 
 # ============================================================================
 # ExplanationEvidence Tests
@@ -40,7 +37,7 @@ def test_explanation_evidence_creation():
         feature="credit_score",
         value=750,
         importance=0.85,
-        description="High credit score positively influences approval"
+        description="High credit score positively influences approval",
     )
 
     assert evidence.feature == "credit_score"
@@ -51,11 +48,7 @@ def test_explanation_evidence_creation():
 
 def test_explanation_evidence_minimal():
     """Test creating ExplanationEvidence with minimal fields."""
-    evidence = ExplanationEvidence(
-        feature="age",
-        value=25,
-        importance=0.3
-    )
+    evidence = ExplanationEvidence(feature="age", value=25, importance=0.3)
 
     assert evidence.feature == "age"
     assert evidence.value == 25
@@ -72,17 +65,11 @@ def test_explanation_result_creation():
     """Test creating ExplanationResult with all fields."""
     evidence_list = [
         ExplanationEvidence(
-            feature="credit_score",
-            value=750,
-            importance=0.85,
-            description="High credit score"
+            feature="credit_score", value=750, importance=0.85, description="High credit score"
         ),
         ExplanationEvidence(
-            feature="income",
-            value=80000,
-            importance=0.75,
-            description="High income"
-        )
+            feature="income", value=80000, importance=0.75, description="High income"
+        ),
     ]
 
     result = ExplanationResult(
@@ -91,9 +78,7 @@ def test_explanation_result_creation():
         confidence=0.92,
         evidence=evidence_list,
         reasoning="Strong financial indicators support approval",
-        counterfactuals=[
-            {"credit_score": 600, "outcome": "Loan denied"}
-        ]
+        counterfactuals=[{"credit_score": 600, "outcome": "Loan denied"}],
     )
 
     assert result.decision == "Loan approved"
@@ -107,10 +92,7 @@ def test_explanation_result_to_human_readable():
     """Test converting ExplanationResult to human-readable text."""
     evidence_list = [
         ExplanationEvidence(
-            feature="credit_score",
-            value=750,
-            importance=0.85,
-            description="High credit score"
+            feature="credit_score", value=750, importance=0.85, description="High credit score"
         )
     ]
 
@@ -120,7 +102,7 @@ def test_explanation_result_to_human_readable():
         confidence=0.92,
         evidence=evidence_list,
         reasoning="Strong financial indicators",
-        counterfactuals=[]
+        counterfactuals=[],
     )
 
     human_text = result.to_human_readable()
@@ -135,10 +117,7 @@ def test_explanation_result_to_human_readable():
 
 def test_explanation_result_to_human_readable_with_max_evidence():
     """Test human-readable output with max_evidence limit."""
-    evidence_list = [
-        ExplanationEvidence(f"feature_{i}", i, 0.5, f"desc {i}")
-        for i in range(10)
-    ]
+    evidence_list = [ExplanationEvidence(f"feature_{i}", i, 0.5, f"desc {i}") for i in range(10)]
 
     result = ExplanationResult(
         decision="Test decision",
@@ -146,7 +125,7 @@ def test_explanation_result_to_human_readable_with_max_evidence():
         confidence=0.8,
         evidence=evidence_list,
         reasoning="Test reasoning",
-        counterfactuals=[]
+        counterfactuals=[],
     )
 
     human_text = result.to_human_readable(max_evidence=3)
@@ -163,10 +142,7 @@ def test_explanation_result_to_json():
     """Test converting ExplanationResult to JSON."""
     evidence_list = [
         ExplanationEvidence(
-            feature="credit_score",
-            value=750,
-            importance=0.85,
-            description="High credit score"
+            feature="credit_score", value=750, importance=0.85, description="High credit score"
         )
     ]
 
@@ -176,7 +152,7 @@ def test_explanation_result_to_json():
         confidence=0.92,
         evidence=evidence_list,
         reasoning="Strong indicators",
-        counterfactuals=[{"credit_score": 600, "outcome": "denied"}]
+        counterfactuals=[{"credit_score": 600, "outcome": "denied"}],
     )
 
     json_str = result.to_json()
@@ -194,17 +170,11 @@ def test_explanation_result_to_markdown():
     """Test converting ExplanationResult to Markdown."""
     evidence_list = [
         ExplanationEvidence(
-            feature="credit_score",
-            value=750,
-            importance=0.85,
-            description="High credit score"
+            feature="credit_score", value=750, importance=0.85, description="High credit score"
         ),
         ExplanationEvidence(
-            feature="income",
-            value=80000,
-            importance=0.75,
-            description="High income"
-        )
+            feature="income", value=80000, importance=0.75, description="High income"
+        ),
     ]
 
     result = ExplanationResult(
@@ -213,7 +183,7 @@ def test_explanation_result_to_markdown():
         confidence=0.92,
         evidence=evidence_list,
         reasoning="Strong financial indicators",
-        counterfactuals=[{"credit_score": 600, "outcome": "denied"}]
+        counterfactuals=[{"credit_score": 600, "outcome": "denied"}],
     )
 
     markdown = result.to_markdown()
@@ -235,7 +205,7 @@ def test_explanation_result_empty_evidence():
         confidence=0.5,
         evidence=[],
         reasoning="No specific evidence",
-        counterfactuals=[]
+        counterfactuals=[],
     )
 
     human_text = result.to_human_readable()
@@ -252,20 +222,11 @@ def test_feature_importance_explainer_basic():
     """Test basic feature importance explanation."""
     explainer = FeatureImportanceExplainer()
 
-    input_data = {
-        "credit_score": 750,
-        "income": 80000,
-        "age": 35
-    }
-    output_data = {
-        "confidence": 0.92,
-        "decision": "approved"
-    }
+    input_data = {"credit_score": 750, "income": 80000, "age": 35}
+    output_data = {"confidence": 0.92, "decision": "approved"}
 
     result = explainer.explain(
-        decision="Loan approved",
-        input_data=input_data,
-        output_data=output_data
+        decision="Loan approved", input_data=input_data, output_data=output_data
     )
 
     assert result.decision == "Loan approved"
@@ -283,9 +244,7 @@ def test_feature_importance_explainer_single_feature():
     explainer = FeatureImportanceExplainer()
 
     result = explainer.explain(
-        decision="Simple decision",
-        input_data={"score": 100},
-        output_data={"confidence": 0.8}
+        decision="Simple decision", input_data={"score": 100}, output_data={"confidence": 0.8}
     )
 
     assert len(result.evidence) == 1
@@ -297,11 +256,7 @@ def test_feature_importance_explainer_no_confidence():
     """Test feature importance without confidence in output."""
     explainer = FeatureImportanceExplainer()
 
-    result = explainer.explain(
-        decision="Decision",
-        input_data={"feature": "value"},
-        output_data={}
-    )
+    result = explainer.explain(decision="Decision", input_data={"feature": "value"}, output_data={})
 
     # Should use default confidence
     assert 0.0 <= result.confidence <= 1.0
@@ -321,10 +276,7 @@ def test_counterfactual_explainer_basic():
     metadata = {"threshold": 700}
 
     result = explainer.explain(
-        decision="Loan approved",
-        input_data=input_data,
-        output_data=output_data,
-        metadata=metadata
+        decision="Loan approved", input_data=input_data, output_data=output_data, metadata=metadata
     )
 
     assert result.decision == "Loan approved"
@@ -346,14 +298,11 @@ def test_counterfactual_explainer_with_threshold():
         decision="Approved",
         input_data={"credit_score": 750},
         output_data={"confidence": 0.9},
-        metadata=metadata
+        metadata=metadata,
     )
 
     # Should have counterfactual with credit_score below threshold
-    assert any(
-        cf.get("credit_score", 0) < 700
-        for cf in result.counterfactuals
-    )
+    assert any(cf.get("credit_score", 0) < 700 for cf in result.counterfactuals)
 
 
 def test_counterfactual_explainer_no_metadata():
@@ -364,7 +313,7 @@ def test_counterfactual_explainer_no_metadata():
         decision="Decision",
         input_data={"feature": 100},
         output_data={"confidence": 0.8},
-        metadata={}
+        metadata={},
     )
 
     # Should still generate counterfactuals
@@ -383,7 +332,7 @@ def test_example_based_explainer_with_examples():
     metadata = {
         "similar_cases": [
             {"case_id": "A001", "outcome": "approved", "similarity": 0.95},
-            {"case_id": "A002", "outcome": "approved", "similarity": 0.88}
+            {"case_id": "A002", "outcome": "approved", "similarity": 0.88},
         ]
     }
 
@@ -391,7 +340,7 @@ def test_example_based_explainer_with_examples():
         decision="Loan approved",
         input_data={"credit_score": 750},
         output_data={"confidence": 0.9},
-        metadata=metadata
+        metadata=metadata,
     )
 
     assert result.decision == "Loan approved"
@@ -412,7 +361,7 @@ def test_example_based_explainer_no_examples():
         decision="Decision",
         input_data={"feature": 100},
         output_data={"confidence": 0.8},
-        metadata={}
+        metadata={},
     )
 
     # Should indicate no similar cases
@@ -433,10 +382,7 @@ def test_example_based_explainer_sorts_by_similarity():
     }
 
     result = explainer.explain(
-        decision="Decision",
-        input_data={},
-        output_data={"confidence": 0.8},
-        metadata=metadata
+        decision="Decision", input_data={}, output_data={"confidence": 0.8}, metadata=metadata
     )
 
     # Evidence should be sorted by importance (similarity) descending
@@ -460,7 +406,7 @@ def test_chain_of_thought_explainer_with_steps():
         "reasoning_steps": [
             "Step 1: Verify credit score is above 700",
             "Step 2: Check income meets minimum requirement",
-            "Step 3: Confirm no recent defaults"
+            "Step 3: Confirm no recent defaults",
         ]
     }
 
@@ -468,7 +414,7 @@ def test_chain_of_thought_explainer_with_steps():
         decision="Loan approved",
         input_data={"credit_score": 750},
         output_data={"confidence": 0.92},
-        metadata=metadata
+        metadata=metadata,
     )
 
     assert result.decision == "Loan approved"
@@ -486,10 +432,7 @@ def test_chain_of_thought_explainer_no_steps():
     explainer = ChainOfThoughtExplainer()
 
     result = explainer.explain(
-        decision="Decision",
-        input_data={},
-        output_data={"confidence": 0.8},
-        metadata={}
+        decision="Decision", input_data={}, output_data={"confidence": 0.8}, metadata={}
     )
 
     # Should indicate no steps available
@@ -501,19 +444,10 @@ def test_chain_of_thought_explainer_step_numbering():
     """Test that steps are numbered correctly in evidence."""
     explainer = ChainOfThoughtExplainer()
 
-    metadata = {
-        "reasoning_steps": [
-            "Check A",
-            "Check B",
-            "Check C"
-        ]
-    }
+    metadata = {"reasoning_steps": ["Check A", "Check B", "Check C"]}
 
     result = explainer.explain(
-        decision="Decision",
-        input_data={},
-        output_data={"confidence": 0.8},
-        metadata=metadata
+        decision="Decision", input_data={}, output_data={"confidence": 0.8}, metadata=metadata
     )
 
     # Evidence features should be "step_1", "step_2", "step_3"
@@ -533,17 +467,14 @@ def test_rule_based_explainer_with_rules():
     explainer = RuleBasedExplainer()
 
     metadata = {
-        "rules": [
-            "IF credit_score >= 700 THEN eligible",
-            "IF income >= 50000 THEN sufficient"
-        ]
+        "rules": ["IF credit_score >= 700 THEN eligible", "IF income >= 50000 THEN sufficient"]
     }
 
     result = explainer.explain(
         decision="Approved",
         input_data={"credit_score": 750, "income": 80000},
         output_data={"confidence": 0.95},
-        metadata=metadata
+        metadata=metadata,
     )
 
     assert result.decision == "Approved"
@@ -561,10 +492,7 @@ def test_rule_based_explainer_no_rules():
     explainer = RuleBasedExplainer()
 
     result = explainer.explain(
-        decision="Decision",
-        input_data={},
-        output_data={"confidence": 0.8},
-        metadata={}
+        decision="Decision", input_data={}, output_data={"confidence": 0.8}, metadata={}
     )
 
     # Should indicate no rules available
@@ -576,18 +504,10 @@ def test_rule_based_explainer_rule_confidence():
     """Test that rules get appropriate importance scores."""
     explainer = RuleBasedExplainer()
 
-    metadata = {
-        "rules": [
-            "Rule 1",
-            "Rule 2"
-        ]
-    }
+    metadata = {"rules": ["Rule 1", "Rule 2"]}
 
     result = explainer.explain(
-        decision="Decision",
-        input_data={},
-        output_data={"confidence": 0.9},
-        metadata=metadata
+        decision="Decision", input_data={}, output_data={"confidence": 0.9}, metadata=metadata
     )
 
     # All rules should have importance of 1.0 (deterministic rules)
@@ -647,7 +567,7 @@ def test_explain_agent_decision_basic():
         decision="Loan approved",
         input_data={"credit_score": 750},
         output_data={"confidence": 0.9},
-        explanation_type=ExplanationType.FEATURE_IMPORTANCE
+        explanation_type=ExplanationType.FEATURE_IMPORTANCE,
     )
 
     assert result.decision == "Loan approved"
@@ -662,7 +582,7 @@ def test_explain_agent_decision_with_metadata():
         input_data={},
         output_data={"confidence": 0.8},
         explanation_type=ExplanationType.RULE_BASED,
-        metadata={"rules": ["IF x THEN y"]}
+        metadata={"rules": ["IF x THEN y"]},
     )
 
     assert result.explanation_type == ExplanationType.RULE_BASED
@@ -685,7 +605,7 @@ def test_explain_agent_decision_all_types():
             input_data={"feature": 100},
             output_data={"confidence": 0.8},
             explanation_type=exp_type,
-            metadata={}
+            metadata={},
         )
 
         assert result.explanation_type == exp_type
@@ -706,7 +626,7 @@ def test_full_workflow_feature_importance():
     result = explainer.explain(
         decision="Loan approved",
         input_data={"credit_score": 750, "income": 80000, "age": 35},
-        output_data={"confidence": 0.92}
+        output_data={"confidence": 0.92},
     )
 
     # 3. Convert to different formats
@@ -730,7 +650,7 @@ def test_full_workflow_counterfactual():
         input_data={"score": 800},
         output_data={"confidence": 0.95},
         explanation_type=ExplanationType.COUNTERFACTUAL,
-        metadata={"threshold": 700}
+        metadata={"threshold": 700},
     )
 
     # Verify counterfactuals were generated
@@ -755,7 +675,7 @@ def test_multiple_explainers_same_decision():
         decision=decision,
         input_data=input_data,
         output_data=output_data,
-        explanation_type=ExplanationType.FEATURE_IMPORTANCE
+        explanation_type=ExplanationType.FEATURE_IMPORTANCE,
     )
 
     # Explain using counterfactual
@@ -764,7 +684,7 @@ def test_multiple_explainers_same_decision():
         input_data=input_data,
         output_data=output_data,
         explanation_type=ExplanationType.COUNTERFACTUAL,
-        metadata={"threshold": 700}
+        metadata={"threshold": 700},
     )
 
     # Both should explain same decision

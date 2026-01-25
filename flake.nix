@@ -95,6 +95,8 @@
               # Python environment via uv
               uv
               python313
+              python313Packages.pytest
+              python313Packages.mypy
 
               # System dependencies
               postgresql_15

@@ -1,9 +1,11 @@
 """
 Pytest configuration and fixtures
 """
-import pytest
+
 import os
 from pathlib import Path
+
+import pytest
 
 
 @pytest.fixture(scope="session")
@@ -34,7 +36,7 @@ def sample_hyperparameter_space():
         batch_size=[8, 16, 32],
         num_epochs=[1, 2, 3],
         weight_decay=(0.0, 0.1),
-        warmup_steps=[0, 100, 500]
+        warmup_steps=[0, 100, 500],
     )
 
 
@@ -50,5 +52,5 @@ def sample_pipeline_config(sample_hyperparameter_space):
         search_strategy=SearchStrategy.RANDOM,
         max_trials=5,
         parallel_trials=2,
-        model_name="distilbert-base-uncased"
+        model_name="distilbert-base-uncased",
     )
