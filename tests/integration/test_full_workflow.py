@@ -237,17 +237,19 @@ class TestComplianceIntegration:
         # Create output that should pass all three frameworks
         output = AgentOutput(
             content="Customer data exported",
+            has_explanation=True,
+            explanation="Data exported per Article 18 request with full audit trail",
+            explanation_quality=0.85,
             metadata={
                 # LGPD
-                "explanation_provided": True,
-                "explanation": "Data exported per Article 18 request",
-                "data_export_enabled": True,
-                "export_format": "JSON",
-                "data_categories": ["personal", "financial"],
+                "exportable_format": "json",
+                "data_structure": {"customer": "object", "records": "list"},
                 # GDPR
                 "risk_level": "low",
                 "data_access_enabled": True,
+                "data_categories": ["personal", "financial"],
                 "retention_period": "90 days",
+                "export_format": "JSON",
                 "processes_personal_data": True,
                 "erasure_supported": True,
                 "erasure_endpoint": "/api/v1/customers/{id}/delete",

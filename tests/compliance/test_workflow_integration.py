@@ -378,4 +378,4 @@ class TestWorkflowIntegrationScenarios:
 
         result2 = await validate_agent_output_activity(**attempt2)
         assert result2["passed"] is True
-        assert "denied due to" in result2["output"]
+        assert result2["output"] == "Credit limit increase denied"

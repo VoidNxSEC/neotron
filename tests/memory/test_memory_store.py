@@ -7,8 +7,23 @@ Tests semantic search, memory storage, and GDPR compliance features.
 from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-import numpy as np
+import sys
+from types import ModuleType
+
 import pytest
+
+np = pytest.importorskip("numpy")
+
+# Ensure psycopg2 is available for mocking (create stub if missing)
+if "psycopg2" not in sys.modules:
+    _psycopg2 = ModuleType("psycopg2")
+    _psycopg2.connect = None
+    _extras = ModuleType("psycopg2.extras")
+    _extras.RealDictCursor = object
+    _extras.Json = lambda x: x
+    _psycopg2.extras = _extras
+    sys.modules["psycopg2"] = _psycopg2
+    sys.modules["psycopg2.extras"] = _extras
 from neutron.memory import (
     Memory,
     MemorySearchResult,

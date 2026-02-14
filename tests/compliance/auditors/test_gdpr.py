@@ -379,7 +379,8 @@ class TestGDPRGuardrails:
 
         # Should not raise exception
         enforced = gdpr_art22_human_oversight_guardrail.enforce(output)
-        assert enforced == output
+        assert enforced.original == output
+        assert enforced.enforced is True
 
     def test_article_15_guardrail_warns_on_violation(self):
         """Article 15 guardrail warns but doesn't block"""
@@ -387,7 +388,8 @@ class TestGDPRGuardrails:
 
         # Should not raise (warn severity)
         enforced = gdpr_art15_data_access_guardrail.enforce(output)
-        assert enforced == output
+        assert enforced.original == output
+        assert enforced.enforced is True
 
     def test_article_17_guardrail_warns_on_violation(self):
         """Article 17 guardrail warns but doesn't block"""
@@ -398,7 +400,8 @@ class TestGDPRGuardrails:
 
         # Should not raise (warn severity)
         enforced = gdpr_art17_erasure_support_guardrail.enforce(output)
-        assert enforced == output
+        assert enforced.original == output
+        assert enforced.enforced is True
 
     def test_gdpr_guardrails_list(self):
         """GDPR_GUARDRAILS contains all three guardrails"""
@@ -529,16 +532,10 @@ class TestConvenienceFunctions:
 class TestGDPRErasureHandler:
     """Tests for GDPR erasure handler"""
 
-    @patch("neutron.compliance.auditors.gdpr.MemoryStore")
-    @patch("neutron.compliance.auditors.gdpr.AuditLogger")
-    @patch("neutron.compliance.auditors.gdpr.datetime")
-    def test_erase_customer_data(
-        self, mock_datetime, mock_audit_logger_class, mock_memory_store_class
-    ):
+    @patch("neutron.memory.MemoryStore")
+    @patch("neutron.compliance.audit_logger.AuditLogger")
+    def test_erase_customer_data(self, mock_audit_logger_class, mock_memory_store_class):
         """Test erasing customer data"""
-        # Mock datetime
-        mock_datetime.utcnow.return_value.isoformat.return_value = "2024-01-01T00:00:00Z"
-
         # Mock MemoryStore
         mock_memory_store = MagicMock()
         mock_memory_store.delete_by_customer.return_value = 5
@@ -573,7 +570,7 @@ class TestGDPRErasureHandler:
         assert result["audit_id"] == "audit_123"
         assert result["status"] == "completed"
 
-    @patch("neutron.compliance.auditors.gdpr.AuditLogger")
+    @patch("neutron.compliance.audit_logger.AuditLogger")
     def test_erase_customer_data_with_provided_memory_store(self, mock_audit_logger_class):
         """Test erasure with provided memory store"""
         # Mock MemoryStore
@@ -655,7 +652,8 @@ class TestGDPRIntegration:
 
         # Article 22 should not block
         enforced = gdpr_art22_human_oversight_guardrail.enforce(output)
-        assert enforced == output
+        assert enforced.original == output
+        assert enforced.enforced is True
 
     def test_non_compliant_high_risk_blocks(self):
         """Test non-compliant high-risk decision blocks"""
@@ -669,8 +667,8 @@ class TestGDPRIntegration:
 
     def test_erasure_integration(self):
         """Test erasure handler integration"""
-        with patch("neutron.compliance.auditors.gdpr.MemoryStore") as mock_store_class:
-            with patch("neutron.compliance.auditors.gdpr.AuditLogger") as mock_logger_class:
+        with patch("neutron.memory.MemoryStore") as mock_store_class:
+            with patch("neutron.compliance.audit_logger.AuditLogger") as mock_logger_class:
                 # Setup mocks
                 mock_store = MagicMock()
                 mock_store.delete_by_customer.return_value = 10

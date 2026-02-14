@@ -551,17 +551,17 @@ class TestGuardrails:
     def test_article_13_guardrail_properties(self):
         """Test Article 13 guardrail configuration"""
         assert ARTICLE_13_TRANSPARENCY.name == "EU_AI_Act_Article_13_Transparency"
-        assert ARTICLE_13_TRANSPARENCY.severity == "WARNING"
+        assert ARTICLE_13_TRANSPARENCY.severity == "warn"
 
     def test_article_14_guardrail_properties(self):
         """Test Article 14 guardrail configuration"""
         assert ARTICLE_14_HUMAN_OVERSIGHT.name == "EU_AI_Act_Article_14_Human_Oversight"
-        assert ARTICLE_14_HUMAN_OVERSIGHT.severity == "BLOCKING"
+        assert ARTICLE_14_HUMAN_OVERSIGHT.severity == "block"
 
     def test_article_5_guardrail_properties(self):
         """Test Article 5 guardrail configuration"""
         assert ARTICLE_5_PROHIBITED_PRACTICES.name == "EU_AI_Act_Article_5_Prohibited_Practices"
-        assert ARTICLE_5_PROHIBITED_PRACTICES.severity == "BLOCKING"
+        assert ARTICLE_5_PROHIBITED_PRACTICES.severity == "block"
 
     def test_article_13_guardrail_check(self):
         """Test Article 13 guardrail check function"""
