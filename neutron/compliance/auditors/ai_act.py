@@ -568,8 +568,9 @@ def check_ai_act_prohibited_practices(output: AgentOutput) -> ValidationResult:
 # All AI systems must be transparent about their nature
 ARTICLE_13_TRANSPARENCY = create_guardrail(
     name="EU_AI_Act_Article_13_Transparency",
+    regulation="AI_ACT",
     check_function=check_ai_act_article_13_transparency,
-    severity="WARNING",  # Warning - transparency is important but not blocking
+    severity="warn",
     description=(
         "EU AI Act Article 13: Ensures AI systems provide transparency "
         "information to users about capabilities, limitations, and AI nature"
@@ -580,8 +581,9 @@ ARTICLE_13_TRANSPARENCY = create_guardrail(
 # High-risk AI systems MUST have human oversight
 ARTICLE_14_HUMAN_OVERSIGHT = create_guardrail(
     name="EU_AI_Act_Article_14_Human_Oversight",
+    regulation="AI_ACT",
     check_function=check_ai_act_article_14_human_oversight,
-    severity="BLOCKING",  # Blocking - human oversight is mandatory for high-risk systems
+    severity="block",
     description=(
         "EU AI Act Article 14: Ensures high-risk AI systems have effective "
         "human oversight with override capabilities"
@@ -592,8 +594,9 @@ ARTICLE_14_HUMAN_OVERSIGHT = create_guardrail(
 # Unacceptable risk AI is completely banned
 ARTICLE_5_PROHIBITED_PRACTICES = create_guardrail(
     name="EU_AI_Act_Article_5_Prohibited_Practices",
+    regulation="AI_ACT",
     check_function=check_ai_act_prohibited_practices,
-    severity="BLOCKING",  # Blocking - prohibited practices are banned
+    severity="block",
     description=(
         "EU AI Act Article 5: Blocks prohibited AI practices including "
         "social scoring, subliminal manipulation, and vulnerability exploitation"

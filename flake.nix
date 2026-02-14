@@ -96,6 +96,8 @@
               uv
               python313
               python313Packages.pytest
+              python313Packages.pytest-asyncio
+              python313Packages.numpy
               python313Packages.mypy
 
               # System dependencies

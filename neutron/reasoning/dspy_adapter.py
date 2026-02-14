@@ -77,13 +77,13 @@ class SimpleLLMProvider:
         """Call local llama.cpp server (OpenAI-compatible API)"""
         try:
             # llama.cpp server expõe API compatível com OpenAI
-            # Porta padrão: 8080
+            # Porta padrão: 8081 (llama-swap)
             # Verifique sua porta com: ps aux | grep llama-server
             import openai
 
             client = openai.OpenAI(
                 api_key="not-needed",  # llama.cpp não precisa de key
-                base_url="http://localhost:8080/v1",  # API compatível com OpenAI
+                base_url="http://localhost:8081/v1",  # API compatível com OpenAI
             )
 
             response = client.chat.completions.create(
@@ -98,7 +98,7 @@ class SimpleLLMProvider:
         except Exception as e:
             raise RuntimeError(
                 f"Local llama.cpp call failed: {e}. "
-                f"Certifique-se que llama.cpp server está rodando em localhost:8080"
+                f"Certifique-se que llama.cpp server está rodando em localhost:8081"
             )
 
 

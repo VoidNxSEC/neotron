@@ -2342,7 +2342,7 @@ wheels = [
 ]
 
 [[package]]
-name = "neutron-ml-pipeline"
+name = "neutron-nexus"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
