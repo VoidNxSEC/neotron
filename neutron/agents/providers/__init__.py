@@ -2,11 +2,13 @@ from .base import LLMProvider, LLMResponse, ProviderConfig
 from .llamacpp import LlamaCppProvider
 from .anthropic import AnthropicProvider
 from .openai import OpenAIProvider, DeepSeekProvider
+from .ml_offload import MLOffloadProvider
 
 __all__ = [
     "LLMProvider",
     "LLMResponse",
     "ProviderConfig",
+    "MLOffloadProvider",
     "LlamaCppProvider",
     "AnthropicProvider",
     "OpenAIProvider",
@@ -29,6 +31,7 @@ def create_provider(
         LLMProvider instance
     """
     providers = {
+        "ml_offload": MLOffloadProvider,
         "llamacpp": LlamaCppProvider,
         "anthropic": AnthropicProvider,
         "openai": OpenAIProvider,
