@@ -246,8 +246,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# -- Include compliance router ----------------------------------------------
+# -- Include routers --------------------------------------------------------
 from neutron.api.compliance import router as compliance_router
+from neutron.api.auth_endpoints import router as auth_router
+
+app.include_router(auth_router)
 app.include_router(compliance_router)
 
 
@@ -263,58 +266,13 @@ async def rate_limit_middleware(request: Request, call_next):
 
 
 # ---------------------------------------------------------------------------
-# Auth dependency
+# Auth dependency (imported from auth module)
 # ---------------------------------------------------------------------------
 
-async def require_auth(request: Request) -> dict:
-    """Dependency that validates the JWT Bearer token.
+from neutron.api.auth import get_current_user, AuthPrincipal
 
-    If ``API_SECRET_KEY`` is not configured the server runs in *open* mode and
-    this dependency is a no-op (returns a guest principal).
-    """
-    if not API_SECRET_KEY:
-        return {"sub": "anonymous", "mode": "open"}
-
-    auth_header: str | None = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
-
-    token = auth_header[7:]
-    try:
-        payload = _jwt_verify(token, API_SECRET_KEY)
-    except ValueError as exc:
-        raise HTTPException(status_code=401, detail=str(exc))
-
-    return payload
-
-
-# ---------------------------------------------------------------------------
-# Endpoints -- Auth
-# ---------------------------------------------------------------------------
-
-@app.post("/api/v1/auth/token", response_model=AuthResponse)
-async def create_token(body: AuthRequest):
-    """Issue a JWT token.
-
-    For now any username/password combination is accepted as long as
-    ``API_SECRET_KEY`` is configured.  Real credential validation will be
-    added in a future iteration.
-    """
-    if not API_SECRET_KEY:
-        raise HTTPException(
-            status_code=501,
-            detail="Authentication is not configured. Set API_SECRET_KEY to enable.",
-        )
-
-    now = time.time()
-    payload = {
-        "sub": body.username,
-        "iat": int(now),
-        "exp": int(now + JWT_EXPIRATION_SECONDS),
-        "jti": str(uuid.uuid4()),
-    }
-    token = _jwt_sign(payload, API_SECRET_KEY)
-    return AuthResponse(access_token=token, expires_in=JWT_EXPIRATION_SECONDS)
+# Legacy compatibility - map old require_auth to new get_current_user
+require_auth = get_current_user
 
 
 # ---------------------------------------------------------------------------
@@ -331,7 +289,7 @@ async def health():
 # ---------------------------------------------------------------------------
 
 @app.post("/api/v1/tasks", response_model=TaskResponse)
-async def submit_task(task: TaskRequest, _user: dict = Depends(require_auth)):
+async def submit_task(task: TaskRequest, _user: AuthPrincipal = Depends(require_auth)):
     if not _temporal_client:
         raise HTTPException(status_code=503, detail="Temporal backend unavailable")
 
@@ -352,7 +310,7 @@ async def submit_task(task: TaskRequest, _user: dict = Depends(require_auth)):
 
 
 @app.get("/api/v1/tasks/{task_id}")
-async def get_task_status(task_id: str, _user: dict = Depends(require_auth)):
+async def get_task_status(task_id: str, _user: AuthPrincipal = Depends(require_auth)):
     if not _temporal_client:
         raise HTTPException(status_code=503, detail="Temporal backend unavailable")
 
@@ -374,13 +332,13 @@ async def get_task_status(task_id: str, _user: dict = Depends(require_auth)):
 # ---------------------------------------------------------------------------
 
 @app.get("/api/v1/agents", response_model=List[AgentInfo])
-async def list_agents(_user: dict = Depends(require_auth)):
+async def list_agents(_user: AuthPrincipal = Depends(require_auth)):
     """Return the list of available agents."""
     return [AgentInfo(**a) for a in AVAILABLE_AGENTS]
 
 
 @app.post("/api/v1/agents/execute", response_model=AgentExecuteResponse)
-async def execute_agent(body: AgentExecuteRequest, _user: dict = Depends(require_auth)):
+async def execute_agent(body: AgentExecuteRequest, _user: AuthPrincipal = Depends(require_auth)):
     """Execute a single agent task."""
     if body.agent_id not in AGENT_IDS:
         raise HTTPException(
@@ -405,7 +363,7 @@ async def execute_agent(body: AgentExecuteRequest, _user: dict = Depends(require
 # ---------------------------------------------------------------------------
 
 @app.post("/api/v1/swarm/execute", response_model=SwarmExecuteResponse)
-async def execute_swarm(body: SwarmExecuteRequest, _user: dict = Depends(require_auth)):
+async def execute_swarm(body: SwarmExecuteRequest, _user: AuthPrincipal = Depends(require_auth)):
     """Execute an agent swarm with consensus."""
     unknown = set(body.agent_ids) - AGENT_IDS
     if unknown:
@@ -445,7 +403,7 @@ async def execute_swarm(body: SwarmExecuteRequest, _user: dict = Depends(require
 # ---------------------------------------------------------------------------
 
 @app.get("/api/v1/compliance/status", response_model=ComplianceStatus)
-async def compliance_status(_user: dict = Depends(require_auth)):
+async def compliance_status(_user: AuthPrincipal = Depends(require_auth)):
     """Return a compliance status summary."""
     import datetime
 
