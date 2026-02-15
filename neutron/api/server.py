@@ -246,6 +246,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -- Include compliance router ----------------------------------------------
+from neutron.api.compliance import router as compliance_router
+app.include_router(compliance_router)
+
 
 # -- Rate-limit middleware --------------------------------------------------
 
