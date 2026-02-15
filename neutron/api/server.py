@@ -252,12 +252,14 @@ from neutron.api.auth_endpoints import router as auth_router
 from neutron.api.policy_endpoints import router as policy_router
 from neutron.api.audit_endpoints import router as audit_router
 from neutron.api.consent_endpoints import router as consent_router
+from neutron.api.oracle_endpoints import router as oracle_router
 
 app.include_router(auth_router)
 app.include_router(policy_router)
 app.include_router(audit_router)
 app.include_router(consent_router)
 app.include_router(compliance_router)
+app.include_router(oracle_router)
 
 
 # -- Rate-limit middleware --------------------------------------------------
@@ -345,7 +347,7 @@ async def list_agents(_user: AuthPrincipal = Depends(require_auth)):
 
 @app.post("/api/v1/agents/execute", response_model=AgentExecuteResponse)
 async def execute_agent(body: AgentExecuteRequest, _user: AuthPrincipal = Depends(require_auth)):
-    """Execute a single agent task."""
+    """Execute a single agent task with real LLM backend."""
     if body.agent_id not in AGENT_IDS:
         raise HTTPException(
             status_code=400,
@@ -355,13 +357,42 @@ async def execute_agent(body: AgentExecuteRequest, _user: AuthPrincipal = Depend
     execution_id = f"agent-exec-{uuid.uuid4()}"
     logger.info("Agent execution requested: agent=%s task_type=%s id=%s", body.agent_id, body.task_type, execution_id)
 
-    # TODO: dispatch to real agent runtime via Temporal
-    return AgentExecuteResponse(
-        execution_id=execution_id,
-        agent_id=body.agent_id,
-        status="submitted",
-        result={"message": f"Agent '{body.agent_id}' task '{body.task_type}' queued for execution"},
+    from neutron.agents.cortex import Agent
+
+    agent_prompts = {
+        "compliance_analyst": "You are an LGPD/GDPR compliance expert. Analyze regulatory compliance.",
+        "risk_assessor": "You are a risk assessment specialist. Evaluate risks and regulatory exposure.",
+        "decision_maker": "You are a decision synthesizer. Make a final APPROVED/REJECTED/CONDITIONAL decision.",
+    }
+
+    agent = Agent(
+        name=body.agent_id,
+        role=body.agent_id.replace("_", " "),
+        system_prompt=agent_prompts.get(body.agent_id, "You are a helpful AI agent."),
     )
+
+    task = {"type": body.task_type, "description": f"Execute {body.task_type}", "data": body.input}
+
+    try:
+        response = await agent.execute(task)
+        return AgentExecuteResponse(
+            execution_id=execution_id,
+            agent_id=body.agent_id,
+            status="completed",
+            result={
+                "content": response.content,
+                "confidence": response.confidence,
+                "metadata": response.metadata,
+            },
+        )
+    except Exception as e:
+        logger.error("Agent execution failed [%s]: %s", execution_id, e)
+        return AgentExecuteResponse(
+            execution_id=execution_id,
+            agent_id=body.agent_id,
+            status="error",
+            result={"error": str(e)},
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -394,14 +425,62 @@ async def execute_swarm(body: SwarmExecuteRequest, _user: AuthPrincipal = Depend
         body.agent_ids, body.consensus_strategy, swarm_id,
     )
 
-    # TODO: dispatch to real swarm orchestration via Temporal
-    return SwarmExecuteResponse(
-        swarm_id=swarm_id,
-        agent_ids=body.agent_ids,
-        status="submitted",
-        consensus_strategy=body.consensus_strategy,
-        results={"message": f"Swarm with {len(body.agent_ids)} agents queued for execution"},
+    from neutron.agents.cortex import Agent, AgentSwarm, ConsensusStrategy
+
+    strategy_map = {
+        "majority": ConsensusStrategy.MAJORITY_VOTE,
+        "unanimous": ConsensusStrategy.UNANIMOUS,
+        "weighted": ConsensusStrategy.WEIGHTED_CONFIDENCE,
+        "first": ConsensusStrategy.DICTATOR,
+    }
+
+    agent_prompts = {
+        "compliance_analyst": "You are an LGPD/GDPR compliance expert. Analyze regulatory compliance.",
+        "risk_assessor": "You are a risk assessment specialist. Evaluate risks and regulatory exposure.",
+        "decision_maker": "You are a decision synthesizer. Make a final APPROVED/REJECTED/CONDITIONAL decision.",
+    }
+
+    agents = [
+        Agent(
+            name=agent_id,
+            role=agent_id.replace("_", " "),
+            system_prompt=agent_prompts.get(agent_id, "You are a helpful AI agent."),
+        )
+        for agent_id in body.agent_ids
+    ]
+
+    swarm = AgentSwarm(
+        agents=agents,
+        consensus_strategy=strategy_map[body.consensus_strategy],
     )
+
+    task = {
+        "type": body.task_type,
+        "description": f"Execute {body.task_type}",
+        "data": body.input,
+    }
+
+    try:
+        result = await swarm.broadcast_task(task)
+        return SwarmExecuteResponse(
+            swarm_id=swarm_id,
+            agent_ids=body.agent_ids,
+            status="completed",
+            consensus_strategy=body.consensus_strategy,
+            results={
+                "consensus": result["consensus"],
+                "individual_results": result["individual_results"],
+            },
+        )
+    except Exception as e:
+        logger.error("Swarm execution failed [%s]: %s", swarm_id, e)
+        return SwarmExecuteResponse(
+            swarm_id=swarm_id,
+            agent_ids=body.agent_ids,
+            status="error",
+            consensus_strategy=body.consensus_strategy,
+            results={"error": str(e)},
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -419,3 +498,105 @@ async def compliance_status(_user: AuthPrincipal = Depends(require_auth)):
         last_check=datetime.datetime.now(datetime.timezone.utc).isoformat(),
         issues=[],
     )
+
+
+# ---------------------------------------------------------------------------
+# Endpoints -- Metrics
+# ---------------------------------------------------------------------------
+
+
+class CortexTestRequest(BaseModel):
+    agent_ids: List[str] = ["compliance_analyst", "risk_assessor", "decision_maker"]
+    task: str = "Evaluate compliance for a credit scoring decision"
+    data: Dict[str, Any] = {}
+    consensus_strategy: str = "weighted"
+
+
+@app.get("/v1/metrics")
+async def get_metrics(_user: AuthPrincipal = Depends(require_auth)):
+    """Return LLM client health, circuit breaker status, and basic metrics."""
+    try:
+        from neutron.agents.llm_client import LLMClient
+
+        client = LLMClient()
+        health = await client.health_check()
+        cb_status = client.get_circuit_breaker_status()
+
+        return {
+            "status": "ok",
+            "providers": health,
+            "circuit_breakers": cb_status,
+            "agents_available": len(AVAILABLE_AGENTS),
+        }
+    except Exception as e:
+        logger.error("Metrics collection failed: %s", e)
+        return {
+            "status": "degraded",
+            "error": str(e),
+            "agents_available": len(AVAILABLE_AGENTS),
+        }
+
+
+# ---------------------------------------------------------------------------
+# Endpoints -- Cortex Test
+# ---------------------------------------------------------------------------
+
+@app.post("/v1/test/cortex")
+async def test_cortex(body: CortexTestRequest, _user: AuthPrincipal = Depends(require_auth)):
+    """
+    Test multi-agent consensus without the full 4-layer compliance flow.
+
+    Useful for verifying LLM connectivity and agent behavior.
+    """
+    from neutron.agents.cortex import Agent, AgentSwarm, ConsensusStrategy
+
+    strategy_map = {
+        "majority": ConsensusStrategy.MAJORITY_VOTE,
+        "unanimous": ConsensusStrategy.UNANIMOUS,
+        "weighted": ConsensusStrategy.WEIGHTED_CONFIDENCE,
+        "first": ConsensusStrategy.DICTATOR,
+    }
+
+    strategy = strategy_map.get(body.consensus_strategy, ConsensusStrategy.WEIGHTED_CONFIDENCE)
+
+    unknown = set(body.agent_ids) - AGENT_IDS
+    if unknown:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown agent_id(s): {sorted(unknown)}. Available: {sorted(AGENT_IDS)}",
+        )
+
+    agent_prompts = {
+        "compliance_analyst": "You are an LGPD/GDPR compliance expert. Analyze regulatory compliance.",
+        "risk_assessor": "You are a risk assessment specialist. Evaluate risks and regulatory exposure.",
+        "decision_maker": "You are a decision synthesizer. Make a final APPROVED/REJECTED/CONDITIONAL decision.",
+    }
+
+    agents = [
+        Agent(
+            name=agent_id,
+            role=agent_id.replace("_", " "),
+            system_prompt=agent_prompts.get(agent_id, "You are a helpful AI agent."),
+        )
+        for agent_id in body.agent_ids
+    ]
+
+    swarm = AgentSwarm(agents=agents, consensus_strategy=strategy)
+
+    task = {
+        "type": "cortex_test",
+        "description": body.task,
+        "data": body.data,
+    }
+
+    try:
+        result = await swarm.broadcast_task(task)
+        return {
+            "status": "completed",
+            "consensus": result["consensus"],
+            "individual_results": result["individual_results"],
+            "agents_used": body.agent_ids,
+        }
+    except Exception as e:
+        logger.error("Cortex test failed: %s", e)
+        raise HTTPException(status_code=500, detail=f"Cortex test failed: {str(e)}")
