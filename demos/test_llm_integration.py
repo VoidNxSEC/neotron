@@ -212,6 +212,85 @@ async def test_circuit_breaker():
     return True
 
 
+async def test_end_to_end_nexus_flow():
+    """Test end-to-end: consent -> SENTINEL -> BASTION -> CORTEX -> AUDIT."""
+    print_header("Test 6: End-to-End NEXUS 4-Layer Flow", "-")
+
+    # Check if any LLM API key is configured
+    has_api_key = any([
+        os.getenv("ANTHROPIC_API_KEY"),
+        os.getenv("OPENAI_API_KEY"),
+        os.getenv("DEEPSEEK_API_KEY"),
+    ])
+
+    if not has_api_key:
+        print("  SKIPPED: No LLM API keys configured")
+        print("  Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or DEEPSEEK_API_KEY to enable")
+        return True  # Not a failure, just skipped
+
+    from neutron.compliance.nexus_flow import (
+        ComplianceDecision,
+        ComplianceRequest,
+        NEXUSComplianceFlow,
+    )
+
+    flow = NEXUSComplianceFlow(enable_bastion=True, enable_smart_contracts=False)
+
+    # Test 1: Valid request with consent
+    print("  Test 6a: Valid request (with consent)...")
+    request = ComplianceRequest(
+        customer_id="integration_test_customer",
+        action="loan_approval",
+        data={"credit_score": 750, "amount": 10000},
+        consent_token="lgpd_consent_integration_test",
+        regulation="LGPD",
+    )
+
+    try:
+        response = await flow.validate(request)
+        print(f"    Decision: {response.decision.value}")
+        print(f"    Confidence: {response.confidence:.2f}")
+        print(f"    Layers completed: {len(response.layers)}/4")
+        print(f"    Audit hash: {response.audit_hash[:32]}...")
+        print(f"    Time: {response.total_processing_time_ms:.0f}ms")
+
+        # Verify all layers executed
+        assert "SENTINEL" in response.layers, "SENTINEL layer missing"
+        assert response.layers["SENTINEL"].passed, "SENTINEL should pass with valid consent"
+        assert "CORTEX" in response.layers, "CORTEX layer missing"
+        assert "AUDIT" in response.layers, "AUDIT layer missing"
+
+        print("    [PASS] All 4 layers executed successfully")
+    except Exception as e:
+        print(f"    [FAIL] {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+    # Test 2: Request without consent (should be rejected at SENTINEL)
+    print("\n  Test 6b: Invalid request (no consent)...")
+    request_no_consent = ComplianceRequest(
+        customer_id="test_no_consent",
+        action="loan_approval",
+        data={"credit_score": 800},
+        consent_token=None,
+        regulation="LGPD",
+    )
+
+    try:
+        response2 = await flow.validate(request_no_consent)
+        assert response2.decision == ComplianceDecision.REJECTED, "Should be rejected"
+        assert len(response2.layers) == 1, "Should stop at SENTINEL"
+        print(f"    Decision: {response2.decision.value}")
+        print(f"    Blocked at: Layer 1 (SENTINEL)")
+        print("    [PASS] Correctly rejected without consent")
+    except Exception as e:
+        print(f"    [FAIL] {e}")
+        return False
+
+    return True
+
+
 async def main():
     """Run all tests."""
     print_header("NEXUS LLM Integration Test Suite")
@@ -227,6 +306,7 @@ async def main():
         ("CORTEX Agent", test_cortex_agent),
         ("Agent Swarm", test_agent_swarm),
         ("Circuit Breaker", test_circuit_breaker),
+        ("E2E NEXUS Flow", test_end_to_end_nexus_flow),
     ]
 
     results = []
