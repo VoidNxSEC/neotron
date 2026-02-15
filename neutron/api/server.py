@@ -249,8 +249,10 @@ app.add_middleware(
 # -- Include routers --------------------------------------------------------
 from neutron.api.compliance import router as compliance_router
 from neutron.api.auth_endpoints import router as auth_router
+from neutron.api.policy_endpoints import router as policy_router
 
 app.include_router(auth_router)
+app.include_router(policy_router)
 app.include_router(compliance_router)
 
 
