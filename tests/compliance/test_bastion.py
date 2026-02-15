@@ -28,6 +28,8 @@ from neutron.compliance.bastion import (
     revoke_capability,
 )
 
+from .bastion_test_helpers import run_in_subprocess, requires_linux, skip_in_ci
+
 # =============================================================================
 # BPF Program Tests
 # =============================================================================
@@ -260,47 +262,62 @@ class TestKernelPolicy:
         assert policy.check_capability() is True
 
     @patch.dict(os.environ, {}, clear=True)
+    @skip_in_ci  # Skip in CI due to kernel restrictions
     def test_enforce_without_capability(self):
         """Test enforcement without required capability"""
-        policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False,  # Disable audit for cleaner test
-        )
 
-        # Ensure no capability
-        revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+        def isolated_test():
+            policy = KernelPolicy(
+                name="test",
+                regulation="LGPD",
+                blocked_syscalls=["open"],
+                required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
+                audit=False,  # Disable audit for cleaner test
+            )
 
-        # Enforce should apply filter (or simulate on non-Linux)
-        with policy.enforce():
-            # On non-Linux, sets environment variable
-            if sys.platform != "linux":
-                assert os.environ.get(f"BASTION_ENFORCING_{policy.name}") == "1"
+            # Ensure no capability
+            revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+
+            # Enforce should apply filter (or simulate on non-Linux)
+            with policy.enforce():
+                # On non-Linux, sets environment variable
+                if sys.platform != "linux":
+                    assert os.environ.get(f"BASTION_ENFORCING_{policy.name}") == "1"
+                # On Linux, seccomp filter is applied (we can't easily test
+                # the filter effect without triggering it, so we just verify
+                # enforce() doesn't crash)
+
+        # Run in subprocess to isolate seccomp filter
+        assert run_in_subprocess(isolated_test)
 
     @patch.dict(os.environ, {}, clear=True)
+    @skip_in_ci  # Skip in CI due to kernel restrictions
     def test_enforce_with_capability(self):
         """Test enforcement with required capability"""
-        policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False,
-        )
 
-        # Grant capability
-        grant_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+        def isolated_test():
+            policy = KernelPolicy(
+                name="test",
+                regulation="LGPD",
+                blocked_syscalls=["open"],
+                required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
+                audit=False,
+            )
 
-        # Enforce should NOT apply filter when capability present
-        with policy.enforce():
-            # Should not set enforcement env var
-            if sys.platform != "linux":
-                assert f"BASTION_ENFORCING_{policy.name}" not in os.environ
+            # Grant capability
+            grant_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
 
-        # Cleanup
-        revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+            # Enforce should NOT apply filter when capability present
+            with policy.enforce():
+                # Should not set enforcement env var
+                if sys.platform != "linux":
+                    assert f"BASTION_ENFORCING_{policy.name}" not in os.environ
+
+            # Cleanup
+            revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+
+        # Run in subprocess to isolate
+        assert run_in_subprocess(isolated_test)
 
 
 # =============================================================================
@@ -397,33 +414,38 @@ class TestLayeredPolicy:
         assert layered.kernel_policy == kernel_policy
 
     @patch.dict(os.environ, {}, clear=True)
+    @skip_in_ci  # Skip in CI due to kernel restrictions
     def test_layered_enforcement(self):
         """Test layered policy enforcement"""
-        app_guardrail = MagicMock()
 
-        kernel_policy = KernelPolicy(
-            name="test",
-            regulation="LGPD",
-            blocked_syscalls=["open"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False,
-        )
+        def isolated_test():
+            app_guardrail = MagicMock()
 
-        layered = LayeredPolicy(
-            name="test_layered",
-            regulation="LGPD",
-            application_check=app_guardrail,
-            kernel_policy=kernel_policy,
-        )
+            kernel_policy = KernelPolicy(
+                name="test",
+                regulation="LGPD",
+                blocked_syscalls=["open"],
+                required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
+                audit=False,
+            )
 
-        # Revoke capability to trigger kernel enforcement
-        revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+            layered = LayeredPolicy(
+                name="test_layered",
+                regulation="LGPD",
+                application_check=app_guardrail,
+                kernel_policy=kernel_policy,
+            )
 
-        # Enforce both layers
-        with layered.enforce():
-            # Kernel layer should be enforced
-            if sys.platform != "linux":
-                assert os.environ.get("BASTION_ENFORCING_test") == "1"
+            # Revoke capability to trigger kernel enforcement
+            revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+
+            # Enforce both layers
+            with layered.enforce():
+                # Kernel layer should be enforced
+                if sys.platform != "linux":
+                    assert os.environ.get("BASTION_ENFORCING_test") == "1"
+
+        assert run_in_subprocess(isolated_test)
 
 
 # =============================================================================
@@ -435,52 +457,62 @@ class TestIntegration:
     """Integration tests combining multiple components"""
 
     @patch.dict(os.environ, {}, clear=True)
+    @skip_in_ci  # Skip in CI due to kernel restrictions
     def test_complete_workflow_without_consent(self):
         """Test complete workflow without consent token"""
-        policy = KernelPolicy(
-            name="lgpd_consent_test",
-            regulation="LGPD",
-            blocked_syscalls=["open", "read"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            action="ERRNO",
-            errno=13,
-            audit=False,
-        )
 
-        # Ensure no consent
-        revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+        def isolated_test():
+            policy = KernelPolicy(
+                name="lgpd_consent_test",
+                regulation="LGPD",
+                blocked_syscalls=["open", "read"],
+                required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
+                action="ERRNO",
+                errno=13,
+                audit=False,
+            )
 
-        # Enforce policy
-        with policy.enforce():
-            # Capability check should fail
-            assert not policy.check_capability()
+            # Ensure no consent
+            revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
 
-            # On non-Linux, enforcement is simulated
-            if sys.platform != "linux":
-                assert os.environ.get("BASTION_ENFORCING_lgpd_consent_test") == "1"
+            # Enforce policy
+            with policy.enforce():
+                # Capability check should fail
+                assert not policy.check_capability()
+
+                # On non-Linux, enforcement is simulated
+                if sys.platform != "linux":
+                    assert os.environ.get("BASTION_ENFORCING_lgpd_consent_test") == "1"
+
+        assert run_in_subprocess(isolated_test)
 
     @patch.dict(os.environ, {}, clear=True)
+    @skip_in_ci  # Skip in CI due to kernel restrictions
     def test_complete_workflow_with_consent(self):
         """Test complete workflow with consent token"""
-        policy = KernelPolicy(
-            name="lgpd_consent_test",
-            regulation="LGPD",
-            blocked_syscalls=["open", "read"],
-            required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
-            audit=False,
-        )
 
-        # Grant consent
-        grant_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
+        def isolated_test():
+            policy = KernelPolicy(
+                name="lgpd_consent_test",
+                regulation="LGPD",
+                blocked_syscalls=["open", "read"],
+                required_capability=ComplianceCapability.CAP_CONSENT_TOKEN,
+                audit=False,
+            )
 
-        # Enforce policy
-        with policy.enforce():
-            # Capability check should succeed
-            assert policy.check_capability()
+            # Grant consent
+            grant_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
 
-            # On non-Linux, should NOT enforce when capability present
-            if sys.platform != "linux":
-                assert "BASTION_ENFORCING_lgpd_consent_test" not in os.environ
+            # Enforce policy
+            with policy.enforce():
+                # Capability check should succeed
+                assert policy.check_capability()
+
+                # On non-Linux, should NOT enforce when capability present
+                if sys.platform != "linux":
+                    assert "BASTION_ENFORCING_lgpd_consent_test" not in os.environ
+
+        assert run_in_subprocess(isolated_test)
 
         # Cleanup
         revoke_capability(ComplianceCapability.CAP_CONSENT_TOKEN)
