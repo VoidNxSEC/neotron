@@ -19,6 +19,7 @@ logger = logging.getLogger("neutron.core.config")
 class ProviderType(Enum):
     """Available LLM providers."""
 
+    ML_OFFLOAD = "ml_offload"
     ANTHROPIC = "anthropic"
     OPENAI = "openai"
     DEEPSEEK = "deepseek"
@@ -65,6 +66,7 @@ class ProviderConfig:
     def _default_model(provider_type: ProviderType) -> str:
         """Get default model for provider."""
         defaults = {
+            ProviderType.ML_OFFLOAD: "current-model",
             ProviderType.ANTHROPIC: "claude-3-5-sonnet-20241022",
             ProviderType.OPENAI: "gpt-4",
             ProviderType.DEEPSEEK: "deepseek-chat",
@@ -77,12 +79,13 @@ class ProviderConfig:
 class LLMConfig:
     """LLM configuration with fallback chain."""
 
-    # Primary provider (tries first)
-    primary_provider: ProviderType = ProviderType.ANTHROPIC
+    # Primary provider (tries first - ml-offload for local inference)
+    primary_provider: ProviderType = ProviderType.ML_OFFLOAD
 
     # Fallback chain (tries in order if primary fails)
     fallback_chain: list[ProviderType] = field(
         default_factory=lambda: [
+            ProviderType.ANTHROPIC,
             ProviderType.DEEPSEEK,
             ProviderType.OPENAI,
             ProviderType.LLAMACPP,
@@ -101,8 +104,11 @@ class LLMConfig:
     def from_env(cls) -> LLMConfig:
         """Create LLM config from environment variables."""
         # Parse provider preference from env
-        primary = os.getenv("LLM_PRIMARY_PROVIDER", "anthropic").lower()
+        primary = os.getenv("LLM_PRIMARY_PROVIDER", "ml_offload").lower()
         provider_map = {
+            "ml_offload": ProviderType.ML_OFFLOAD,
+            "ml-offload": ProviderType.ML_OFFLOAD,
+            "offload": ProviderType.ML_OFFLOAD,
             "anthropic": ProviderType.ANTHROPIC,
             "claude": ProviderType.ANTHROPIC,
             "openai": ProviderType.OPENAI,
@@ -111,10 +117,10 @@ class LLMConfig:
             "llamacpp": ProviderType.LLAMACPP,
             "llama": ProviderType.LLAMACPP,
         }
-        primary_provider = provider_map.get(primary, ProviderType.ANTHROPIC)
+        primary_provider = provider_map.get(primary, ProviderType.ML_OFFLOAD)
 
         # Parse fallback chain
-        fallback_str = os.getenv("LLM_FALLBACK_CHAIN", "deepseek,openai,llamacpp")
+        fallback_str = os.getenv("LLM_FALLBACK_CHAIN", "anthropic,deepseek,openai,llamacpp")
         fallback_chain = []
         for name in fallback_str.split(","):
             name = name.strip().lower()

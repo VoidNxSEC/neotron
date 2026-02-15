@@ -17,6 +17,7 @@ from neutron.core.config import LLMConfig, ProviderType, get_config
 from neutron.agents.providers import (
     LLMProvider,
     LLMResponse,
+    MLOffloadProvider,
     AnthropicProvider,
     OpenAIProvider,
     DeepSeekProvider,
@@ -90,6 +91,7 @@ class LLMClient:
     def _initialize_providers(self) -> None:
         """Initialize LLM providers based on configuration."""
         provider_classes = {
+            ProviderType.ML_OFFLOAD: MLOffloadProvider,
             ProviderType.ANTHROPIC: AnthropicProvider,
             ProviderType.OPENAI: OpenAIProvider,
             ProviderType.DEEPSEEK: DeepSeekProvider,
