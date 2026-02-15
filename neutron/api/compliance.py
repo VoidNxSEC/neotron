@@ -269,13 +269,38 @@ async def get_audit_log(audit_hash: str) -> Dict[str, Any]:
     """
     Retrieve audit log by hash (IPFS CID or Arweave TX).
 
-    In production, this fetches the immutable log from IPFS/Arweave.
+    Fetches the immutable compliance log from decentralized storage
+    (IPFS, Arweave, or local fallback).
     """
-    # In production, fetch from IPFS/Arweave
-    # For now, return placeholder
-    return {
-        "audit_hash": audit_hash,
-        "status": "not_implemented",
-        "message": "Audit log retrieval from IPFS/Arweave coming soon",
-        "note": "In production, this fetches the complete audit trail from decentralized storage",
-    }
+    from neutron.storage.decentralized import DecentralizedStorage, StorageType
+
+    storage = DecentralizedStorage()
+
+    # Try local first (most common in dev), then IPFS, then Arweave
+    for storage_type in [StorageType.LOCAL, StorageType.IPFS, StorageType.ARWEAVE]:
+        try:
+            log = await storage.retrieve_log(storage_type, audit_hash)
+            return {
+                "audit_hash": audit_hash,
+                "status": "found",
+                "storage_type": storage_type.value,
+                "log": {
+                    "log_id": log.log_id,
+                    "user_address": log.user_address,
+                    "regulation": log.regulation,
+                    "article": log.article,
+                    "action": log.action,
+                    "passed": log.passed,
+                    "violation": log.violation,
+                    "timestamp": log.timestamp,
+                    "metadata": log.metadata,
+                    "blockchain_tx": log.blockchain_tx,
+                },
+            }
+        except (ValueError, Exception):
+            continue
+
+    raise HTTPException(
+        status_code=404,
+        detail=f"Audit log not found for hash: {audit_hash}",
+    )
