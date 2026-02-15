@@ -251,10 +251,12 @@ from neutron.api.compliance import router as compliance_router
 from neutron.api.auth_endpoints import router as auth_router
 from neutron.api.policy_endpoints import router as policy_router
 from neutron.api.audit_endpoints import router as audit_router
+from neutron.api.consent_endpoints import router as consent_router
 
 app.include_router(auth_router)
 app.include_router(policy_router)
 app.include_router(audit_router)
+app.include_router(consent_router)
 app.include_router(compliance_router)
 
 
