@@ -2,6 +2,7 @@
 Cortex: Multi-Agent Orchestration & Consensus Engine
 """
 import asyncio
+import json
 import logging
 from typing import List, Dict, Any, Optional, Callable, Awaitable
 from dataclasses import dataclass, field
@@ -25,28 +26,117 @@ class AgentResponse:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 class Agent:
-    """Base class for Neutron Agents"""
-    def __init__(self, name: str, role: str = "generalist"):
+    """Base class for Neutron Agents with LLM integration"""
+    def __init__(
+        self,
+        name: str,
+        role: str = "generalist",
+        system_prompt: str | None = None,
+        llm_client: Any | None = None,
+    ):
         self.name = name
         self.role = role
-    
+        self.system_prompt = system_prompt or f"You are {name}, a {role} agent in the NEXUS platform."
+        self._llm_client = llm_client
+
+    @property
+    def llm_client(self):
+        """Lazy-load LLM client to avoid circular import."""
+        if self._llm_client is None:
+            from neutron.agents.llm_client import LLMClient
+            self._llm_client = LLMClient()
+        return self._llm_client
+
+    def build_prompt(self, task: Dict[str, Any]) -> str:
+        """Build prompt from task. Override in subclasses for custom behavior."""
+        description = task.get("description", "No description provided")
+        task_type = task.get("type", "general")
+        data = task.get("data", {})
+
+        prompt = f"Task Type: {task_type}\n\n"
+        prompt += f"Description: {description}\n\n"
+
+        if data:
+            import json
+            prompt += f"Input Data:\n{json.dumps(data, indent=2)}\n\n"
+
+        prompt += (
+            "Analyze this task and provide your response in JSON format:\n"
+            '{"content": "your analysis", "confidence": 0.9, "reasoning": "brief explanation"}'
+        )
+
+        return prompt
+
+    def parse_response(self, raw_content: str) -> tuple[str, float]:
+        """Parse LLM response into content and confidence."""
+        import json
+
+        try:
+            # Try to extract JSON from response
+            cleaned = raw_content.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned[7:]
+            if cleaned.startswith("```"):
+                cleaned = cleaned[3:]
+            if cleaned.endswith("```"):
+                cleaned = cleaned[:-3]
+            cleaned = cleaned.strip()
+
+            data = json.loads(cleaned)
+            content = data.get("content", raw_content)
+            confidence = float(data.get("confidence", 0.7))
+            confidence = max(0.0, min(1.0, confidence))
+
+            return content, confidence
+        except (json.JSONDecodeError, ValueError):
+            # Fallback to raw content
+            return raw_content.strip(), 0.7
+
     async def execute(self, task: Dict[str, Any]) -> AgentResponse:
         """
-        Execute a task. In a real scenario, this delegates to LLM/Tool.
-        For infrastructure plumbing, we simulate processing.
+        Execute a task using real LLM backend.
         """
-        # TODO: Connect to Reactor/LLM backend here
         logger.info(f"[{self.name}] Processing task: {task.get('description', 'unknown')}")
-        
-        # Simulate work
-        await asyncio.sleep(0.1) 
-        
-        return AgentResponse(
-            agent_name=self.name,
-            content=f"Processed by {self.name}",
-            confidence=0.9,
-            metadata={"role": self.role}
-        )
+
+        # Build prompt
+        prompt = self.build_prompt(task)
+
+        # Call LLM
+        try:
+            response = await self.llm_client.generate(
+                prompt=prompt,
+                system=self.system_prompt,
+                temperature=0.3,
+                max_tokens=1024,
+            )
+
+            content, confidence = self.parse_response(response.content)
+
+            logger.info(
+                f"[{self.name}] Completed with confidence {confidence:.2f}, "
+                f"tokens: {response.total_tokens}"
+            )
+
+            return AgentResponse(
+                agent_name=self.name,
+                content=content,
+                confidence=confidence,
+                metadata={
+                    "role": self.role,
+                    "model": response.model,
+                    "tokens": response.total_tokens,
+                    "finish_reason": response.finish_reason,
+                }
+            )
+        except Exception as e:
+            logger.error(f"[{self.name}] LLM call failed: {e}")
+            # Fallback to error response
+            return AgentResponse(
+                agent_name=self.name,
+                content=f"Error: {str(e)}",
+                confidence=0.0,
+                metadata={"role": self.role, "error": str(e)}
+            )
 
 class ConsensusEngine:
     """
