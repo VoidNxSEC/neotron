@@ -4,7 +4,7 @@ Tests for GDPR Compliance Auditors
 Tests GDPR Articles 22, 15, and 17 compliance guardrails.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -90,7 +90,7 @@ class TestGDPRArticle22HumanOversight:
                 "risk_level": "high",
                 "human_reviewed": True,
                 # Missing reviewer_id
-                "review_timestamp": datetime.utcnow().isoformat(),
+                "review_timestamp": datetime.now(timezone.utc).isoformat(),
             },
         )
 
@@ -122,7 +122,7 @@ class TestGDPRArticle22HumanOversight:
 
     def test_high_risk_with_complete_review_passes(self):
         """High-risk decision with complete human review passes"""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         output = AgentOutput(
             content="Loan approved after review",
             metadata={
@@ -628,7 +628,7 @@ class TestGDPRIntegration:
 
     def test_high_risk_workflow_with_review(self):
         """Test high-risk decision with proper human review"""
-        timestamp = datetime.utcnow().isoformat()
+        timestamp = datetime.now(timezone.utc).isoformat()
         output = AgentOutput(
             content="Loan approved",
             metadata={

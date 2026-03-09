@@ -25,7 +25,7 @@ Requirements:
 """
 
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 
 import numpy as np
 
@@ -250,7 +250,7 @@ def demo_4_gdpr_high_risk_compliant():
     print("Creating high-risk decision with human review...")
     from neutron.compliance.sentinel import AgentOutput
 
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
     output = AgentOutput(
         content="Loan application APPROVED - $50,000 at 4.5% APR",
         metadata={

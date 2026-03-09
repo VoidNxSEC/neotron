@@ -72,7 +72,7 @@ import struct
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Literal
 
@@ -492,7 +492,7 @@ class KernelPolicy:
         # In production, this would log to PostgreSQL audit table
         # For now, log to stderr
         audit_record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "layer": "kernel",
             "policy": self.name,
             "regulation": self.regulation,

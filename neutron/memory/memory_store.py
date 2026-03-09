@@ -6,7 +6,7 @@ Production memory store with GDPR-compliant deletion and semantic search.
 
 import os
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 try:
@@ -131,7 +131,7 @@ class MemoryStore:
                 content=row["content"],
                 embedding=row.get("embedding"),
                 metadata=row.get("metadata", {}),
-                timestamp=row.get("timestamp", datetime.utcnow()),
+                timestamp=row.get("timestamp", datetime.now(timezone.utc)),
                 importance_score=row.get("importance_score", 0.5),
                 memory_type=row.get("memory_type", "episodic"),
                 tags=row.get("tags", []),
@@ -164,7 +164,7 @@ class MemoryStore:
             content=row["content"],
             embedding=row.get("embedding"),
             metadata=row.get("metadata", {}),
-            timestamp=row.get("timestamp", datetime.utcnow()),
+            timestamp=row.get("timestamp", datetime.now(timezone.utc)),
             importance_score=row.get("importance_score", 0.5),
             memory_type=row.get("memory_type", "episodic"),
             tags=row.get("tags", []),

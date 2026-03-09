@@ -7,7 +7,7 @@ In production, this would write to PostgreSQL with append-only constraints.
 
 import json
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 logger = logging.getLogger("neutron.compliance.audit_logger")
@@ -45,7 +45,7 @@ class AuditLogger:
 
         audit_entry = {
             "audit_id": audit_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             **event
         }
 
