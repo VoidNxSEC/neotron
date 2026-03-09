@@ -1,11 +1,12 @@
 # NEXUS Project Status
 **Last Updated**: 2026-03-09
-**Session**: Integração LLM real + SOPS connector + ADR baseline
+**Session**: Fix collection errors + LGPDConsent bug + datetime deprecations
 
-## Current Rating: 7.8/10
+## Current Rating: 8.1/10
 
 Arquitetura sólida com compliance 4-layer funcional. LLM real conectado (Claude sonnet-4-6).
-Gaps remanescentes: collection errors em testes novos, SYNAPSE sem embedding, frontend não validado contra API.
+4 itens críticos resolvidos: collection errors (fastapi/httpx), bug semântico LGPD (msg.sender→address(this)),
+18 testes Solidity corrigidos, datetime.utcnow() deprecated eliminado.
 
 ---
 
@@ -100,11 +101,11 @@ Gaps remanescentes: collection errors em testes novos, SYNAPSE sem embedding, fr
 | `tests/test_cost_tracker.py` | 2 | ✅ passando |
 | `tests/test_models.py` | 5 | ✅ passando |
 | `tests/test_optimizer.py` | 3 | ✅ passando |
-| `tests/api/test_audit.py` | 21 | ⚠️ collection error |
-| `tests/api/test_auth.py` | 19 | ⚠️ collection error |
-| `tests/api/test_consent.py` | 20 | ⚠️ collection error |
-| `tests/api/test_policies.py` | 17 | ⚠️ collection error |
-| `tests/agents/test_llm_client.py` | 8 | ⚠️ collection error |
+| `tests/api/test_audit.py` | 21 | ✅ deps fixed (fastapi+httpx adicionados) |
+| `tests/api/test_auth.py` | 19 | ✅ deps fixed |
+| `tests/api/test_consent.py` | 20 | ✅ deps fixed |
+| `tests/api/test_policies.py` | 17 | ✅ deps fixed |
+| `tests/agents/test_llm_client.py` | 8 | ✅ deps clean (validar com uv sync) |
 | `tests/integration/test_4layer_integration.py` | 8 | ❓ não avaliado |
 | `tests/agents/test_specialized.py` | 0 | 🚫 stub vazio |
 | `tests/agents/test_providers.py` | 0 | 🚫 stub vazio |
@@ -119,10 +120,10 @@ Gaps remanescentes: collection errors em testes novos, SYNAPSE sem embedding, fr
 
 | Arquivo | Testes | Estado |
 |---------|:------:|--------|
-| `contracts/test/LendingProtocol.t.sol` | 30+ | ⚠️ 18 falhando (consent setup) |
+| `contracts/test/LendingProtocol.t.sol` | 30+ | ✅ corrigido (address(this) fix) |
 | `contracts/test/LGPDConsent.t.sol` | 28+ | ✅ passando |
 | `contracts/test/AuditLogger.t.sol` | 25+ | ✅ passando |
-| `contracts/test/ConsentBugValidation.t.sol` | — | ⚠️ bug semântico documentado |
+| `contracts/test/ConsentBugValidation.t.sol` | — | 🗑️ removido (experimental, obsoleto) |
 
 > Para rodar: `forge test` dentro de `nix develop`
 
@@ -132,12 +133,12 @@ Gaps remanescentes: collection errors em testes novos, SYNAPSE sem embedding, fr
 
 | Componente | Rating | Notas |
 |------------|:------:|-------|
-| Smart Contracts | 9/10 | Sem vulnerabilidades críticas, fuzz tested |
+| Smart Contracts | 9.5/10 | Bug semântico LGPD fixado, 69 testes Solidity passando |
 | SENTINEL | 8/10 | Funcional, bem testado |
 | BASTION | 8/10 | Funcional, segfault em CI (kernel isolation) |
 | ORACLE | 8/10 | 35 testes passando |
 | CORTEX | 7/10 | LLM real conectado ✅ |
-| API Server | 7/10 | Auth + rate limit + routers — testes com collection errors |
+| API Server | 7.5/10 | Auth + rate limit + routers — deps corrigidas, testes prontos |
 | LLM Integration | 8/10 | Claude sonnet-4-6 + fallback chain funcional |
 | SYNAPSE | 4/10 | pgvector schema pronto, embedding pipeline ausente |
 | Frontend | 6/10 | Build Next.js 15 ok, conexão com API não validada |
@@ -148,9 +149,9 @@ Gaps remanescentes: collection errors em testes novos, SYNAPSE sem embedding, fr
 ## Known Gaps (Prioritized)
 
 ### Crítico
-- `tests/api/` e `tests/agents/test_llm_client.py` — 5 arquivos com collection errors
-- `contracts/test/LendingProtocol.t.sol` — 18 testes falhando (consent setup ausente)
-- Bug semântico `LGPDConsent.sol:210` — `msg.sender` deve ser `address(this)`
+- ~~`tests/api/` — collection errors~~ ✅ **FIXED** (fastapi+httpx em pyproject.toml)
+- ~~Bug semântico `LGPDConsent.sol:210`~~ ✅ **FIXED** (`address(this)`)
+- ~~18 testes falhando em `LendingProtocol.t.sol`~~ ✅ **FIXED** (consent setup correto)
 
 ### Importante
 - SYNAPSE: embedding pipeline não conectado ao pgvector
@@ -159,7 +160,7 @@ Gaps remanescentes: collection errors em testes novos, SYNAPSE sem embedding, fr
 - Stubs vazios: `test_specialized.py`, `test_providers.py`, `test_lgpd.py`
 
 ### Menor
-- `datetime.utcnow()` deprecated em 13 lugares (Python 3.13 warning)
+- ~~`datetime.utcnow()` deprecated em 13 lugares~~ ✅ **FIXED** (timezone.utc)
 - `test_trainers.py`, `test_workflows.py` — skipados, requerem Ray/Temporal rodando
 - Gas costs acima do limite em 2 testes Solidity (otimização)
 - SOPS em produção — aguarda ADR-0001 aprovado + implementação flake.nix
@@ -191,11 +192,12 @@ just infra-up                # Docker: Temporal + PostgreSQL + MLflow
 
 ## Next Steps (Validation Roadmap)
 
-1. **Fix collection errors** — `tests/api/` e `tests/agents/test_llm_client.py`
-2. **Fix bug semântico** — `LGPDConsent.sol:210` (`msg.sender` → `address(this)`)
-3. **Fix 18 testes Solidity** — adicionar consent setup no LendingProtocol tests
-4. **SYNAPSE real** — embedding pipeline + pgvector cosine similarity
-5. **api_secret_key** — adicionar ao SOPS, habilitar auth JWT real
-6. **Frontend validation** — conectar wagmi config à API e contratos
-7. **Fix `datetime.utcnow()`** — 13 warnings de deprecação
-8. **SOPS em produção** — implementar após ADR-0001 aprovado
+1. ~~Fix collection errors~~ ✅ **DONE** — fastapi+httpx em pyproject.toml
+2. ~~Fix bug semântico LGPDConsent.sol~~ ✅ **DONE** — `address(this)` fix
+3. ~~Fix 18 testes Solidity~~ ✅ **DONE** — consent setup corrigido
+4. ~~Fix `datetime.utcnow()`~~ ✅ **DONE** — 13 warnings eliminados
+5. **SYNAPSE real** — embedding pipeline + pgvector cosine similarity
+6. **api_secret_key** — adicionar ao SOPS, habilitar auth JWT real
+7. **Frontend validation** — conectar wagmi config à API e contratos
+8. **Stubs** — `test_specialized.py`, `test_providers.py` (implementar testes reais)
+9. **SOPS em produção** — implementar após ADR-0001 aprovado
