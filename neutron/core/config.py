@@ -13,6 +13,12 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
+from dotenv import load_dotenv
+
+from neutron.core.sops import secret
+
+load_dotenv()
+
 logger = logging.getLogger("neutron.core.config")
 
 
@@ -52,7 +58,7 @@ class ProviderConfig:
         return cls(
             provider_type=provider_type,
             enabled=os.getenv(f"{prefix}_ENABLED", "true").lower() == "true",
-            api_key=os.getenv(f"{prefix}_API_KEY", ""),
+            api_key=secret(f"{prefix.lower()}_api_key"),
             base_url=os.getenv(f"{prefix}_BASE_URL", ""),
             model=os.getenv(f"{prefix}_MODEL", cls._default_model(provider_type)),
             temperature=float(os.getenv(f"{prefix}_TEMPERATURE", "0.3")),
@@ -182,7 +188,7 @@ class NEXUSConfig:
     # API configuration
     api_host: str = field(default_factory=lambda: os.getenv("API_HOST", "0.0.0.0"))
     api_port: int = field(default_factory=lambda: int(os.getenv("API_PORT", "8000")))
-    api_secret_key: str = field(default_factory=lambda: os.getenv("API_SECRET_KEY", ""))
+    api_secret_key: str = field(default_factory=lambda: secret("api_secret_key"))
 
     # IPFS/Arweave configuration
     ipfs_url: str = field(default_factory=lambda: os.getenv("IPFS_URL", "http://localhost:5001"))

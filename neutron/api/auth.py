@@ -24,13 +24,16 @@ from typing import Any, Dict, List, Optional
 from fastapi import Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
+from neutron.core.sops import secret as _sops_secret
+
 logger = logging.getLogger("neutron.api.auth")
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-API_SECRET_KEY: str | None = os.getenv("API_SECRET_KEY")
+# Reads from /run/secrets/api_secret_key (sops-nix) → env API_SECRET_KEY → None (open mode)
+API_SECRET_KEY: str | None = _sops_secret("api_secret_key") or None
 JWT_EXPIRATION_SECONDS: int = int(os.getenv("JWT_EXPIRATION_SECONDS", "3600"))  # 1 hour
 REFRESH_TOKEN_EXPIRATION_SECONDS: int = int(
     os.getenv("REFRESH_TOKEN_EXPIRATION_SECONDS", "604800")  # 7 days
