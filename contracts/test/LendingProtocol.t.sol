@@ -106,7 +106,7 @@ contract LendingProtocolTest is Test {
         // Borrower grants LGPD consent
         vm.prank(borrower1);
         lending.grantConsent(
-            borrower1,
+            address(lending),
             365 days,
             "Loan application and credit scoring"
         );
@@ -146,7 +146,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan application");
+        lending.grantConsent(address(lending), 365 days, "Loan application");
 
         // Try to borrow 1 ETH with only 1 ETH collateral (need 1.5 ETH)
         vm.prank(borrower1);
@@ -164,7 +164,7 @@ contract LendingProtocolTest is Test {
         // No deposits → no liquidity
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan application");
+        lending.grantConsent(address(lending), 365 days, "Loan application");
 
         vm.prank(borrower1);
         vm.expectRevert(
@@ -182,7 +182,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 20 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Multiple loans");
+        lending.grantConsent(address(lending), 365 days, "Multiple loans");
 
         // First loan
         vm.prank(borrower1);
@@ -207,7 +207,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -234,7 +234,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -256,7 +256,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -285,7 +285,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -305,7 +305,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -326,7 +326,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         // Healthy loan: 1 ETH borrowed, 1.5 ETH collateral (150%)
         vm.prank(borrower1);
@@ -345,7 +345,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -361,7 +361,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -397,7 +397,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -422,7 +422,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         uint256 gasBefore = gasleft();
         vm.prank(borrower1);
@@ -443,7 +443,7 @@ contract LendingProtocolTest is Test {
         lending.deposit{value: 10 ether}();
 
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Loan");
+        lending.grantConsent(address(lending), 365 days, "Loan");
 
         vm.prank(borrower1);
         bytes32 loanId = lending.applyForLoan{value: 1.5 ether}(1 ether);
@@ -474,7 +474,7 @@ contract LendingProtocolTest is Test {
 
         // 2. Borrower grants consent
         vm.prank(borrower1);
-        lending.grantConsent(borrower1, 365 days, "Full cycle test");
+        lending.grantConsent(address(lending), 365 days, "Full cycle test");
 
         // 3. Borrower applies for loan
         vm.prank(borrower1);

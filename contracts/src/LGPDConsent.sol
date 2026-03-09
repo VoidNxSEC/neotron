@@ -208,7 +208,7 @@ contract LGPDConsent is ComplianceGuardrail {
      * @return bool True if consent is valid
      */
     function hasConsent(address dataSubject) internal view override returns (bool) {
-        return hasConsent(dataSubject, msg.sender);
+        return hasConsent(dataSubject, address(this));
     }
 
     /**
