@@ -745,6 +745,34 @@ tests/
 
 ---
 
+### Phase 6: Web3 Integration & Testnet (Weeks 20-21)
+**Theme**: Bridging Frontend with Blockchain 
+
+**Objectives**:
+- [x] Integrate Neoland TUI/Frontend components (Agent Orchestra) into Next.js
+- [x] UI synchronization with backend APIs (`/v1/test/cortex`)
+- [ ] Complete Lending Protocol UI (Deposit, Borrow, Repay dashboards)
+- [ ] Wagmi/Viem integration for wallet connection (MetaMask, Rabby)
+- [ ] Smart Contract deployment to Ethereum Sepolia Testnet
+- [ ] End-to-end testing on Testnet (Frontend -> Backend -> Sepolia -> IPFS/Arweave)
+- [ ] **MILESTONE**: Live public testnet beta of Lending Protocol with 4-Layer Compliance
+
+---
+
+### Phase 7: Production Deployment & Go-to-Market (Weeks 22-24)
+**Theme**: Hardening, Mainnet, and Launch
+
+**Objectives**:
+- [ ] Infrastructure as Code (IaC) setup (NixOS flakes for production)
+- [ ] CI/CD Pipeline for zero-downtime deployment (GitHub Actions)
+- [ ] Smart Contract Mainnet Deployment (Ethereum L2 like Arbitrum/Base for low gas)
+- [ ] Decentralized Storage Mainnet (Arweave real funding, IPFS pinning service)
+- [ ] Final Security Audit & Penetration Testing
+- [ ] Series A Pitch Deck finalized with live production metrics
+- [ ] **MILESTONE**: Official Launch of "Compliance-First AI Assistant" live demo on Mainnet
+
+---
+
 ## Success Criteria
 
 ### Phase 1 Success Metrics
@@ -863,7 +891,7 @@ tests/
 **Last Updated**: 2026-01-22
 **Status**: Active Development - Phase 5 COMPLETE ✅ | Phase 6 Starting 🚀
 
-## Progress Summary (as of 2026-01-22)
+## Progress Summary (as of 2026-03-13)
 
 ✅ **Phase 1 (Weeks 1-4): COMPLETE**
 - SENTINEL compliance engine
@@ -895,8 +923,24 @@ tests/
 - ~2,500 LOC Solidity + ~500 LOC Python
 - 115+ Foundry tests + 25+ Python tests
 
-⏳ **Phase 6 (Weeks 20-23): NEXT**
-- Sepolia testnet deployment
-- Frontend + Web3 integration
-- Advanced DeFi features
-- Production deployment
+⏳ **Phase 6: Web3 Integration & Testnet (Weeks 20-21): IN PROGRESS**
+- [x] Integrate Neoland TUI/Frontend components (Agent Orchestra) into Next.js
+- [x] UI synchronization with backend APIs (`/v1/test/cortex`)
+- [ ] Complete Lending Protocol UI (Deposit, Borrow, Repay dashboards)
+- [ ] Wagmi/Viem integration for wallet connection (MetaMask, Rabby)
+- [ ] Smart Contract deployment to Ethereum Sepolia Testnet
+- [ ] End-to-end testing on Testnet (Frontend -> Backend -> Sepolia -> IPFS/Arweave)
+- [ ] **MILESTONE**: Live public testnet beta of Lending Protocol
+
+⏳ **Phase 7: Production Deployment & Go-to-Market (Weeks 22-24): PENDING**
+- [ ] Infrastructure as Code (IaC) setup (NixOS flakes for production)
+- [ ] CI/CD Pipeline for zero-downtime deployment (GitHub Actions)
+- [ ] Smart Contract Mainnet Deployment (Ethereum L2 like Arbitrum/Base)
+- [ ] Decentralized Storage Mainnet (Arweave real funding, IPFS pinning service)
+- [ ] Final Security Audit & Penetration Testing
+- [ ] Series A Pitch Deck finalized with live production metrics
+- [ ] **MILESTONE**: Official Launch of "Compliance-First AI Assistant" live demo on Mainnet
+
+🔮 **Future Explorations & Strategic Shifts**
+- **BASTION Anomaly Prediction**: Research and implementation of ML-based anomaly detection algorithms to predict and proactively block malicious syscall patterns at the kernel level before they occur.
+- **ML-Training Lab Synergy**: Maintain and evolve the original `neutron` ML-training lab components (Hyperparameter tuning, Ray, Cerebro) in parallel with the orchestration engine. Their capabilities are indispensable for future anomaly prediction models and adaptive guardrails.

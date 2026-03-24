@@ -24,17 +24,5 @@ __all__ = [
     "explain_agent_decision",
 ]
 
-# Optional imports (require dspy dependency)
-try:
-    from .dspy_adapter import DSPyProviderAdapter, SimpleLLMProvider
-
-    __all__.extend(["DSPyProviderAdapter", "SimpleLLMProvider"])
-except ImportError:
-    pass
-
-try:
-    from .ensemble_reasoning import EnsembleReasoner, EnsembleResult, ProviderResponse
-
-    __all__.extend(["EnsembleReasoner", "EnsembleResult", "ProviderResponse"])
-except ImportError:
-    pass
+# EnsembleReasoner and DSPy adapter have been moved to mlops package
+# (ml-offload-api/python/mlops/reasoning/)

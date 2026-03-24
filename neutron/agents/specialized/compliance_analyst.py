@@ -8,7 +8,10 @@ from __future__ import annotations
 
 import json
 
-from neutron.agents.providers.base import LLMProvider
+try:
+    from mlops.llm.providers.base import LLMProvider
+except ImportError:
+    from typing import Any as LLMProvider  # type: ignore
 from neutron.orchestration.cortex import Task
 
 from .base_agent import AgentConfig, BaseSpecializedAgent

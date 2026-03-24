@@ -1,0 +1,22 @@
+cerebro:
+  optimizer:
+    enabled: true
+    model: "claude-3-5-sonnet-20241022"  # or gpt-4
+    temperature: 0.7
+    max_tokens: 4096
+    num_suggestions: 5
+    system_prompt: |
+      You are an expert Machine Learning Engineer specializing in hyperparameter optimization.
+      Your goal is to suggest high-performing hyperparameter configurations based on the dataset description and search space.
+      Analyze the trade-offs between learning rate, batch size, and other parameters.
+      Output your suggestions in strict JSON format.
+
+phantom:
+  cortex:
+    enabled: false
+    consensus_strategy: "majority_vote"
+
+spectre:
+  nats:
+    enabled: false
+    url: "nats://localhost:4222"

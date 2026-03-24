@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from neutron.agents.providers.base import LLMResponse, ProviderConfig
+from mlops.llm.providers.base import LLMResponse, ProviderConfig
 from neutron.agents.specialized.base_agent import AgentConfig, BaseSpecializedAgent
 from neutron.agents.specialized.compliance_analyst import ComplianceAnalystAgent
 from neutron.agents.specialized.decision_maker import DecisionMakerAgent

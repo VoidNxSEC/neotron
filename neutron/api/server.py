@@ -516,7 +516,10 @@ class CortexTestRequest(BaseModel):
 async def get_metrics(_user: AuthPrincipal = Depends(require_auth)):
     """Return LLM client health, circuit breaker status, and basic metrics."""
     try:
-        from neutron.agents.llm_client import LLMClient
+        try:
+            from mlops.llm.client import LLMClient
+        except ImportError:
+            from neutron.agents._llm_http_client import LLMHTTPClient as LLMClient
 
         client = LLMClient()
         health = await client.health_check()

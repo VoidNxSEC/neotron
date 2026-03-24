@@ -12,7 +12,10 @@ import time
 from dataclasses import dataclass
 from typing import Any
 
-from neutron.agents.providers.base import LLMProvider
+try:
+    from mlops.llm.providers.base import LLMProvider
+except ImportError:
+    from typing import Any as LLMProvider  # type: ignore
 from neutron.orchestration.cortex import AgentResult, Task
 
 

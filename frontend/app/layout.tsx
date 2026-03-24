@@ -31,6 +31,9 @@ export default function RootLayout({
                       NEXUS BASTION-SC
                     </Link>
                     <div className="hidden md:flex space-x-6">
+                      <Link href="/assistant" className="hover:text-primary font-medium text-blue-500">
+                        AI Assistant
+                      </Link>
                       <Link href="/lend" className="hover:text-primary">
                         Lend
                       </Link>

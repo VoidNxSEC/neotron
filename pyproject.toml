@@ -6,34 +6,23 @@ authors = [{ name = "kernelcore", email = "kernelcore@neutron.ai" }]
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+  # Compliance orchestration
   "temporalio>=1.6.0",
-  "ray[default]>=2.10.0",      # Relaxed for Py3.13 support
-  "mlflow>=2.14.0",
-  "pyarrow>=18.0.0",
-  "torch>=2.2.0",
-  "torchvision>=0.17.0",
-  "transformers>=4.38.0",
-  "datasets>=2.18.0",
-  "accelerate>=0.28.0",
-  "sentencepiece>=0.2.0",
-  "safetensors>=0.4.2",
-  "numpy>=1.26.0",
-  "scipy>=1.12.0",
-  "scikit-learn>=1.4.0",
-  "pandas>=2.2.0",
+  # API
   "pydantic>=2.6.0",
   "pydantic-settings>=2.2.0",
+  "fastapi>=0.110.0",
+  "uvicorn[standard]>=0.27.0",
+  # Database / storage
   "psycopg2-binary>=2.9.9",
   "sqlalchemy>=2.0.0",
+  # Utilities
   "python-dotenv>=1.0.0",
-  "fastapi>=0.110.0",           # API framework
-  "uvicorn[standard]>=0.27.0",  # ASGI server
-  "anthropic>=0.40.0",          # Claude API
-  "openai>=1.54.0",             # OpenAI and DeepSeek API
-  "tenacity>=8.2.3",
   "tqdm>=4.66.0",
   "click>=8.1.0",
-  "PyGObject>=3.46.0",
+  "PyYAML>=6.0.3",
+  # Note: ML deps (mlflow, ray, torch, anthropic, openai, dspy, etc.)
+  # have been moved to ml-offload-api/python/pyproject.toml (mlops package)
 ]
 
 [project.optional-dependencies]
@@ -55,7 +44,7 @@ neutron = "neutron.cli.main:main"
 neutron-worker = "neutron.orchestration.worker:main"
 neutron-gui = "neutron.gui.app:main"
 neutron-dag = "neutron.integration.dag_bridge:main"
-neutron-cost = "neutron.tracking.cost_tracker:main"
+# neutron-cost moved to mlops package (ml-offload-api/python/)
 
 [build-system]
 requires = ["hatchling"]

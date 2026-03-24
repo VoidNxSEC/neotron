@@ -41,9 +41,12 @@ class Agent:
 
     @property
     def llm_client(self):
-        """Lazy-load LLM client to avoid circular import."""
+        """Lazy-load LLM client (mlops package or HTTP stub)."""
         if self._llm_client is None:
-            from neutron.agents.llm_client import LLMClient
+            try:
+                from mlops.llm.client import LLMClient
+            except ImportError:
+                from neutron.agents._llm_http_client import LLMHTTPClient as LLMClient
             self._llm_client = LLMClient()
         return self._llm_client
 

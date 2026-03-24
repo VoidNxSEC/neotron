@@ -3,7 +3,7 @@ import { ComplianceLayers } from '@/components/compliance/ComplianceLayers'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { Shield, TrendingUp, Lock, Database } from 'lucide-react'
+import { Shield, TrendingUp, Lock, Database, Brain } from 'lucide-react'
 
 export default function Home() {
   return (
@@ -18,8 +18,14 @@ export default function Home() {
             First DeFi Protocol with Kernel-Level Compliance Enforcement
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
+            <Link href="/assistant">
+              <Button size="lg" className="text-lg px-8 bg-cyan-600 hover:bg-cyan-700 text-white">
+                <Brain className="mr-2 h-5 w-5" />
+                NEXUS Cortex Assistant
+              </Button>
+            </Link>
             <Link href="/lend">
-              <Button size="lg" className="text-lg px-8">
+              <Button size="lg" variant="outline" className="text-lg px-8">
                 <TrendingUp className="mr-2 h-5 w-5" />
                 Start Lending
               </Button>

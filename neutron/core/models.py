@@ -12,6 +12,7 @@ class SearchStrategy(Enum):
     RANDOM = "random"
     GRID = "grid"
     BAYESIAN = "bayesian"
+    SEMANTIC = "semantic"
 
 
 @dataclass

@@ -1,1 +1,15 @@
-{}
+# Dynamic configuration for Temporal
+# This is used to tune system limits, quotas, and feature flags.
+
+frontend.enableClientVersionCheck:
+  - value: false
+
+# Increase QPS limits for local testing
+history.persistenceMaxQPS:
+  - value: 3000
+frontend.persistenceMaxQPS:
+  - value: 3000
+
+# Useful for development indexing
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: true
