@@ -72,7 +72,7 @@ import struct
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any, Literal
 
@@ -492,7 +492,7 @@ class KernelPolicy:
         # In production, this would log to PostgreSQL audit table
         # For now, log to stderr
         audit_record = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "layer": "kernel",
             "policy": self.name,
             "regulation": self.regulation,
@@ -502,8 +502,11 @@ class KernelPolicy:
             "action": self.action,
         }
 
-        # TODO: Integrate with neutron.compliance.sentinel audit logger
-        print(f"[BASTION AUDIT] {audit_record}", file=sys.stderr)
+        from neutron.compliance.events import publish_sync
+
+        audit_record["source"] = "neotron"
+        audit_record["subject"] = "neotron.compliance.bastion.v1"
+        publish_sync("neotron.compliance.bastion.v1", audit_record)
 
 
 # =============================================================================
