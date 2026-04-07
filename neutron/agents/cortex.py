@@ -3,6 +3,10 @@ Cortex: Multi-Agent Orchestration & Consensus Engine
 
 Todos os eventos de swarm/consensus são publicados como JSON estruturado em:
   neotron.cortex.consensus.v1  — resultado do swarm (via NATS)
+
+Cada Agent tem a sua própria SynapseMemory:
+  - search() antes do LLM — injeta contexto semântico histórico no prompt
+  - add() após execute() — persiste resultado para execuções futuras
 """
 
 import asyncio
@@ -13,6 +17,8 @@ import uuid
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
+
+from neutron.agents.synapse import SynapseMemory
 
 # Configure logging
 logger = logging.getLogger("neutron.agents.cortex")
@@ -34,7 +40,7 @@ class AgentResponse:
 
 
 class Agent:
-    """Base class for Neutron Agents with LLM integration"""
+    """Base class for Neutron Agents with LLM integration and per-agent Synapse memory."""
 
     def __init__(
         self,
@@ -42,6 +48,7 @@ class Agent:
         role: str = "generalist",
         system_prompt: str | None = None,
         llm_client: Any | None = None,
+        synapse: SynapseMemory | None = None,
     ):
         self.name = name
         self.role = role
@@ -49,6 +56,8 @@ class Agent:
             system_prompt or f"You are {name}, a {role} agent in the NEXUS platform."
         )
         self._llm_client = llm_client
+        # Per-agent semantic memory — provider wired lazily after LLM client is resolved
+        self.synapse: SynapseMemory = synapse or SynapseMemory()
 
     @property
     def llm_client(self):
@@ -61,8 +70,8 @@ class Agent:
             self._llm_client = LLMClient()
         return self._llm_client
 
-    def build_prompt(self, task: dict[str, Any]) -> str:
-        """Build prompt from task. Override in subclasses for custom behavior."""
+    def build_prompt(self, task: dict[str, Any], memory_context: list[str] | None = None) -> str:
+        """Build prompt from task, optionally injecting Synapse memory context."""
         description = task.get("description", "No description provided")
         task_type = task.get("type", "general")
         data = task.get("data", {})
@@ -71,9 +80,13 @@ class Agent:
         prompt += f"Description: {description}\n\n"
 
         if data:
-            import json
-
             prompt += f"Input Data:\n{json.dumps(data, indent=2)}\n\n"
+
+        if memory_context:
+            prompt += "Relevant context from prior experience:\n"
+            for i, ctx in enumerate(memory_context, 1):
+                prompt += f"  [{i}] {ctx}\n"
+            prompt += "\n"
 
         prompt += (
             "Analyze this task and provide your response in JSON format:\n"
@@ -107,15 +120,30 @@ class Agent:
             return raw_content.strip(), 0.7
 
     async def execute(self, task: dict[str, Any]) -> AgentResponse:
-        """
-        Execute a task using real LLM backend.
-        """
-        logger.info(f"[{self.name}] Processing task: {task.get('description', 'unknown')}")
+        """Execute a task using real LLM backend, enriched with Synapse memory context."""
+        description = task.get("description", "unknown")
+        logger.info(f"[{self.name}] Processing task: {description}")
 
-        # Build prompt
-        prompt = self.build_prompt(task)
+        # 1. Recall relevant prior experience from Synapse
+        memory_context: list[str] = []
+        try:
+            memories = await self.synapse.search(description, limit=3)
+            memory_context = [m.content for m in memories]
+            if memory_context:
+                logger.debug(
+                    json.dumps({
+                        "event": "synapse_recall",
+                        "agent": self.name,
+                        "recalled": len(memory_context),
+                    })
+                )
+        except Exception as exc:
+            logger.debug(f"[{self.name}] Synapse recall skipped: {exc}")
 
-        # Call LLM
+        # 2. Build prompt with memory context injected
+        prompt = self.build_prompt(task, memory_context=memory_context or None)
+
+        # 3. Call LLM
         try:
             response = await self.llm_client.generate(
                 prompt=prompt,
@@ -131,6 +159,21 @@ class Agent:
                 f"tokens: {response.total_tokens}"
             )
 
+            # 4. Persist result to Synapse for future recall
+            try:
+                summary = f"Task: {description} | Result: {str(content)[:200]}"
+                await self.synapse.add(
+                    content=summary,
+                    metadata={
+                        "agent": self.name,
+                        "task_type": task.get("type", "general"),
+                        "confidence": confidence,
+                    },
+                    importance=confidence,
+                )
+            except Exception as exc:
+                logger.debug(f"[{self.name}] Synapse store skipped: {exc}")
+
             return AgentResponse(
                 agent_name=self.name,
                 content=content,
@@ -140,11 +183,11 @@ class Agent:
                     "model": response.model,
                     "tokens": response.total_tokens,
                     "finish_reason": response.finish_reason,
+                    "memory_context_used": len(memory_context),
                 },
             )
         except Exception as e:
             logger.error(f"[{self.name}] LLM call failed: {e}")
-            # Fallback to error response
             return AgentResponse(
                 agent_name=self.name,
                 content=f"Error: {str(e)}",

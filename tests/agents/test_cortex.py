@@ -1,8 +1,5 @@
 """Tests for CORTEX multi-agent orchestration."""
 
-import json
-from unittest.mock import AsyncMock
-
 import pytest
 
 from neutron.orchestration.cortex import (
@@ -13,7 +10,6 @@ from neutron.orchestration.cortex import (
     SwarmResult,
     Task,
 )
-
 
 # --- Data Classes ---
 
@@ -86,7 +82,11 @@ class TestConsensusEngine:
     # -- majority_vote --
 
     def test_majority_vote_clear_winner(self):
-        results = [self._r("a1", "approve", 0.9), self._r("a2", "approve", 0.8), self._r("a3", "deny", 0.7)]
+        results = [
+            self._r("a1", "approve", 0.9),
+            self._r("a2", "approve", 0.8),
+            self._r("a3", "deny", 0.7),
+        ]
         output, conf, agreement = ConsensusEngine.majority_vote(results)
         assert output == "approve"
         assert abs(conf - 0.85) < 0.001
@@ -110,7 +110,11 @@ class TestConsensusEngine:
     # -- best_confidence --
 
     def test_best_confidence(self):
-        results = [self._r("a1", "deny", 0.5), self._r("a2", "approve", 0.95), self._r("a3", "deny", 0.7)]
+        results = [
+            self._r("a1", "deny", 0.5),
+            self._r("a2", "approve", 0.95),
+            self._r("a3", "deny", 0.7),
+        ]
         output, conf, agreement = ConsensusEngine.best_confidence(results)
         assert output == "approve"
         assert conf == 0.95
@@ -207,8 +211,6 @@ class TestAgentSwarm:
         assert swarm.num_agents == 1
         assert swarm.agents[0].agent_id == "a2"
 
-    @pytest.mark.asyncio
-    @pytest.mark.asyncio
     async def test_execute_majority_vote(self):
         agents = [
             FakeAgent("a1", "approve", 0.9),
@@ -223,7 +225,6 @@ class TestAgentSwarm:
         assert result.num_agents == 3
         assert result.agreement_score > 0.5
 
-    @pytest.mark.asyncio
     async def test_execute_best_confidence(self):
         agents = [
             FakeAgent("a1", "deny", 0.5),
@@ -236,7 +237,6 @@ class TestAgentSwarm:
         assert result.consensus_output == "approve"
         assert result.consensus_confidence == 0.99
 
-    @pytest.mark.asyncio
     async def test_execute_unanimous_success(self):
         agents = [FakeAgent(f"a{i}", "ok", 0.9) for i in range(3)]
         swarm = AgentSwarm(agents)
@@ -246,7 +246,6 @@ class TestAgentSwarm:
         assert result.consensus_output == "ok"
         assert result.agreement_score == 1.0
 
-    @pytest.mark.asyncio
     async def test_execute_unanimous_failure(self):
         agents = [FakeAgent("a1", "yes", 0.9), FakeAgent("a2", "no", 0.8)]
         swarm = AgentSwarm(agents)
@@ -255,7 +254,6 @@ class TestAgentSwarm:
         with pytest.raises(ValueError, match="different outputs"):
             await swarm.execute(task)
 
-    @pytest.mark.asyncio
     async def test_partial_failure_tolerated(self):
         agents = [FakeAgent("a1", "ok", 0.9), FailingAgent("a2")]
         swarm = AgentSwarm(agents)
@@ -265,7 +263,6 @@ class TestAgentSwarm:
         assert result.num_agents == 1
         assert result.consensus_output == "ok"
 
-    @pytest.mark.asyncio
     async def test_require_all_agents_fails(self):
         agents = [FakeAgent("a1", "ok", 0.9), FailingAgent("a2")]
         swarm = AgentSwarm(agents)
@@ -274,7 +271,6 @@ class TestAgentSwarm:
         with pytest.raises(ValueError, match="require_all_agents"):
             await swarm.execute(task)
 
-    @pytest.mark.asyncio
     async def test_all_agents_fail(self):
         agents = [FailingAgent("a1"), FailingAgent("a2")]
         swarm = AgentSwarm(agents)
@@ -283,7 +279,6 @@ class TestAgentSwarm:
         with pytest.raises(ValueError, match="All agents failed"):
             await swarm.execute(task)
 
-    @pytest.mark.asyncio
     async def test_execute_with_explanation(self):
         agents = [FakeAgent("a1", "approve", 0.9), FakeAgent("a2", "approve", 0.8)]
         swarm = AgentSwarm(agents)
@@ -295,12 +290,12 @@ class TestAgentSwarm:
         readable = result.explanation.to_human_readable()
         assert len(readable) > 0
 
-    @pytest.mark.asyncio
     async def test_timeout(self):
         import asyncio
 
         class SlowAgent:
             agent_id = "slow"
+
             async def execute(self, task):
                 await asyncio.sleep(10)
                 return AgentResult(agent_id="slow", output="late", confidence=0.5, explanation="")
