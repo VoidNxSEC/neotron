@@ -30,6 +30,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from neutron.agents.llm_client import LLMClient
+
 from neutron.agents.cortex import Agent, AgentSwarm, ConsensusStrategy
 from neutron.core.config import get_config
 
@@ -48,7 +49,7 @@ async def test_llm_client():
 
     client = LLMClient()
 
-    print(f"  Initialized LLM client")
+    print("  Initialized LLM client")
     print(f"  Providers available: {list(client._providers.keys())}")
 
     # Health check
@@ -87,7 +88,7 @@ async def test_simple_generation():
             max_tokens=50,
         )
 
-        print(f"\n  ✓ Response received:")
+        print("\n  ✓ Response received:")
         print(f"    Model: {response.model}")
         print(f"    Tokens: {response.total_tokens}")
         print(f"    Content: {response.content[:200]}")
@@ -121,7 +122,7 @@ async def test_cortex_agent():
     try:
         result = await agent.execute(task)
 
-        print(f"\n  ✓ Agent response:")
+        print("\n  ✓ Agent response:")
         print(f"    Confidence: {result.confidence:.2f}")
         print(f"    Content: {result.content[:200]}")
         print(f"    Metadata: {result.metadata}")
@@ -130,6 +131,7 @@ async def test_cortex_agent():
     except Exception as e:
         print(f"\n  ✗ Agent execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -178,18 +180,21 @@ async def test_agent_swarm():
     try:
         result = await swarm.broadcast_task(task)
 
-        print(f"\n  ✓ Swarm consensus reached:")
+        print("\n  ✓ Swarm consensus reached:")
         print(f"    Decision: {result['consensus']['decision']}")
         print(f"    Confidence: {result['consensus']['confidence']:.2f}")
 
-        print(f"\n  Individual agent results:")
+        print("\n  Individual agent results:")
         for r in result["individual_results"]:
-            print(f"    {r['agent']:15s}: {str(r['content'])[:60]:60s} (conf: {r['confidence']:.2f})")
+            print(
+                f"    {r['agent']:15s}: {str(r['content'])[:60]:60s} (conf: {r['confidence']:.2f})"
+            )
 
         return True
     except Exception as e:
         print(f"\n  ✗ Swarm execution failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -217,11 +222,13 @@ async def test_end_to_end_nexus_flow():
     print_header("Test 6: End-to-End NEXUS 4-Layer Flow", "-")
 
     # Check if any LLM API key is configured
-    has_api_key = any([
-        os.getenv("ANTHROPIC_API_KEY"),
-        os.getenv("OPENAI_API_KEY"),
-        os.getenv("DEEPSEEK_API_KEY"),
-    ])
+    has_api_key = any(
+        [
+            os.getenv("ANTHROPIC_API_KEY"),
+            os.getenv("OPENAI_API_KEY"),
+            os.getenv("DEEPSEEK_API_KEY"),
+        ]
+    )
 
     if not has_api_key:
         print("  SKIPPED: No LLM API keys configured")
@@ -264,6 +271,7 @@ async def test_end_to_end_nexus_flow():
     except Exception as e:
         print(f"    [FAIL] {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -282,7 +290,7 @@ async def test_end_to_end_nexus_flow():
         assert response2.decision == ComplianceDecision.REJECTED, "Should be rejected"
         assert len(response2.layers) == 1, "Should stop at SENTINEL"
         print(f"    Decision: {response2.decision.value}")
-        print(f"    Blocked at: Layer 1 (SENTINEL)")
+        print("    Blocked at: Layer 1 (SENTINEL)")
         print("    [PASS] Correctly rejected without consent")
     except Exception as e:
         print(f"    [FAIL] {e}")
@@ -296,7 +304,7 @@ async def main():
     print_header("NEXUS LLM Integration Test Suite")
 
     config = get_config()
-    print(f"  Configuration loaded")
+    print("  Configuration loaded")
     print(f"  Primary provider: {config.llm.primary_provider.value}")
     print(f"  Fallback chain: {[p.value for p in config.llm.fallback_chain]}")
 
@@ -318,6 +326,7 @@ async def main():
         except Exception as e:
             print(f"\n  ✗ Test '{test_name}' raised exception: {e}")
             import traceback
+
             traceback.print_exc()
             results.append((test_name, False))
 

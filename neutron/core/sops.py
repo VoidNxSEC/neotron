@@ -74,7 +74,9 @@ def secret(name: str, default: str = "") -> str:
     # 3. Return default
     logger.debug(
         "Secret '%s' not found in env(%s) or %s",
-        name, _env_name(name), _SECRETS_DIR,
+        name,
+        _env_name(name),
+        _SECRETS_DIR,
     )
     return default
 

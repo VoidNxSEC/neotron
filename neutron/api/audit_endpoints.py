@@ -8,11 +8,9 @@ LGPD Article 48, GDPR Article 30, EU AI Act Article 12.
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from neutron.api.auth import AuthPrincipal, Role, get_current_user, require_role
 from neutron.api.audit_store import (
     AuditEventType,
     AuditLogResponse,
@@ -22,6 +20,7 @@ from neutron.api.audit_store import (
     IPFSAuditResponse,
     get_audit_store,
 )
+from neutron.api.auth import AuthPrincipal, Role, get_current_user, require_role
 
 logger = logging.getLogger("neutron.api.audit_endpoints")
 
@@ -63,15 +62,17 @@ def audit_log_to_response(log) -> AuditLogResponse:
 
 @router.get("/logs", response_model=AuditLogsResponse)
 async def query_audit_logs(
-    event_type: Optional[AuditEventType] = Query(None, description="Filter by event type"),
-    customer_id: Optional[str] = Query(None, description="Filter by customer ID"),
-    user_id: Optional[str] = Query(None, description="Filter by user ID"),
-    decision: Optional[ComplianceDecisionType] = Query(None, description="Filter by compliance decision"),
-    regulation: Optional[str] = Query(None, description="Filter by regulation (LGPD, GDPR, AI_ACT)"),
-    action: Optional[str] = Query(None, description="Filter by action"),
-    start_time: Optional[float] = Query(None, description="Filter by start timestamp (unix)"),
-    end_time: Optional[float] = Query(None, description="Filter by end timestamp (unix)"),
-    request_id: Optional[str] = Query(None, description="Filter by request ID"),
+    event_type: AuditEventType | None = Query(None, description="Filter by event type"),
+    customer_id: str | None = Query(None, description="Filter by customer ID"),
+    user_id: str | None = Query(None, description="Filter by user ID"),
+    decision: ComplianceDecisionType | None = Query(
+        None, description="Filter by compliance decision"
+    ),
+    regulation: str | None = Query(None, description="Filter by regulation (LGPD, GDPR, AI_ACT)"),
+    action: str | None = Query(None, description="Filter by action"),
+    start_time: float | None = Query(None, description="Filter by start timestamp (unix)"),
+    end_time: float | None = Query(None, description="Filter by end timestamp (unix)"),
+    request_id: str | None = Query(None, description="Filter by request ID"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Page size (max 100)"),
     principal: AuthPrincipal = Depends(get_current_user),
@@ -122,8 +123,7 @@ async def query_audit_logs(
     )
 
     logger.info(
-        f"Audit query by {principal.username}: {total} results, "
-        f"filters={filters_applied}"
+        f"Audit query by {principal.username}: {total} results, " f"filters={filters_applied}"
     )
 
     return AuditLogsResponse(
@@ -183,8 +183,8 @@ async def get_customer_audit_logs(
 
 @router.get("/stats", response_model=AuditStatsResponse)
 async def get_audit_stats(
-    start_time: Optional[float] = Query(None, description="Start timestamp (unix)"),
-    end_time: Optional[float] = Query(None, description="End timestamp (unix)"),
+    start_time: float | None = Query(None, description="Start timestamp (unix)"),
+    end_time: float | None = Query(None, description="End timestamp (unix)"),
     principal: AuthPrincipal = Depends(get_current_user),
 ) -> AuditStatsResponse:
     """
@@ -288,12 +288,12 @@ async def fetch_audit_from_ipfs(
 )
 async def create_audit_event(
     event_type: AuditEventType,
-    customer_id: Optional[str] = None,
-    user_id: Optional[str] = None,
-    action: Optional[str] = None,
-    decision: Optional[ComplianceDecisionType] = None,
-    regulation: Optional[str] = None,
-    details: Optional[dict] = None,
+    customer_id: str | None = None,
+    user_id: str | None = None,
+    action: str | None = None,
+    decision: ComplianceDecisionType | None = None,
+    regulation: str | None = None,
+    details: dict | None = None,
     principal: AuthPrincipal = Depends(get_current_user),
 ) -> AuditLogResponse:
     """
@@ -328,8 +328,7 @@ async def create_audit_event(
     ipfs_hash = audit_store.simulate_ipfs_storage(log)
 
     logger.info(
-        f"Manual audit event created: {log.audit_id} by {principal.username}, "
-        f"IPFS: {ipfs_hash}"
+        f"Manual audit event created: {log.audit_id} by {principal.username}, " f"IPFS: {ipfs_hash}"
     )
 
     return audit_log_to_response(log)

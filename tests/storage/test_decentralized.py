@@ -11,16 +11,15 @@ Tests cover:
 """
 
 import json
-import os
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
+
+import pytest
 
 from neutron.storage.decentralized import (
+    ComplianceLog,
     DecentralizedStorage,
     StorageReceipt,
     StorageType,
-    ComplianceLog,
 )
 
 
@@ -295,13 +294,13 @@ class TestDecentralizedStorage:
         """Test storage receipt has all required attributes"""
         receipt = storage._store_local(sample_log)
 
-        assert hasattr(receipt, 'storage_type')
-        assert hasattr(receipt, 'identifier')
-        assert hasattr(receipt, 'permanent')
-        assert hasattr(receipt, 'url')
-        assert hasattr(receipt, 'timestamp')
-        assert hasattr(receipt, 'size_bytes')
-        assert hasattr(receipt, 'cost_usd')
+        assert hasattr(receipt, "storage_type")
+        assert hasattr(receipt, "identifier")
+        assert hasattr(receipt, "permanent")
+        assert hasattr(receipt, "url")
+        assert hasattr(receipt, "timestamp")
+        assert hasattr(receipt, "size_bytes")
+        assert hasattr(receipt, "cost_usd")
 
     @pytest.mark.asyncio
     async def test_ipfs_unavailable_fallback(self, sample_log):

@@ -4,6 +4,7 @@ Tests for Audit Log API
 
 import os
 import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,8 +12,8 @@ from fastapi.testclient import TestClient
 os.environ["API_SECRET_KEY"] = "test_secret_key_for_neutron_2026"
 os.environ["ADMIN_PASSWORD"] = "test_admin_password"
 
-from neutron.api.server import app
 from neutron.api.audit_store import AuditEventType, ComplianceDecisionType, get_audit_store
+from neutron.api.server import app
 
 
 @pytest.fixture
@@ -56,7 +57,9 @@ def sample_audit_logs(audit_store):
             customer_id=f"customer_{i % 3}",  # 3 different customers
             user_id=f"user_{i % 2}",  # 2 different users
             action="loan_approval",
-            decision=ComplianceDecisionType.APPROVED if i % 2 == 0 else ComplianceDecisionType.REJECTED,
+            decision=(
+                ComplianceDecisionType.APPROVED if i % 2 == 0 else ComplianceDecisionType.REJECTED
+            ),
             regulation="LGPD",
             request_id=f"req_{i}",
             details={"amount": 1000 * (i + 1)},
@@ -213,9 +216,9 @@ def test_query_logs_multiple_filters(client, admin_token, sample_audit_logs):
     assert response.status_code == 200
     data = response.json()
     assert all(
-        log["event_type"] == "compliance_validation" and
-        log["decision"] == "approved" and
-        log["regulation"] == "LGPD"
+        log["event_type"] == "compliance_validation"
+        and log["decision"] == "approved"
+        and log["regulation"] == "LGPD"
         for log in data["logs"]
     )
 

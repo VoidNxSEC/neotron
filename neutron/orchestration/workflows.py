@@ -7,11 +7,11 @@ Temporal workflow engine for production-ready compliance enforcement.
 
 from typing import Any
 
+from neutron.compliance.auditors.lgpd import LGPD_GUARDRAILS
 from neutron.compliance.sentinel import (
     AgentOutput,
     ComplianceViolation,
 )
-from neutron.compliance.auditors.lgpd import LGPD_GUARDRAILS
 
 
 async def validate_agent_output_activity(

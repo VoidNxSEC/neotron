@@ -3,6 +3,7 @@ Tests for Policy Management API
 """
 
 import os
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -10,8 +11,8 @@ from fastapi.testclient import TestClient
 os.environ["API_SECRET_KEY"] = "test_secret_key_for_neutron_2026"
 os.environ["ADMIN_PASSWORD"] = "test_admin_password"
 
-from neutron.api.server import app
 from neutron.api.policy_store import get_policy_store
+from neutron.api.server import app
 
 
 @pytest.fixture
@@ -35,7 +36,7 @@ def admin_token(client):
 def operator_token(client):
     """Get operator access token."""
     # Create operator user first
-    from neutron.api.auth import get_auth_store, Role
+    from neutron.api.auth import Role, get_auth_store
 
     store = get_auth_store()
     store.create_user("operator_test", "operator_pass", Role.OPERATOR)
@@ -275,7 +276,6 @@ def test_update_policy_admin(client, admin_token):
 def test_update_policy_non_admin_fails(client, operator_token):
     """Test that only admins can update policies."""
     # Get a default policy ID
-    from neutron.api.policy_store import get_policy_store
 
     store = get_policy_store()
     policy_id = "policy_lgpd_default"

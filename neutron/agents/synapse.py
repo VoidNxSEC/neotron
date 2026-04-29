@@ -23,6 +23,7 @@ except ImportError:
 # Data
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class MemoryItem:
     content: str
@@ -35,6 +36,7 @@ class MemoryItem:
 # ---------------------------------------------------------------------------
 # Math helpers (pure-python, no numpy)
 # ---------------------------------------------------------------------------
+
 
 def _dot(a: list[float], b: list[float]) -> float:
     return sum(x * y for x, y in zip(a, b))
@@ -54,6 +56,7 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 # ---------------------------------------------------------------------------
 # SynapseMemory
 # ---------------------------------------------------------------------------
+
 
 class SynapseMemory:
     """In-memory semantic store for a single agent."""

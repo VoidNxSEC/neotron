@@ -1,4 +1,4 @@
-from .cortex import AgentSwarm, Agent, ConsensusStrategy
+from .cortex import Agent, AgentSwarm, ConsensusStrategy
 
 # Expose Memory via agents namespace for convenience, though it lives in memory package
 # or just leave it out to force correct usage.

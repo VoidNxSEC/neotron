@@ -4,7 +4,7 @@ SYNAPSE Working Memory - Sliding Window Context Management
 Short-term memory for agent conversations with token-based truncation.
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass

@@ -7,12 +7,10 @@ Provides user authentication, API key management, and token refresh.
 from __future__ import annotations
 
 import logging
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from neutron.api.auth import (
-    APIKey,
     APIKeyCreateRequest,
     APIKeyCreateResponse,
     APIKeyInfo,
@@ -142,7 +140,11 @@ async def refresh_token(request: RefreshRequest) -> LoginResponse:
 # ---------------------------------------------------------------------------
 
 
-@router.post("/apikeys", response_model=APIKeyCreateResponse, dependencies=[Depends(require_role(Role.ADMIN))])
+@router.post(
+    "/apikeys",
+    response_model=APIKeyCreateResponse,
+    dependencies=[Depends(require_role(Role.ADMIN))],
+)
 async def create_api_key(
     request: APIKeyCreateRequest,
     principal: AuthPrincipal = Depends(get_current_user),
@@ -179,9 +181,7 @@ async def create_api_key(
         },
     )
 
-    logger.info(
-        f"API key created: {api_key_obj.key_id} ({request.name}) by {principal.username}"
-    )
+    logger.info(f"API key created: {api_key_obj.key_id} ({request.name}) by {principal.username}")
 
     return APIKeyCreateResponse(
         key_id=api_key_obj.key_id,
@@ -192,7 +192,9 @@ async def create_api_key(
     )
 
 
-@router.get("/apikeys", response_model=APIKeyListResponse, dependencies=[Depends(require_role(Role.ADMIN))])
+@router.get(
+    "/apikeys", response_model=APIKeyListResponse, dependencies=[Depends(require_role(Role.ADMIN))]
+)
 async def list_api_keys(
     include_revoked: bool = False,
     principal: AuthPrincipal = Depends(get_current_user),

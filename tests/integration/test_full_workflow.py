@@ -9,14 +9,14 @@ import asyncio
 from typing import Any
 
 import pytest
+
+from neutron.compliance.sentinel import AgentOutput
 from neutron.orchestration.cortex import (
     AgentResult,
     AgentSwarm,
     ConsensusStrategy,
     Task,
 )
-
-from neutron.compliance.sentinel import AgentOutput
 from neutron.reasoning import ExplanationType
 
 # =============================================================================

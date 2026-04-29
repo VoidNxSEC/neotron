@@ -44,7 +44,7 @@ def print_layer_result(name: str, layer) -> None:
     if layer.metadata:
         for k, v in layer.metadata.items():
             if k == "oracle":
-                print(f"    ORACLE explainability: attached")
+                print("    ORACLE explainability: attached")
             elif k == "individual_results":
                 print(f"    Agent results: {len(v)} agents")
             else:
@@ -54,14 +54,16 @@ def print_layer_result(name: str, layer) -> None:
 def print_article_mapping(response) -> None:
     print_header("EU AI Act Article Mapping", "-")
 
-    print("""
+    print(
+        """
   Article 13 - Transparency (Right to Explanation)
   -------------------------------------------------
   Requirement: High-risk AI systems shall be designed and developed in
   such a way to ensure that their operation is sufficiently transparent
   to enable deployers to interpret the system's output.
 
-  NEXUS Compliance:""")
+  NEXUS Compliance:"""
+    )
 
     if "CORTEX" in response.layers:
         cortex = response.layers["CORTEX"]
@@ -77,30 +79,33 @@ def print_article_mapping(response) -> None:
                 print(f"    - Chain of Thought: {len(cot['steps'])} reasoning steps")
         print(f"    - Multi-agent consensus: {cortex.metadata.get('num_agents', 0)} agents")
         print(f"    - Confidence score: {cortex.metadata.get('consensus_confidence', 0):.2f}")
-    print(f"    - Full explanation provided: YES")
+    print("    - Full explanation provided: YES")
 
-    print("""
+    print(
+        """
   Article 14 - Human Oversight
   ----------------------------
   Requirement: High-risk AI systems shall be designed and developed in
   such a way as to enable effective human oversight during use.
 
-  NEXUS Compliance:""")
+  NEXUS Compliance:"""
+    )
     print(f"    - Decision: {response.decision.value}")
     print(f"    - Audit trail: {response.audit_hash or 'local'}")
     if "SENTINEL" in response.layers:
         print(f"    - Consent validation: {response.layers['SENTINEL'].status}")
     if "BASTION" in response.layers:
         print(f"    - Kernel enforcement: {response.layers['BASTION'].status}")
-    print(f"    - Human can override: YES (REVIEW_REQUIRED supported)")
-    print(f"    - Immutable audit log: YES (IPFS/Arweave)")
+    print("    - Human can override: YES (REVIEW_REQUIRED supported)")
+    print("    - Immutable audit log: YES (IPFS/Arweave)")
 
 
 async def demo_credit_scoring() -> None:
     """Demo: Credit scoring with full 4-layer compliance."""
     print_header("SCENARIO: AI Credit Scoring Decision")
 
-    print("""
+    print(
+        """
   A financial institution uses AI to evaluate loan applications.
   Under the EU AI Act, credit scoring is a HIGH-RISK AI system
   (Annex III, Section 5b) requiring full compliance with Articles 13-14.
@@ -110,7 +115,8 @@ async def demo_credit_scoring() -> None:
   Credit Score: 720
   Income: R$8,000/month
   Existing Debt: R$15,000
-  """)
+  """
+    )
 
     # Create compliance request
     request = ComplianceRequest(
@@ -171,7 +177,7 @@ async def demo_credit_scoring() -> None:
     passed_count = sum(1 for l in response.layers.values() if l.passed)
     print(f"\n  Layers executed: {layer_count}/4")
     print(f"  Layers passed: {passed_count}/{layer_count}")
-    print(f"  EU AI Act Articles covered: 13 (Transparency), 14 (Human Oversight)")
+    print("  EU AI Act Articles covered: 13 (Transparency), 14 (Human Oversight)")
     print(f"  Processing time: {elapsed:.0f}ms")
     print(f"  Audit trail: {'Immutable' if response.audit_hash else 'Local'}")
     print()
@@ -181,10 +187,12 @@ async def demo_without_consent() -> None:
     """Demo: Request rejected at Layer 1 (no consent)."""
     print_header("SCENARIO: Request Without Consent (Expected Rejection)")
 
-    print("""
+    print(
+        """
   Same credit scoring scenario, but WITHOUT a consent token.
   NEXUS should reject at Layer 1 (SENTINEL) per LGPD Article 7.
-  """)
+  """
+    )
 
     request = ComplianceRequest(
         customer_id="customer_99",
@@ -200,7 +208,7 @@ async def demo_without_consent() -> None:
     print(f"  Decision: {response.decision.value.upper()}")
     print(f"  Reason: {response.explanation}")
     print(f"  Layers reached: {len(response.layers)}/4")
-    print(f"  Blocked at: Layer 1 (SENTINEL)")
+    print("  Blocked at: Layer 1 (SENTINEL)")
     print()
 
     assert response.decision == ComplianceDecision.REJECTED

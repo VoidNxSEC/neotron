@@ -12,19 +12,21 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+
 try:
     import mlflow
 except ImportError:
     mlflow = None
 
 from neutron.agents.llm_client import LLMClient
+from neutron.ml_lab.optimization.optimizer import HyperparameterOptimizer
+
 from neutron.core.models import (
     HyperparameterSpace,
     OptimizationState,
     SearchStrategy,
     TrainingConfig,
 )
-from neutron.ml_lab.optimization.optimizer import HyperparameterOptimizer
 
 logger = logging.getLogger("neutron.plugins.cerebro")
 
@@ -32,7 +34,7 @@ logger = logging.getLogger("neutron.plugins.cerebro")
 class CerebroOptimizer(HyperparameterOptimizer):
     """
     Semantic Hyperparameter Optimizer using LLM reasoning.
-    
+
     Integrated with PHANTOM (Cerebro) for intelligent search
     and MLflow for reasoning tracking.
     """
@@ -45,7 +47,7 @@ class CerebroOptimizer(HyperparameterOptimizer):
         super().__init__(hyperparameter_space, strategy=SearchStrategy.SEMANTIC)
         self.llm_client = LLMClient()
         self.config = self._load_config(config_path)
-        
+
         # Optimizer settings
         self.model = self.config.get("model", "claude-3-5-sonnet-20241022")
         self.temperature = self.config.get("temperature", 0.7)
@@ -58,10 +60,10 @@ class CerebroOptimizer(HyperparameterOptimizer):
             if not config_file.exists():
                 logger.warning(f"Config file {path} not found, using defaults")
                 return {}
-                
-            with open(config_file, "r") as f:
+
+            with open(config_file) as f:
                 data = yaml.safe_load(f)
-                
+
             return data.get("cerebro", {}).get("optimizer", {})
         except Exception as e:
             logger.error(f"Failed to load config from {path}: {e}")
@@ -72,20 +74,20 @@ class CerebroOptimizer(HyperparameterOptimizer):
     ) -> list[TrainingConfig]:
         """
         Generate hyperparameter configurations using LLM reasoning.
-        
+
         Args:
             num: Number of configurations to suggest.
             state: Current optimization state (history).
             experiment_id: Experiment identifier.
-            
+
         Returns:
             List of suggested TrainingConfig objects.
         """
         prompt = self._construct_prompt(num, state)
-        
+
         try:
             logger.info(f"Requesting {num} suggestions from Cerebro ({self.model})...")
-            
+
             # Start MLflow run for the optimization step if active
             if mlflow and mlflow.active_run():
                 mlflow.log_param("cerebro_model", self.model)
@@ -95,12 +97,12 @@ class CerebroOptimizer(HyperparameterOptimizer):
                 prompt=prompt,
                 system=self.system_prompt,
                 temperature=self.temperature,
-                max_tokens=4096
+                max_tokens=4096,
             )
-            
+
             # Parse and validate suggestions
             suggestions_data = self._parse_response(response.content)
-            
+
             # Log reasoning/response to MLflow
             if mlflow and mlflow.active_run():
                 mlflow.log_text(response.content, "cerebro_response.txt")
@@ -109,17 +111,17 @@ class CerebroOptimizer(HyperparameterOptimizer):
 
             configs = []
             valid_suggestions = suggestions_data.get("suggestions", [])
-            
+
             # Take only requested number
             for i, suggestion in enumerate(valid_suggestions[:num]):
                 # Validate against space (basic check)
                 # In a real implementation, we might clamp values or reject invalid ones
-                
+
                 config = TrainingConfig(
                     run_id=f"{experiment_id}-cerebro-{state.trials_completed + i}",
                     experiment_id=experiment_id,
-                    model_name="distilbert-base-uncased", # TODO: Make configurable
-                    dataset_path="imdb", # TODO: Make configurable
+                    model_name="distilbert-base-uncased",  # TODO: Make configurable
+                    dataset_path="imdb",  # TODO: Make configurable
                     learning_rate=float(suggestion.get("learning_rate", 1e-5)),
                     batch_size=int(suggestion.get("batch_size", 16)),
                     num_epochs=int(suggestion.get("num_epochs", 3)),
@@ -127,20 +129,22 @@ class CerebroOptimizer(HyperparameterOptimizer):
                     warmup_steps=int(suggestion.get("warmup_steps", 0)),
                 )
                 configs.append(config)
-                
+
             # If LLM returned fewer than requested, fill with random
             if len(configs) < num:
-                logger.warning(f"Cerebro returned {len(configs)} configs, requested {num}. Filling with random.")
+                logger.warning(
+                    f"Cerebro returned {len(configs)} configs, requested {num}. Filling with random."
+                )
                 random_configs = self._random_search(num - len(configs), experiment_id)
                 configs.extend(random_configs)
-                
+
             return configs
 
         except Exception as e:
             logger.error(f"Cerebro optimization failed: {e}")
             if mlflow and mlflow.active_run():
                 mlflow.log_text(str(e), "cerebro_error.txt")
-            
+
             # Fallback to random search
             return self._random_search(num, experiment_id)
 
@@ -149,12 +153,13 @@ class CerebroOptimizer(HyperparameterOptimizer):
     ) -> list[TrainingConfig]:
         """Synchronous wrapper for suggest_configs_async."""
         import asyncio
+
         return asyncio.run(self.suggest_configs_async(num, state, experiment_id))
 
     def _construct_prompt(self, num: int, state: OptimizationState) -> str:
         """Construct the prompt for the LLM."""
         space = self.hyperparameter_space
-        
+
         # Describe history (simplified)
         history_str = "No prior trials."
         if state.trials_completed > 0:
@@ -201,14 +206,14 @@ class CerebroOptimizer(HyperparameterOptimizer):
         """Extract and parse JSON from LLM response."""
         # Strip markdown code blocks if present
         text = text.strip()
-        
+
         # Regex to find JSON block
         json_match = re.search(r"```json\s*(.*?)\s*```", text, re.DOTALL)
         if json_match:
             text = json_match.group(1)
         elif text.startswith("```") and text.endswith("```"):
             text = text[3:-3].strip()
-            
+
         try:
             return json.loads(text)
         except json.JSONDecodeError as e:

@@ -22,10 +22,10 @@ Usage:
 """
 
 from neutron.storage.decentralized import (
+    ComplianceLog,
     DecentralizedStorage,
     StorageReceipt,
     StorageType,
-    ComplianceLog,
 )
 
 __all__ = [

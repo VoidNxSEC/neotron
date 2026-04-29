@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import asyncio
 from collections import Counter
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any
 
@@ -49,9 +49,7 @@ class AgentResult:
 
     def __post_init__(self) -> None:
         if not (0.0 <= self.confidence <= 1.0):
-            raise ValueError(
-                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
-            )
+            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
 
 
 @dataclass
@@ -76,9 +74,7 @@ class SwarmResult:
         """Average confidence across all agent results."""
         if not self.individual_results:
             return 0.0
-        return sum(r.confidence for r in self.individual_results) / len(
-            self.individual_results
-        )
+        return sum(r.confidence for r in self.individual_results) / len(self.individual_results)
 
     def generate_explanation(
         self,
@@ -297,8 +293,8 @@ class SwarmResult:
                 )
 
             reasoning = (
-                f"Counterfactual analysis: what if the agents had produced different results? "
-                f"The consensus would change if key agents altered their predictions."
+                "Counterfactual analysis: what if the agents had produced different results? "
+                "The consensus would change if key agents altered their predictions."
             )
 
             result = ExplanationResult(
@@ -383,9 +379,7 @@ class ConsensusEngine:
             # Equal weights if all confidences are zero
             weighted_output = sum(r.output for r in results) / len(results)
         else:
-            weighted_output = sum(
-                r.output * r.confidence for r in results
-            ) / total_weight
+            weighted_output = sum(r.output * r.confidence for r in results) / total_weight
 
         avg_confidence = total_weight / len(results)
 
@@ -417,9 +411,7 @@ class ConsensusEngine:
 
         first_output = results[0].output
         if not all(r.output == first_output for r in results):
-            raise ValueError(
-                "Unanimous consensus failed: agents produced different outputs"
-            )
+            raise ValueError("Unanimous consensus failed: agents produced different outputs")
 
         avg_confidence = sum(r.confidence for r in results) / len(results)
         return first_output, avg_confidence, 1.0
@@ -537,9 +529,7 @@ class AgentSwarm:
 
         # Apply timeout if specified
         if task.timeout_seconds and task.timeout_seconds > 0:
-            agent_results = await asyncio.wait_for(
-                _execute_all(), timeout=task.timeout_seconds
-            )
+            agent_results = await asyncio.wait_for(_execute_all(), timeout=task.timeout_seconds)
         else:
             agent_results = await _execute_all()
 
@@ -552,9 +542,7 @@ class AgentSwarm:
         }
 
         consensus_fn = strategy_map[task.consensus_strategy]
-        consensus_output, consensus_confidence, agreement_score = consensus_fn(
-            agent_results
-        )
+        consensus_output, consensus_confidence, agreement_score = consensus_fn(agent_results)
 
         result = SwarmResult(
             task=task,

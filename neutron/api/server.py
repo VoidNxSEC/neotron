@@ -9,7 +9,7 @@ import os
 import time
 import uuid
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -28,9 +28,7 @@ logger = logging.getLogger("neutron.api")
 # ---------------------------------------------------------------------------
 API_SECRET_KEY: str | None = os.getenv("API_SECRET_KEY")
 CORS_ORIGINS: list[str] = [
-    o.strip()
-    for o in os.getenv("CORS_ORIGINS", "*").split(",")
-    if o.strip()
+    o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()
 ]
 JWT_EXPIRATION_SECONDS: int = int(os.getenv("JWT_EXPIRATION_SECONDS", "3600"))
 
@@ -47,6 +45,7 @@ AGENT_IDS: set[str] = {a["agent_id"] for a in AVAILABLE_AGENTS}
 
 # -- Error models -----------------------------------------------------------
 
+
 class ErrorDetail(BaseModel):
     correlation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     message: str
@@ -58,6 +57,7 @@ class ErrorResponse(BaseModel):
 
 
 # -- Auth models ------------------------------------------------------------
+
 
 class AuthRequest(BaseModel):
     username: str
@@ -72,9 +72,10 @@ class AuthResponse(BaseModel):
 
 # -- Task models (existing) -------------------------------------------------
 
+
 class TaskRequest(BaseModel):
     description: str
-    metadata: Dict[str, Any] = {}
+    metadata: dict[str, Any] = {}
 
 
 class TaskResponse(BaseModel):
@@ -84,6 +85,7 @@ class TaskResponse(BaseModel):
 
 # -- Agent models -----------------------------------------------------------
 
+
 class AgentInfo(BaseModel):
     agent_id: str
     description: str
@@ -92,41 +94,42 @@ class AgentInfo(BaseModel):
 class AgentExecuteRequest(BaseModel):
     agent_id: str
     task_type: str
-    input: Dict[str, Any] = {}
+    input: dict[str, Any] = {}
 
 
 class AgentExecuteResponse(BaseModel):
     execution_id: str
     agent_id: str
     status: str
-    result: Dict[str, Any] = {}
+    result: dict[str, Any] = {}
 
 
 class SwarmExecuteRequest(BaseModel):
-    agent_ids: List[str]
+    agent_ids: list[str]
     task_type: str
-    input: Dict[str, Any] = {}
+    input: dict[str, Any] = {}
     consensus_strategy: str = "majority"
 
 
 class SwarmExecuteResponse(BaseModel):
     swarm_id: str
-    agent_ids: List[str]
+    agent_ids: list[str]
     status: str
     consensus_strategy: str
-    results: Dict[str, Any] = {}
+    results: dict[str, Any] = {}
 
 
 class ComplianceStatus(BaseModel):
     status: str
     agents_available: int
     last_check: str
-    issues: List[str] = []
+    issues: list[str] = []
 
 
 # ---------------------------------------------------------------------------
 # JWT helpers (stdlib only -- HMAC-SHA256)
 # ---------------------------------------------------------------------------
+
 
 def _b64url_encode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
@@ -170,11 +173,12 @@ def _jwt_verify(token: str, secret: str) -> dict:
 # Rate limiter -- in-memory token bucket (per IP)
 # ---------------------------------------------------------------------------
 
+
 class _TokenBucket:
     """Simple token-bucket rate limiter. Thread-safe enough for async."""
 
     def __init__(self, rate: float, capacity: int) -> None:
-        self.rate = rate          # tokens per second
+        self.rate = rate  # tokens per second
         self.capacity = capacity  # max burst
         self._buckets: dict[str, tuple[float, float]] = {}  # ip -> (tokens, last_ts)
 
@@ -197,7 +201,10 @@ _rate_limiter = _TokenBucket(rate=1.0, capacity=60)
 # Error helper
 # ---------------------------------------------------------------------------
 
-def _error_response(status_code: int, message: str, correlation_id: str | None = None) -> JSONResponse:
+
+def _error_response(
+    status_code: int, message: str, correlation_id: str | None = None
+) -> JSONResponse:
     cid = correlation_id or str(uuid.uuid4())
     body = ErrorResponse(
         error=ErrorDetail(correlation_id=cid, message=message, status_code=status_code)
@@ -208,6 +215,7 @@ def _error_response(status_code: int, message: str, correlation_id: str | None =
 # ---------------------------------------------------------------------------
 # Lifespan
 # ---------------------------------------------------------------------------
+
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
@@ -247,12 +255,12 @@ app.add_middleware(
 )
 
 # -- Include routers --------------------------------------------------------
-from neutron.api.compliance import router as compliance_router
-from neutron.api.auth_endpoints import router as auth_router
-from neutron.api.policy_endpoints import router as policy_router
 from neutron.api.audit_endpoints import router as audit_router
+from neutron.api.auth_endpoints import router as auth_router
+from neutron.api.compliance import router as compliance_router
 from neutron.api.consent_endpoints import router as consent_router
 from neutron.api.oracle_endpoints import router as oracle_router
+from neutron.api.policy_endpoints import router as policy_router
 
 app.include_router(auth_router)
 app.include_router(policy_router)
@@ -263,6 +271,7 @@ app.include_router(oracle_router)
 
 
 # -- Rate-limit middleware --------------------------------------------------
+
 
 @app.middleware("http")
 async def rate_limit_middleware(request: Request, call_next):
@@ -277,7 +286,7 @@ async def rate_limit_middleware(request: Request, call_next):
 # Auth dependency (imported from auth module)
 # ---------------------------------------------------------------------------
 
-from neutron.api.auth import get_current_user, AuthPrincipal
+from neutron.api.auth import AuthPrincipal, get_current_user
 
 # Legacy compatibility - map old require_auth to new get_current_user
 require_auth = get_current_user
@@ -287,6 +296,7 @@ require_auth = get_current_user
 # Endpoints -- Health (no auth)
 # ---------------------------------------------------------------------------
 
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "temporal": _temporal_client is not None}
@@ -295,6 +305,7 @@ async def health():
 # ---------------------------------------------------------------------------
 # Endpoints -- Tasks (existing, now auth-protected)
 # ---------------------------------------------------------------------------
+
 
 @app.post("/api/v1/tasks", response_model=TaskResponse)
 async def submit_task(task: TaskRequest, _user: AuthPrincipal = Depends(require_auth)):
@@ -339,7 +350,8 @@ async def get_task_status(task_id: str, _user: AuthPrincipal = Depends(require_a
 # Endpoints -- Agents
 # ---------------------------------------------------------------------------
 
-@app.get("/api/v1/agents", response_model=List[AgentInfo])
+
+@app.get("/api/v1/agents", response_model=list[AgentInfo])
 async def list_agents(_user: AuthPrincipal = Depends(require_auth)):
     """Return the list of available agents."""
     return [AgentInfo(**a) for a in AVAILABLE_AGENTS]
@@ -355,7 +367,12 @@ async def execute_agent(body: AgentExecuteRequest, _user: AuthPrincipal = Depend
         )
 
     execution_id = f"agent-exec-{uuid.uuid4()}"
-    logger.info("Agent execution requested: agent=%s task_type=%s id=%s", body.agent_id, body.task_type, execution_id)
+    logger.info(
+        "Agent execution requested: agent=%s task_type=%s id=%s",
+        body.agent_id,
+        body.task_type,
+        execution_id,
+    )
 
     from neutron.agents.cortex import Agent
 
@@ -399,6 +416,7 @@ async def execute_agent(body: AgentExecuteRequest, _user: AuthPrincipal = Depend
 # Endpoints -- Swarm
 # ---------------------------------------------------------------------------
 
+
 @app.post("/api/v1/swarm/execute", response_model=SwarmExecuteResponse)
 async def execute_swarm(body: SwarmExecuteRequest, _user: AuthPrincipal = Depends(require_auth)):
     """Execute an agent swarm with consensus."""
@@ -422,7 +440,9 @@ async def execute_swarm(body: SwarmExecuteRequest, _user: AuthPrincipal = Depend
     swarm_id = f"swarm-{uuid.uuid4()}"
     logger.info(
         "Swarm execution requested: agents=%s strategy=%s id=%s",
-        body.agent_ids, body.consensus_strategy, swarm_id,
+        body.agent_ids,
+        body.consensus_strategy,
+        swarm_id,
     )
 
     from neutron.agents.cortex import Agent, AgentSwarm, ConsensusStrategy
@@ -487,6 +507,7 @@ async def execute_swarm(body: SwarmExecuteRequest, _user: AuthPrincipal = Depend
 # Endpoints -- Compliance
 # ---------------------------------------------------------------------------
 
+
 @app.get("/api/v1/compliance/status", response_model=ComplianceStatus)
 async def compliance_status(_user: AuthPrincipal = Depends(require_auth)):
     """Return a compliance status summary."""
@@ -495,7 +516,7 @@ async def compliance_status(_user: AuthPrincipal = Depends(require_auth)):
     return ComplianceStatus(
         status="operational",
         agents_available=len(AVAILABLE_AGENTS),
-        last_check=datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        last_check=datetime.datetime.now(datetime.UTC).isoformat(),
         issues=[],
     )
 
@@ -506,9 +527,9 @@ async def compliance_status(_user: AuthPrincipal = Depends(require_auth)):
 
 
 class CortexTestRequest(BaseModel):
-    agent_ids: List[str] = ["compliance_analyst", "risk_assessor", "decision_maker"]
+    agent_ids: list[str] = ["compliance_analyst", "risk_assessor", "decision_maker"]
     task: str = "Evaluate compliance for a credit scoring decision"
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
     consensus_strategy: str = "weighted"
 
 
@@ -543,6 +564,7 @@ async def get_metrics(_user: AuthPrincipal = Depends(require_auth)):
 # ---------------------------------------------------------------------------
 # Endpoints -- Cortex Test
 # ---------------------------------------------------------------------------
+
 
 @app.post("/v1/test/cortex")
 async def test_cortex(body: CortexTestRequest, _user: AuthPrincipal = Depends(require_auth)):

@@ -10,10 +10,9 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -59,9 +58,11 @@ class PolicyRule:
     rule_id: str
     name: str
     description: str
-    condition: Dict[str, Any]  # JSON condition (e.g., {"field": "age", "operator": ">=", "value": 18})
+    condition: dict[
+        str, Any
+    ]  # JSON condition (e.g., {"field": "age", "operator": ">=", "value": 18})
     action: PolicySeverity
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -74,13 +75,13 @@ class CompliancePolicy:
     policy_type: PolicyType
     version: str
     status: PolicyStatus
-    rules: List[PolicyRule] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    rules: list[PolicyRule] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     created_at: float = field(default_factory=time.time)
     created_by: str = ""
-    updated_at: Optional[float] = None
-    updated_by: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
+    updated_at: float | None = None
+    updated_by: str | None = None
+    tags: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -93,9 +94,9 @@ class PolicyRuleCreate(BaseModel):
 
     name: str = Field(..., min_length=3, max_length=128)
     description: str = Field(..., min_length=10, max_length=512)
-    condition: Dict[str, Any] = Field(..., description="JSON condition for rule evaluation")
+    condition: dict[str, Any] = Field(..., description="JSON condition for rule evaluation")
     action: PolicySeverity = Field(default=PolicySeverity.BLOCK)
-    error_message: Optional[str] = Field(None, max_length=256)
+    error_message: str | None = Field(None, max_length=256)
 
 
 class PolicyRuleResponse(BaseModel):
@@ -104,9 +105,9 @@ class PolicyRuleResponse(BaseModel):
     rule_id: str
     name: str
     description: str
-    condition: Dict[str, Any]
+    condition: dict[str, Any]
     action: str
-    error_message: Optional[str] = None
+    error_message: str | None = None
 
 
 class PolicyCreateRequest(BaseModel):
@@ -115,20 +116,20 @@ class PolicyCreateRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=128)
     description: str = Field(..., min_length=10, max_length=1024)
     policy_type: PolicyType
-    rules: List[PolicyRuleCreate] = Field(default_factory=list)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    tags: List[str] = Field(default_factory=list)
+    rules: list[PolicyRuleCreate] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    tags: list[str] = Field(default_factory=list)
 
 
 class PolicyUpdateRequest(BaseModel):
     """Request to update a policy."""
 
-    name: Optional[str] = Field(None, min_length=3, max_length=128)
-    description: Optional[str] = Field(None, min_length=10, max_length=1024)
-    status: Optional[PolicyStatus] = None
-    rules: Optional[List[PolicyRuleCreate]] = None
-    metadata: Optional[Dict[str, Any]] = None
-    tags: Optional[List[str]] = None
+    name: str | None = Field(None, min_length=3, max_length=128)
+    description: str | None = Field(None, min_length=10, max_length=1024)
+    status: PolicyStatus | None = None
+    rules: list[PolicyRuleCreate] | None = None
+    metadata: dict[str, Any] | None = None
+    tags: list[str] | None = None
 
 
 class PolicyResponse(BaseModel):
@@ -140,19 +141,19 @@ class PolicyResponse(BaseModel):
     policy_type: str
     version: str
     status: str
-    rules: List[PolicyRuleResponse]
-    metadata: Dict[str, Any]
+    rules: list[PolicyRuleResponse]
+    metadata: dict[str, Any]
     created_at: float
     created_by: str
-    updated_at: Optional[float] = None
-    updated_by: Optional[str] = None
-    tags: List[str]
+    updated_at: float | None = None
+    updated_by: str | None = None
+    tags: list[str]
 
 
 class PolicyListResponse(BaseModel):
     """List of policies."""
 
-    policies: List[PolicyResponse]
+    policies: list[PolicyResponse]
     total: int
     page: int
     page_size: int
@@ -167,7 +168,7 @@ class PolicyStore:
     """In-memory policy store (migrate to DB in production)."""
 
     def __init__(self):
-        self.policies: Dict[str, CompliancePolicy] = {}
+        self.policies: dict[str, CompliancePolicy] = {}
         self._init_default_policies()
 
     def _init_default_policies(self):
@@ -218,7 +219,11 @@ class PolicyStore:
                     rule_id="gdpr_art6_lawful_basis",
                     name="GDPR Article 6 - Lawful Basis",
                     description="Processing must have lawful basis",
-                    condition={"field": "lawful_basis", "operator": "in", "value": ["consent", "contract", "legal_obligation"]},
+                    condition={
+                        "field": "lawful_basis",
+                        "operator": "in",
+                        "value": ["consent", "contract", "legal_obligation"],
+                    },
                     action=PolicySeverity.BLOCK,
                     error_message="GDPR Article 6 violation: No lawful basis for processing",
                 ),
@@ -254,10 +259,10 @@ class PolicyStore:
         name: str,
         description: str,
         policy_type: PolicyType,
-        rules: List[PolicyRuleCreate],
+        rules: list[PolicyRuleCreate],
         created_by: str,
-        metadata: Dict[str, Any] = None,
-        tags: List[str] = None,
+        metadata: dict[str, Any] = None,
+        tags: list[str] = None,
     ) -> CompliancePolicy:
         """Create a new compliance policy."""
         policy_id = f"policy_{uuid.uuid4().hex[:16]}"
@@ -291,18 +296,18 @@ class PolicyStore:
         self.policies[policy_id] = policy
         return policy
 
-    def get_policy(self, policy_id: str) -> Optional[CompliancePolicy]:
+    def get_policy(self, policy_id: str) -> CompliancePolicy | None:
         """Get a policy by ID."""
         return self.policies.get(policy_id)
 
     def list_policies(
         self,
-        policy_type: Optional[PolicyType] = None,
-        status: Optional[PolicyStatus] = None,
-        tags: Optional[List[str]] = None,
+        policy_type: PolicyType | None = None,
+        status: PolicyStatus | None = None,
+        tags: list[str] | None = None,
         page: int = 1,
         page_size: int = 50,
-    ) -> tuple[List[CompliancePolicy], int]:
+    ) -> tuple[list[CompliancePolicy], int]:
         """List policies with filters and pagination."""
         filtered = list(self.policies.values())
 
@@ -327,13 +332,13 @@ class PolicyStore:
         self,
         policy_id: str,
         updated_by: str,
-        name: Optional[str] = None,
-        description: Optional[str] = None,
-        status: Optional[PolicyStatus] = None,
-        rules: Optional[List[PolicyRuleCreate]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        tags: Optional[List[str]] = None,
-    ) -> Optional[CompliancePolicy]:
+        name: str | None = None,
+        description: str | None = None,
+        status: PolicyStatus | None = None,
+        rules: list[PolicyRuleCreate] | None = None,
+        metadata: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+    ) -> CompliancePolicy | None:
         """Update an existing policy."""
         policy = self.policies.get(policy_id)
         if not policy:

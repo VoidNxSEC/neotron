@@ -14,10 +14,9 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -64,22 +63,22 @@ class AuditLog:
     audit_id: str
     event_type: AuditEventType
     timestamp: float
-    customer_id: Optional[str] = None
-    user_id: Optional[str] = None
-    action: Optional[str] = None
-    resource_type: Optional[str] = None
-    resource_id: Optional[str] = None
-    decision: Optional[ComplianceDecisionType] = None
-    regulation: Optional[str] = None  # LGPD, GDPR, AI_ACT
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    request_id: Optional[str] = None
-    session_id: Optional[str] = None
-    details: Dict[str, Any] = field(default_factory=dict)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    ipfs_hash: Optional[str] = None  # For immutable storage
-    blockchain_tx: Optional[str] = None  # For blockchain anchoring
-    retention_until: Optional[float] = None  # LGPD: min 6 months
+    customer_id: str | None = None
+    user_id: str | None = None
+    action: str | None = None
+    resource_type: str | None = None
+    resource_id: str | None = None
+    decision: ComplianceDecisionType | None = None
+    regulation: str | None = None  # LGPD, GDPR, AI_ACT
+    ip_address: str | None = None
+    user_agent: str | None = None
+    request_id: str | None = None
+    session_id: str | None = None
+    details: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    ipfs_hash: str | None = None  # For immutable storage
+    blockchain_tx: str | None = None  # For blockchain anchoring
+    retention_until: float | None = None  # LGPD: min 6 months
 
 
 # ---------------------------------------------------------------------------
@@ -93,40 +92,40 @@ class AuditLogResponse(BaseModel):
     audit_id: str
     event_type: str
     timestamp: float
-    customer_id: Optional[str] = None
-    user_id: Optional[str] = None
-    action: Optional[str] = None
-    resource_type: Optional[str] = None
-    resource_id: Optional[str] = None
-    decision: Optional[str] = None
-    regulation: Optional[str] = None
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    request_id: Optional[str] = None
-    details: Dict[str, Any] = Field(default_factory=dict)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    ipfs_hash: Optional[str] = None
-    blockchain_tx: Optional[str] = None
+    customer_id: str | None = None
+    user_id: str | None = None
+    action: str | None = None
+    resource_type: str | None = None
+    resource_id: str | None = None
+    decision: str | None = None
+    regulation: str | None = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    request_id: str | None = None
+    details: dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    ipfs_hash: str | None = None
+    blockchain_tx: str | None = None
 
 
 class AuditLogsResponse(BaseModel):
     """List of audit logs."""
 
-    logs: List[AuditLogResponse]
+    logs: list[AuditLogResponse]
     total: int
     page: int
     page_size: int
-    filters_applied: Dict[str, Any] = Field(default_factory=dict)
+    filters_applied: dict[str, Any] = Field(default_factory=dict)
 
 
 class AuditStatsResponse(BaseModel):
     """Audit statistics."""
 
     total_events: int
-    events_by_type: Dict[str, int]
-    events_by_decision: Dict[str, int]
-    events_by_regulation: Dict[str, int]
-    date_range: Dict[str, float]
+    events_by_type: dict[str, int]
+    events_by_decision: dict[str, int]
+    events_by_regulation: dict[str, int]
+    date_range: dict[str, float]
     unique_customers: int
     unique_users: int
 
@@ -135,7 +134,7 @@ class IPFSAuditResponse(BaseModel):
     """IPFS audit log retrieval."""
 
     ipfs_hash: str
-    content: Dict[str, Any]
+    content: dict[str, Any]
     verified: bool
     retrieved_at: float
     storage_type: str  # "ipfs" or "arweave"
@@ -150,29 +149,29 @@ class AuditStore:
     """In-memory audit log store (migrate to PostgreSQL in production)."""
 
     def __init__(self):
-        self.logs: List[AuditLog] = []
-        self._index_by_customer: Dict[str, List[str]] = {}  # customer_id -> [audit_ids]
-        self._index_by_user: Dict[str, List[str]] = {}  # user_id -> [audit_ids]
-        self._index_by_request: Dict[str, str] = {}  # request_id -> audit_id
+        self.logs: list[AuditLog] = []
+        self._index_by_customer: dict[str, list[str]] = {}  # customer_id -> [audit_ids]
+        self._index_by_user: dict[str, list[str]] = {}  # user_id -> [audit_ids]
+        self._index_by_request: dict[str, str] = {}  # request_id -> audit_id
 
     def log_event(
         self,
         event_type: AuditEventType,
-        customer_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        action: Optional[str] = None,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[str] = None,
-        decision: Optional[ComplianceDecisionType] = None,
-        regulation: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        request_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        ipfs_hash: Optional[str] = None,
-        blockchain_tx: Optional[str] = None,
+        customer_id: str | None = None,
+        user_id: str | None = None,
+        action: str | None = None,
+        resource_type: str | None = None,
+        resource_id: str | None = None,
+        decision: ComplianceDecisionType | None = None,
+        regulation: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        request_id: str | None = None,
+        session_id: str | None = None,
+        details: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        ipfs_hash: str | None = None,
+        blockchain_tx: str | None = None,
     ) -> AuditLog:
         """Log an audit event."""
         audit_id = f"audit_{uuid.uuid4().hex[:16]}"
@@ -221,14 +220,14 @@ class AuditStore:
 
         return audit_log
 
-    def get_by_id(self, audit_id: str) -> Optional[AuditLog]:
+    def get_by_id(self, audit_id: str) -> AuditLog | None:
         """Get audit log by ID."""
         for log in self.logs:
             if log.audit_id == audit_id:
                 return log
         return None
 
-    def get_by_ipfs_hash(self, ipfs_hash: str) -> Optional[AuditLog]:
+    def get_by_ipfs_hash(self, ipfs_hash: str) -> AuditLog | None:
         """Get audit log by IPFS hash."""
         for log in self.logs:
             if log.ipfs_hash == ipfs_hash:
@@ -237,18 +236,18 @@ class AuditStore:
 
     def query_logs(
         self,
-        event_type: Optional[AuditEventType] = None,
-        customer_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        decision: Optional[ComplianceDecisionType] = None,
-        regulation: Optional[str] = None,
-        action: Optional[str] = None,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
-        request_id: Optional[str] = None,
+        event_type: AuditEventType | None = None,
+        customer_id: str | None = None,
+        user_id: str | None = None,
+        decision: ComplianceDecisionType | None = None,
+        regulation: str | None = None,
+        action: str | None = None,
+        start_time: float | None = None,
+        end_time: float | None = None,
+        request_id: str | None = None,
         page: int = 1,
         page_size: int = 50,
-    ) -> tuple[List[AuditLog], int, Dict[str, Any]]:
+    ) -> tuple[list[AuditLog], int, dict[str, Any]]:
         """
         Query audit logs with filters and pagination.
 
@@ -319,7 +318,7 @@ class AuditStore:
         customer_id: str,
         page: int = 1,
         page_size: int = 50,
-    ) -> tuple[List[AuditLog], int]:
+    ) -> tuple[list[AuditLog], int]:
         """Get all audit logs for a specific customer (LGPD Article 18)."""
         customer_audit_ids = self._index_by_customer.get(customer_id, [])
         filtered = [log for log in self.logs if log.audit_id in customer_audit_ids]
@@ -338,9 +337,9 @@ class AuditStore:
 
     def get_stats(
         self,
-        start_time: Optional[float] = None,
-        end_time: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        start_time: float | None = None,
+        end_time: float | None = None,
+    ) -> dict[str, Any]:
         """Get audit statistics."""
         filtered = self.logs
 
@@ -350,20 +349,20 @@ class AuditStore:
             filtered = [log for log in filtered if log.timestamp <= end_time]
 
         # Count by event type
-        events_by_type: Dict[str, int] = {}
+        events_by_type: dict[str, int] = {}
         for log in filtered:
             event_type = log.event_type.value
             events_by_type[event_type] = events_by_type.get(event_type, 0) + 1
 
         # Count by decision
-        events_by_decision: Dict[str, int] = {}
+        events_by_decision: dict[str, int] = {}
         for log in filtered:
             if log.decision:
                 decision = log.decision.value
                 events_by_decision[decision] = events_by_decision.get(decision, 0) + 1
 
         # Count by regulation
-        events_by_regulation: Dict[str, int] = {}
+        events_by_regulation: dict[str, int] = {}
         for log in filtered:
             if log.regulation:
                 events_by_regulation[log.regulation] = (
@@ -408,7 +407,7 @@ class AuditStore:
         audit_log.ipfs_hash = ipfs_hash
         return ipfs_hash
 
-    def fetch_from_ipfs(self, ipfs_hash: str) -> Optional[Dict[str, Any]]:
+    def fetch_from_ipfs(self, ipfs_hash: str) -> dict[str, Any] | None:
         """Fetch audit log from IPFS (simulated)."""
         # In production, this would fetch from IPFS/Arweave
         log = self.get_by_ipfs_hash(ipfs_hash)

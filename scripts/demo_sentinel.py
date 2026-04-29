@@ -23,7 +23,6 @@ import sys
 sys.path.insert(0, ".")
 
 from neutron.compliance.audit_logger import AuditLogger
-
 from neutron.compliance.auditors import (
     lgpd_art18_explanation_guardrail,
     lgpd_art20_portability_guardrail,

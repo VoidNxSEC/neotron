@@ -52,7 +52,9 @@ def print_layer_result(name: str, result) -> None:
     print(f"    Processing Time: {result.processing_time_ms:.1f}ms")
 
     if result.metadata:
-        print(f"    Metadata: {json.dumps({k: v for k, v in list(result.metadata.items())[:3]}, indent=6)[:150]}...")
+        print(
+            f"    Metadata: {json.dumps({k: v for k, v in list(result.metadata.items())[:3]}, indent=6)[:150]}..."
+        )
 
 
 async def demo_approved_loan():
@@ -78,7 +80,7 @@ async def demo_approved_loan():
         },
     )
 
-    print(f"\n  Request Details:")
+    print("\n  Request Details:")
     print(f"    Customer: {request.customer_id}")
     print(f"    Action: {request.action}")
     print(f"    Credit Score: {request.data['credit_score']}")
@@ -91,7 +93,7 @@ async def demo_approved_loan():
         enable_memory=False,
     )
 
-    print(f"\n  🚀 Executing 4-layer compliance flow...")
+    print("\n  🚀 Executing 4-layer compliance flow...")
     start = time.time()
 
     response = await flow.validate(request)
@@ -122,7 +124,7 @@ async def demo_approved_loan():
     if response.blockchain_tx:
         print(f"  Blockchain TX: {response.blockchain_tx}")
 
-    print(f"\n  Explanation (first 300 chars):")
+    print("\n  Explanation (first 300 chars):")
     print(f"  {response.explanation[:300]}...")
 
     return response.decision == ComplianceDecision.APPROVED
@@ -144,21 +146,21 @@ async def demo_rejected_no_consent():
         regulation="LGPD",
     )
 
-    print(f"\n  Request Details:")
+    print("\n  Request Details:")
     print(f"    Customer: {request.customer_id}")
     print(f"    Action: {request.action}")
     print(f"    Purpose: {request.data['purpose']}")
-    print(f"    Consent: ❌ MISSING")
+    print("    Consent: ❌ MISSING")
 
     flow = NEXUSComplianceFlow()
 
-    print(f"\n  🚀 Executing 4-layer compliance flow...")
+    print("\n  🚀 Executing 4-layer compliance flow...")
 
     response = await flow.validate(request)
 
     # Should be rejected at Layer 1 (SENTINEL)
     print(f"\n  Decision: {response.decision.value.upper()}")
-    print(f"  Rejected at: Layer 1 (SENTINEL)")
+    print("  Rejected at: Layer 1 (SENTINEL)")
     print(f"  Reason: {response.explanation[:200]}")
 
     return response.decision == ComplianceDecision.REJECTED
@@ -184,15 +186,15 @@ async def demo_high_risk_transaction():
         regulation="LGPD",
     )
 
-    print(f"\n  Request Details:")
+    print("\n  Request Details:")
     print(f"    Transaction: {request.data['transaction_id']}")
     print(f"    Amount: ${request.data['amount']:,}")
     print(f"    Route: {request.data['sender_country']} → {request.data['receiver_country']}")
-    print(f"    PEP Status: ⚠️  TRUE")
+    print("    PEP Status: ⚠️  TRUE")
 
     flow = NEXUSComplianceFlow()
 
-    print(f"\n  🚀 Executing 4-layer compliance flow...")
+    print("\n  🚀 Executing 4-layer compliance flow...")
 
     response = await flow.validate(request)
 
@@ -200,10 +202,10 @@ async def demo_high_risk_transaction():
     print(f"  Confidence: {response.confidence:.2%}")
 
     if response.decision in [ComplianceDecision.REVIEW_REQUIRED, ComplianceDecision.CONDITIONAL]:
-        print(f"\n  ⚠️  This transaction requires human review due to:")
+        print("\n  ⚠️  This transaction requires human review due to:")
         print(f"     - High transaction amount (${request.data['amount']:,})")
-        print(f"     - High-risk jurisdictions")
-        print(f"     - PEP involvement")
+        print("     - High-risk jurisdictions")
+        print("     - PEP involvement")
 
     return True  # Any decision is valid for high-risk
 
@@ -225,12 +227,13 @@ async def demo_api_integration():
         "regulation": "LGPD",
     }
 
-    print(f"\n  POST /v1/compliance/validate")
-    print(f"  Content-Type: application/json")
+    print("\n  POST /v1/compliance/validate")
+    print("  Content-Type: application/json")
     print(f"\n{json.dumps(api_request, indent=2)}")
 
-    print(f"\n  Example response:")
-    print("""
+    print("\n  Example response:")
+    print(
+        """
   {
     "request_id": "req_abc123",
     "decision": "APPROVED",
@@ -261,13 +264,14 @@ async def demo_api_integration():
     },
     "total_processing_time_ms": 523.4
   }
-    """)
+    """
+    )
 
-    print(f"\n  To test the API:")
-    print(f"  1. Start server: uvicorn neutron.api.server:app --reload")
-    print(f"  2. Call endpoint: curl -X POST http://localhost:8000/v1/compliance/validate \\")
-    print(f"                          -H 'Content-Type: application/json' \\")
-    print(f"                          -d '<json>'")
+    print("\n  To test the API:")
+    print("  1. Start server: uvicorn neutron.api.server:app --reload")
+    print("  2. Call endpoint: curl -X POST http://localhost:8000/v1/compliance/validate \\")
+    print("                          -H 'Content-Type: application/json' \\")
+    print("                          -d '<json>'")
 
     return True
 
@@ -275,20 +279,20 @@ async def demo_api_integration():
 async def main():
     """Run all demo scenarios."""
     print_header("NEXUS 4-Layer Defense-in-Depth Compliance Flow Demo")
-    print(f"\n  This demo validates NEXUS's core differentiator:")
-    print(f"  - Layer 1: SENTINEL (Application validation)")
-    print(f"  - Layer 2: BASTION (Kernel enforcement - mathematically impossible to bypass)")
-    print(f"  - Layer 3: CORTEX (Multi-agent LLM) + ORACLE (Explainability)")
-    print(f"  - Layer 4: Immutable audit trail (IPFS/Arweave, 200+ year permanence)")
+    print("\n  This demo validates NEXUS's core differentiator:")
+    print("  - Layer 1: SENTINEL (Application validation)")
+    print("  - Layer 2: BASTION (Kernel enforcement - mathematically impossible to bypass)")
+    print("  - Layer 3: CORTEX (Multi-agent LLM) + ORACLE (Explainability)")
+    print("  - Layer 4: Immutable audit trail (IPFS/Arweave, 200+ year permanence)")
 
     # Check LLM configuration
     if not os.getenv("ANTHROPIC_API_KEY"):
-        print(f"\n  ⚠️  WARNING: ANTHROPIC_API_KEY not set!")
-        print(f"  Layer 3 (CORTEX) will attempt fallback to other providers.")
-        print(f"  Set at least one LLM API key for full demonstration:")
-        print(f"    export ANTHROPIC_API_KEY='sk-ant-...'")
-        print(f"    export OPENAI_API_KEY='sk-...'")
-        print(f"    export DEEPSEEK_API_KEY='sk-...'")
+        print("\n  ⚠️  WARNING: ANTHROPIC_API_KEY not set!")
+        print("  Layer 3 (CORTEX) will attempt fallback to other providers.")
+        print("  Set at least one LLM API key for full demonstration:")
+        print("    export ANTHROPIC_API_KEY='sk-ant-...'")
+        print("    export OPENAI_API_KEY='sk-...'")
+        print("    export DEEPSEEK_API_KEY='sk-...'")
         print()
 
     scenarios = [
@@ -307,6 +311,7 @@ async def main():
         except Exception as e:
             print(f"\n  ✗ Scenario failed with error: {e}")
             import traceback
+
             traceback.print_exc()
             results.append((scenario_name, False, str(e)))
 
@@ -326,12 +331,12 @@ async def main():
 
     if passed == total:
         print("\n  🎉 All scenarios completed successfully!")
-        print(f"\n  Key Takeaways:")
-        print(f"  - ✅ 4-layer defense-in-depth provides unbypassable compliance")
-        print(f"  - ✅ Kernel-level enforcement (BASTION) is unique to NEXUS")
-        print(f"  - ✅ Multi-agent consensus ensures high-quality decisions")
-        print(f"  - ✅ Immutable audit trails provide 200+ year evidence")
-        print(f"  - ✅ Ready for EU AI Act high-risk compliance (deadline Aug 2, 2026)")
+        print("\n  Key Takeaways:")
+        print("  - ✅ 4-layer defense-in-depth provides unbypassable compliance")
+        print("  - ✅ Kernel-level enforcement (BASTION) is unique to NEXUS")
+        print("  - ✅ Multi-agent consensus ensures high-quality decisions")
+        print("  - ✅ Immutable audit trails provide 200+ year evidence")
+        print("  - ✅ Ready for EU AI Act high-risk compliance (deadline Aug 2, 2026)")
         return 0
     else:
         print(f"\n  ⚠️  {total - passed} scenario(s) encountered issues")

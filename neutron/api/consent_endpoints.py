@@ -8,7 +8,6 @@ GDPR Article 7 - Conditions for consent
 from __future__ import annotations
 
 import logging
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -32,7 +31,9 @@ router = APIRouter(prefix="/v1/consent", tags=["consent"])
 # ---------------------------------------------------------------------------
 
 
-def consent_to_response(consent, include_token: bool = False, actual_token: Optional[str] = None) -> ConsentTokenResponse:
+def consent_to_response(
+    consent, include_token: bool = False, actual_token: str | None = None
+) -> ConsentTokenResponse:
     """Convert ConsentToken to ConsentTokenResponse."""
     return ConsentTokenResponse(
         token_id=consent.token_id,
@@ -106,6 +107,7 @@ async def create_consent_token(
 
     # Log audit event
     from neutron.api.audit_store import AuditEventType, get_audit_store
+
     audit_store = get_audit_store()
     audit_store.log_event(
         event_type=AuditEventType.CONSENT_GRANTED,
@@ -197,7 +199,7 @@ async def verify_consent_token(
 )
 async def revoke_consent_token(
     token_id: str,
-    request: Optional[ConsentRevokeRequest] = None,
+    request: ConsentRevokeRequest | None = None,
     principal: AuthPrincipal = Depends(get_current_user),
 ) -> ConsentTokenResponse:
     """
@@ -233,6 +235,7 @@ async def revoke_consent_token(
 
     # Log audit event
     from neutron.api.audit_store import AuditEventType, get_audit_store
+
     audit_store = get_audit_store()
     audit_store.log_event(
         event_type=AuditEventType.CONSENT_REVOKED,
@@ -292,8 +295,8 @@ async def list_customer_consents(
 @router.get("/customer/{customer_id}/check")
 async def check_customer_consent(
     customer_id: str,
-    purpose: Optional[str] = Query(None, description="Check specific purpose (e.g., marketing)"),
-    data_type: Optional[str] = Query(None, description="Check specific data type (e.g., email)"),
+    purpose: str | None = Query(None, description="Check specific purpose (e.g., marketing)"),
+    data_type: str | None = Query(None, description="Check specific data type (e.g., email)"),
     regulation: str = Query("LGPD", description="Regulation (LGPD, GDPR, etc.)"),
     principal: AuthPrincipal = Depends(get_current_user),
 ) -> dict:
@@ -321,6 +324,7 @@ async def check_customer_consent(
 
     if purpose:
         from neutron.api.consent_store import ConsentPurpose
+
         try:
             purpose_enum = ConsentPurpose(purpose)
             has_consent = consent_store.check_purpose_consent(
@@ -336,6 +340,7 @@ async def check_customer_consent(
 
     elif data_type:
         from neutron.api.consent_store import DataType
+
         try:
             data_type_enum = DataType(data_type)
             has_consent = consent_store.check_data_type_consent(

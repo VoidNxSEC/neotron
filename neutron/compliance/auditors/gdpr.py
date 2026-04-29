@@ -13,7 +13,7 @@ Key GDPR Articles Implemented:
 Reference: https://gdpr-info.eu/
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from neutron.compliance.sentinel import (
@@ -551,7 +551,7 @@ class GDPRErasureHandler:
                 "regulation": "GDPR",
                 "customer_id": customer_id,
                 "deleted_memories": deleted_memories,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "article": "GDPR Article 17",
                 "guardrail_name": "gdpr_art17_erasure_handler",
                 "passed": True,

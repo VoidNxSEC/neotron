@@ -7,7 +7,8 @@ Provides subprocess isolation to prevent seccomp-BPF filter conflicts.
 import os
 import sys
 import traceback
-from typing import Callable, Any
+from collections.abc import Callable
+from typing import Any
 
 
 def run_in_subprocess(test_func: Callable[[], Any]) -> bool:
@@ -109,13 +110,15 @@ def skip_in_ci(test_func: Callable) -> Callable:
     import pytest
 
     # Check for common CI environment variables
-    is_ci = any([
-        os.getenv("CI") == "true",
-        os.getenv("GITHUB_ACTIONS") == "true",
-        os.getenv("GITLAB_CI") == "true",
-        os.getenv("CIRCLECI") == "true",
-        os.getenv("TRAVIS") == "true",
-    ])
+    is_ci = any(
+        [
+            os.getenv("CI") == "true",
+            os.getenv("GITHUB_ACTIONS") == "true",
+            os.getenv("GITLAB_CI") == "true",
+            os.getenv("CIRCLECI") == "true",
+            os.getenv("TRAVIS") == "true",
+        ]
+    )
 
     if is_ci:
         return pytest.mark.skip(reason="Skipped in CI (kernel restrictions)")(test_func)

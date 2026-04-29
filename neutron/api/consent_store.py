@@ -15,10 +15,9 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
-
 
 # ---------------------------------------------------------------------------
 # Enums
@@ -77,15 +76,15 @@ class ConsentToken:
     status: ConsentStatus
     version: int  # Consent versioning
     regulation: str  # LGPD, GDPR, etc.
-    purposes: List[ConsentPurpose] = field(default_factory=list)
-    data_types: List[DataType] = field(default_factory=list)
+    purposes: list[ConsentPurpose] = field(default_factory=list)
+    data_types: list[DataType] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
-    expires_at: Optional[float] = None  # None = no expiry
-    revoked_at: Optional[float] = None
-    revoked_reason: Optional[str] = None
-    superseded_by: Optional[str] = None  # Token ID that replaced this
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    audit_trail: List[Dict[str, Any]] = field(default_factory=list)
+    expires_at: float | None = None  # None = no expiry
+    revoked_at: float | None = None
+    revoked_reason: str | None = None
+    superseded_by: str | None = None  # Token ID that replaced this
+    metadata: dict[str, Any] = field(default_factory=dict)
+    audit_trail: list[dict[str, Any]] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -98,16 +97,18 @@ class ConsentCreateRequest(BaseModel):
 
     customer_id: str = Field(..., min_length=3, max_length=128)
     regulation: str = Field(default="LGPD", description="LGPD, GDPR, etc.")
-    purposes: List[ConsentPurpose] = Field(..., min_items=1, description="Processing purposes")
-    data_types: List[DataType] = Field(..., min_items=1, description="Data types covered")
-    expires_in_days: Optional[int] = Field(None, ge=1, le=3650, description="Expiry in days (max 10 years)")
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    purposes: list[ConsentPurpose] = Field(..., min_items=1, description="Processing purposes")
+    data_types: list[DataType] = Field(..., min_items=1, description="Data types covered")
+    expires_in_days: int | None = Field(
+        None, ge=1, le=3650, description="Expiry in days (max 10 years)"
+    )
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class ConsentRevokeRequest(BaseModel):
     """Request to revoke consent."""
 
-    reason: Optional[str] = Field(None, max_length=512, description="Reason for revocation")
+    reason: str | None = Field(None, max_length=512, description="Reason for revocation")
 
 
 class ConsentTokenResponse(BaseModel):
@@ -115,18 +116,18 @@ class ConsentTokenResponse(BaseModel):
 
     token_id: str
     customer_id: str
-    consent_token: Optional[str] = None  # Full token (only shown on creation!)
+    consent_token: str | None = None  # Full token (only shown on creation!)
     status: str
     version: int
     regulation: str
-    purposes: List[str]
-    data_types: List[str]
+    purposes: list[str]
+    data_types: list[str]
     created_at: float
-    expires_at: Optional[float] = None
-    revoked_at: Optional[float] = None
-    revoked_reason: Optional[str] = None
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    warning: Optional[str] = None
+    expires_at: float | None = None
+    revoked_at: float | None = None
+    revoked_reason: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    warning: str | None = None
 
 
 class ConsentVerifyResponse(BaseModel):
@@ -136,16 +137,16 @@ class ConsentVerifyResponse(BaseModel):
     token_id: str
     customer_id: str
     status: str
-    purposes: List[str]
-    data_types: List[str]
-    expires_at: Optional[float] = None
-    reason: Optional[str] = None  # Why invalid
+    purposes: list[str]
+    data_types: list[str]
+    expires_at: float | None = None
+    reason: str | None = None  # Why invalid
 
 
 class ConsentListResponse(BaseModel):
     """List of consents."""
 
-    consents: List[ConsentTokenResponse]
+    consents: list[ConsentTokenResponse]
     total: int
 
 
@@ -158,18 +159,18 @@ class ConsentStore:
     """In-memory consent store (migrate to DB in production)."""
 
     def __init__(self):
-        self.consents: Dict[str, ConsentToken] = {}  # token_id -> ConsentToken
-        self._index_by_customer: Dict[str, List[str]] = {}  # customer_id -> [token_ids]
-        self._token_hash_to_id: Dict[str, str] = {}  # token_hash -> token_id
+        self.consents: dict[str, ConsentToken] = {}  # token_id -> ConsentToken
+        self._index_by_customer: dict[str, list[str]] = {}  # customer_id -> [token_ids]
+        self._token_hash_to_id: dict[str, str] = {}  # token_hash -> token_id
 
     def create_consent(
         self,
         customer_id: str,
         regulation: str,
-        purposes: List[ConsentPurpose],
-        data_types: List[DataType],
-        expires_in_days: Optional[int] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        purposes: list[ConsentPurpose],
+        data_types: list[DataType],
+        expires_in_days: int | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> tuple[ConsentToken, str]:
         """
         Create a new consent token.
@@ -202,11 +203,13 @@ class ConsentStore:
             for old_token in active_tokens:
                 old_token.status = ConsentStatus.SUPERSEDED
                 old_token.superseded_by = token_id
-                old_token.audit_trail.append({
-                    "action": "superseded",
-                    "timestamp": time.time(),
-                    "superseded_by": token_id,
-                })
+                old_token.audit_trail.append(
+                    {
+                        "action": "superseded",
+                        "timestamp": time.time(),
+                        "superseded_by": token_id,
+                    }
+                )
 
             # Increment version
             version = max(t.version for t in active_tokens) + 1
@@ -242,7 +245,7 @@ class ConsentStore:
 
         return consent, actual_token
 
-    def verify_consent(self, consent_token: str) -> tuple[bool, Optional[ConsentToken], Optional[str]]:
+    def verify_consent(self, consent_token: str) -> tuple[bool, ConsentToken | None, str | None]:
         """
         Verify a consent token.
 
@@ -274,10 +277,12 @@ class ConsentStore:
         if consent.expires_at and consent.expires_at < time.time():
             # Mark as expired
             consent.status = ConsentStatus.EXPIRED
-            consent.audit_trail.append({
-                "action": "expired",
-                "timestamp": time.time(),
-            })
+            consent.audit_trail.append(
+                {
+                    "action": "expired",
+                    "timestamp": time.time(),
+                }
+            )
             return False, consent, "Consent expired"
 
         if consent.status != ConsentStatus.ACTIVE:
@@ -292,8 +297,8 @@ class ConsentStore:
     def revoke_consent(
         self,
         token_id: str,
-        reason: Optional[str] = None,
-    ) -> Optional[ConsentToken]:
+        reason: str | None = None,
+    ) -> ConsentToken | None:
         """
         Revoke a consent token (LGPD Article 18).
 
@@ -312,15 +317,17 @@ class ConsentStore:
         consent.revoked_at = time.time()
         consent.revoked_reason = reason
 
-        consent.audit_trail.append({
-            "action": "revoked",
-            "timestamp": time.time(),
-            "reason": reason,
-        })
+        consent.audit_trail.append(
+            {
+                "action": "revoked",
+                "timestamp": time.time(),
+                "reason": reason,
+            }
+        )
 
         return consent
 
-    def get_consent_by_id(self, token_id: str) -> Optional[ConsentToken]:
+    def get_consent_by_id(self, token_id: str) -> ConsentToken | None:
         """Get consent by token ID."""
         return self.consents.get(token_id)
 
@@ -328,14 +335,15 @@ class ConsentStore:
         self,
         customer_id: str,
         include_revoked: bool = False,
-    ) -> List[ConsentToken]:
+    ) -> list[ConsentToken]:
         """List all consents for a customer."""
         token_ids = self._index_by_customer.get(customer_id, [])
         consents = [self.consents[tid] for tid in token_ids]
 
         if not include_revoked:
             consents = [
-                c for c in consents
+                c
+                for c in consents
                 if c.status not in [ConsentStatus.REVOKED, ConsentStatus.SUPERSEDED]
             ]
 

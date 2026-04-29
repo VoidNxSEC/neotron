@@ -8,6 +8,7 @@ import asyncio
 from typing import Any
 
 import pytest
+
 from neutron.orchestration.cortex import (
     AgentResult,
     AgentSwarm,
@@ -17,7 +18,6 @@ from neutron.orchestration.cortex import (
     Task,
     create_swarm,
 )
-
 from neutron.reasoning import ExplanationType
 
 # =============================================================================

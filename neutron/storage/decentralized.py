@@ -17,16 +17,18 @@ import json
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
     import ipfshttpclient
+
     IPFS_AVAILABLE = True
 except ImportError:
     IPFS_AVAILABLE = False
 
 try:
     import ar
+
     ARWEAVE_AVAILABLE = True
 except ImportError:
     ARWEAVE_AVAILABLE = False
@@ -34,6 +36,7 @@ except ImportError:
 
 class StorageType(str, Enum):
     """Storage backend type"""
+
     IPFS = "ipfs"
     ARWEAVE = "arweave"
     LOCAL = "local"  # For testing
@@ -42,28 +45,30 @@ class StorageType(str, Enum):
 @dataclass
 class StorageReceipt:
     """Receipt from storing data on decentralized storage"""
+
     storage_type: StorageType
     identifier: str  # CID for IPFS, TX ID for Arweave
     permanent: bool
     url: str
     timestamp: int
     size_bytes: int
-    cost_usd: Optional[float] = None
+    cost_usd: float | None = None
 
 
 @dataclass
 class ComplianceLog:
     """Compliance audit log structure"""
+
     log_id: str
     user_address: str
     regulation: str  # "LGPD", "GDPR", "AI_ACT"
     article: int
     action: str  # "consent_granted", "consent_revoked", etc.
     passed: bool
-    violation: Optional[str] = None
+    violation: str | None = None
     timestamp: int = None
-    metadata: Optional[Dict[str, Any]] = None
-    blockchain_tx: Optional[str] = None  # Transaction hash if on-chain
+    metadata: dict[str, Any] | None = None
+    blockchain_tx: str | None = None  # Transaction hash if on-chain
 
     def __post_init__(self):
         if self.timestamp is None:
@@ -71,18 +76,21 @@ class ComplianceLog:
 
     def to_json(self) -> str:
         """Serialize to JSON for storage"""
-        return json.dumps({
-            "log_id": self.log_id,
-            "user_address": self.user_address,
-            "regulation": self.regulation,
-            "article": self.article,
-            "action": self.action,
-            "passed": self.passed,
-            "violation": self.violation,
-            "timestamp": self.timestamp,
-            "metadata": self.metadata,
-            "blockchain_tx": self.blockchain_tx,
-        }, indent=2)
+        return json.dumps(
+            {
+                "log_id": self.log_id,
+                "user_address": self.user_address,
+                "regulation": self.regulation,
+                "article": self.article,
+                "action": self.action,
+                "passed": self.passed,
+                "violation": self.violation,
+                "timestamp": self.timestamp,
+                "metadata": self.metadata,
+                "blockchain_tx": self.blockchain_tx,
+            },
+            indent=2,
+        )
 
     @classmethod
     def from_json(cls, json_str: str) -> "ComplianceLog":
@@ -111,10 +119,10 @@ class DecentralizedStorage:
     def __init__(
         self,
         ipfs_addr: str = "/ip4/127.0.0.1/tcp/5001",
-        arweave_wallet_path: Optional[str] = None,
+        arweave_wallet_path: str | None = None,
         use_infura: bool = False,
-        infura_project_id: Optional[str] = None,
-        infura_project_secret: Optional[str] = None,
+        infura_project_id: str | None = None,
+        infura_project_secret: str | None = None,
     ):
         """
         Initialize decentralized storage client
@@ -136,8 +144,8 @@ class DecentralizedStorage:
                 if use_infura and infura_project_id:
                     # Infura IPFS endpoint
                     self.ipfs_client = ipfshttpclient.connect(
-                        f"/dns/ipfs.infura.io/tcp/5001/https",
-                        auth=(infura_project_id, infura_project_secret)
+                        "/dns/ipfs.infura.io/tcp/5001/https",
+                        auth=(infura_project_id, infura_project_secret),
                     )
                 else:
                     # Local IPFS daemon
@@ -148,16 +156,12 @@ class DecentralizedStorage:
         # Initialize Arweave wallet
         if ARWEAVE_AVAILABLE and arweave_wallet_path:
             try:
-                with open(arweave_wallet_path, 'r') as f:
+                with open(arweave_wallet_path) as f:
                     self.arweave_wallet = ar.Wallet(f.read())
             except Exception as e:
                 print(f"Warning: Arweave wallet not available: {e}")
 
-    async def store_audit_log(
-        self,
-        log: ComplianceLog,
-        permanent: bool = False
-    ) -> StorageReceipt:
+    async def store_audit_log(self, log: ComplianceLog, permanent: bool = False) -> StorageReceipt:
         """
         Store compliance audit log on decentralized storage
 
@@ -194,7 +198,7 @@ class DecentralizedStorage:
         try:
             # Serialize log to JSON
             json_data = log.to_json()
-            size_bytes = len(json_data.encode('utf-8'))
+            size_bytes = len(json_data.encode("utf-8"))
 
             # Add to IPFS
             result = self.ipfs_client.add_json(json.loads(json_data))
@@ -216,7 +220,7 @@ class DecentralizedStorage:
                 url=url,
                 timestamp=int(time.time()),
                 size_bytes=size_bytes,
-                cost_usd=None  # IPFS pinning cost varies
+                cost_usd=None,  # IPFS pinning cost varies
             )
 
         except Exception as e:
@@ -245,7 +249,7 @@ class DecentralizedStorage:
         try:
             # Serialize log to JSON
             json_data = log.to_json()
-            data_bytes = json_data.encode('utf-8')
+            data_bytes = json_data.encode("utf-8")
             size_bytes = len(data_bytes)
 
             # Create Arweave transaction
@@ -258,7 +262,7 @@ class DecentralizedStorage:
                     ar.Tag("Regulation", log.regulation),
                     ar.Tag("Article", str(log.article)),
                     ar.Tag("Log-ID", log.log_id),
-                ]
+                ],
             )
 
             # Sign transaction
@@ -277,7 +281,7 @@ class DecentralizedStorage:
                 url=f"https://arweave.net/{transaction.id}",
                 timestamp=int(time.time()),
                 size_bytes=size_bytes,
-                cost_usd=cost_usd
+                cost_usd=cost_usd,
             )
 
         except Exception as e:
@@ -301,14 +305,14 @@ class DecentralizedStorage:
 
         # Serialize log
         json_data = log.to_json()
-        data_bytes = json_data.encode('utf-8')
+        data_bytes = json_data.encode("utf-8")
 
         # Generate "CID" (hash of content)
         cid = hashlib.sha256(data_bytes).hexdigest()
 
         # Write to file
         file_path = os.path.join(storage_dir, f"{cid}.json")
-        with open(file_path, 'w') as f:
+        with open(file_path, "w") as f:
             f.write(json_data)
 
         return StorageReceipt(
@@ -318,14 +322,10 @@ class DecentralizedStorage:
             url=f"file://{file_path}",
             timestamp=int(time.time()),
             size_bytes=len(data_bytes),
-            cost_usd=0.0
+            cost_usd=0.0,
         )
 
-    async def retrieve_log(
-        self,
-        storage_type: StorageType,
-        identifier: str
-    ) -> ComplianceLog:
+    async def retrieve_log(self, storage_type: StorageType, identifier: str) -> ComplianceLog:
         """
         Retrieve compliance log from decentralized storage
 
@@ -351,7 +351,7 @@ class DecentralizedStorage:
             return self._retrieve_local(cid)
 
         try:
-            json_data = self.ipfs_client.cat(cid).decode('utf-8')
+            json_data = self.ipfs_client.cat(cid).decode("utf-8")
             return ComplianceLog.from_json(json_data)
         except Exception as e:
             raise ValueError(f"Failed to retrieve from IPFS: {e}")
@@ -360,6 +360,7 @@ class DecentralizedStorage:
         """Retrieve log from Arweave by transaction ID"""
         try:
             import requests
+
             response = requests.get(f"https://arweave.net/{tx_id}")
             response.raise_for_status()
             return ComplianceLog.from_json(response.text)
@@ -374,16 +375,13 @@ class DecentralizedStorage:
         if not os.path.exists(file_path):
             raise ValueError(f"Log not found: {identifier}")
 
-        with open(file_path, 'r') as f:
+        with open(file_path) as f:
             json_data = f.read()
 
         return ComplianceLog.from_json(json_data)
 
     def estimate_cost(
-        self,
-        size_bytes: int,
-        storage_type: StorageType,
-        duration_months: int = 12
+        self, size_bytes: int, storage_type: StorageType, duration_months: int = 12
     ) -> float:
         """
         Estimate storage cost

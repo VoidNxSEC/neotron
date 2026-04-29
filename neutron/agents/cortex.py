@@ -131,11 +131,13 @@ class Agent:
             memory_context = [m.content for m in memories]
             if memory_context:
                 logger.debug(
-                    json.dumps({
-                        "event": "synapse_recall",
-                        "agent": self.name,
-                        "recalled": len(memory_context),
-                    })
+                    json.dumps(
+                        {
+                            "event": "synapse_recall",
+                            "agent": self.name,
+                            "recalled": len(memory_context),
+                        }
+                    )
                 )
         except Exception as exc:
             logger.debug(f"[{self.name}] Synapse recall skipped: {exc}")

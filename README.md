@@ -2,22 +2,26 @@
 
 **Enterprise-Grade AI Agent Orchestration with Compliance-as-Code**
 
+```html
 <div align="center">
+```
 
-[![Tests](https://img.shields.io/badge/Tests-350%2B_Passing-success?style=for-the-badge&logo=pytest&logoColor=white)](https://github.com/kernelcore/neutron)
-[![Coverage](https://img.shields.io/badge/Coverage-90%25%2B-2ea44f?style=for-the-badge&logo=codecov&logoColor=white)](https://codecov.io)
-[![Python](https://img.shields.io/badge/Python-3.11_%7C_3.12_%7C_3.13-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[!\[Tests\](https://img.shields.io/badge/Tests-350%2B\_Passing-success?style=for-the-badge\&logo=pytest\&logoColor=white)](https://github.com/kernelcore/neutron)
+[!\[Coverage\](https://img.shields.io/badge/Coverage-90%25%2B-2ea44f?style=for-the-badge\&logo=codecov\&logoColor=white)](https://codecov.io)
+[!\[Python\](https://img.shields.io/badge/Python-3.11\_%7C\_3.12\_%7C\_3.13-3776AB?style=for-the-badge\&logo=python\&logoColor=white)](https://www.python.org/)
 
-[![LGPD](https://img.shields.io/badge/Compliance-LGPD-4B0082?style=for-the-badge)](docs/compliance/LGPD.md)
-[![GDPR](https://img.shields.io/badge/Compliance-GDPR-4B0082?style=for-the-badge)](docs/compliance/GDPR.md)
-[![EU AI Act](https://img.shields.io/badge/Compliance-EU_AI_Act-4B0082?style=for-the-badge)](docs/compliance/AI_ACT.md)
+[!\[LGPD\](https://img.shields.io/badge/Compliance-LGPD-4B0082?style=for-the-badge)](docs/compliance/LGPD.md)
+[!\[GDPR\](https://img.shields.io/badge/Compliance-GDPR-4B0082?style=for-the-badge)](docs/compliance/GDPR.md)
+[!\[EU AI Act\](https://img.shields.io/badge/Compliance-EU\_AI\_Act-4B0082?style=for-the-badge)](docs/compliance/AI_ACT.md)
 
-[![Status](https://img.shields.io/badge/Status-Production_Ready-success?style=for-the-badge)](docs/PRODUCTION.md)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-Automated-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)](/.github/workflows/ci.yml)
-[![Docs](https://img.shields.io/badge/Docs-Comprehensive-FF6F00?style=for-the-badge&logo=readthedocs&logoColor=white)](docs/)
-[![Code Quality](https://img.shields.io/badge/Quality-A%2B-success?style=for-the-badge)](scripts/run_all_tests.py)
+[!\[Status\](https://img.shields.io/badge/Status-Production\_Ready-success?style=for-the-badge)](docs/PRODUCTION.md)
+[!\[CI/CD\](https://img.shields.io/badge/CI%2FCD-Automated-2088FF?style=for-the-badge\&logo=github-actions\&logoColor=white)](/.github/workflows/ci.yml)
+[!\[Docs\](https://img.shields.io/badge/Docs-Comprehensive-FF6F00?style=for-the-badge\&logo=readthedocs\&logoColor=white)](docs/)
+[!\[Code Quality\](https://img.shields.io/badge/Quality-A%2B-success?style=for-the-badge)](scripts/run_all_tests.py)
 
+```html
 </div>
+```
 
 ---
 
@@ -31,7 +35,7 @@ NEXUS is the **world's first enterprise-grade AI agent orchestration platform** 
 
 **BASTION-SC** - The world's first **smart contract DeFi protocol** with full 4-layer compliance integration. Extends compliance from Python and kernel to blockchain, with immutable audit trails on IPFS and Arweave.
 
-```
+```javascript
 ┌─────────────────────────────────────────────────────────┐
 │           Defense-in-Depth Compliance (4 LAYERS)         │
 ├─────────────────────────────────────────────────────────┤
@@ -68,7 +72,7 @@ NEXUS is the **world's first enterprise-grade AI agent orchestration platform** 
 
 ## Architecture
 
-```mermaid
+```graphql
 graph TD
     subgraph "Decision Engine"
         CORTEX[CORTEX<br/>Multi-Agent Orchestration] --> SYNAPSE[SYNAPSE<br/>Long-term Memory]
@@ -105,10 +109,10 @@ NEXUS enforces a **"Lab-in-a-Box"** philosophy using strict Infrastructure-as-Co
 
 We utilize **Nix Flakes** to guarantee bit-perfect reproducibility across all development and CI environments. This eliminates "it works on my machine" issues by pinning the entire dependency graph, from the system `glibc` to the Python interpreter.
 
--   **Base**: `nixos-unstable` (Pinned via `flake.lock`)
--   **Runtime**: Python 3.13 + `uv` for ultra-fast package resolution
--   **Compute**: CUDA-ready environment with `ray` distributed backend
--   **Orchestration**: `temporal` + `mlflow` + `postgres` defined in `docker-compose.yml`
+- **Base**: `nixos-unstable` (Pinned via `flake.lock`)
+- **Runtime**: Python 3.13 + `uv` for ultra-fast package resolution
+- **Compute**: CUDA-ready environment with `ray` distributed backend
+- **Orchestration**: `temporal` + `mlflow` + `postgres` defined in `docker-compose.yml`
 
 ### Developer Experience (DevX)
 
@@ -129,14 +133,14 @@ No manual installation of CUDA, Postgres, or Python is required. Everything is d
 
 ### The 6 Pillars
 
-| Pillar | Purpose | Status | Uniqueness |
-|--------|---------|--------|------------|
-| **SENTINEL** | Compliance guardrails as code | ✅ Complete | Application-layer enforcement |
-| **BASTION** | Kernel-level compliance enforcement | ✅ Complete | **World's First** - Physical impossibility |
-| **BASTION-SC** | Smart contract compliance | ✅ Complete | **World's First** - DeFi with 4-layer compliance |
-| **CORTEX** | Multi-agent orchestration | ✅ Complete | Byzantine Fault Tolerant consensus |
-| **SYNAPSE** | Long-term semantic memory | ✅ Complete | pgvector + GDPR-compliant deletion |
-| **ORACLE** | AI explainability framework | ✅ Complete | 5 explanation strategies |
+| Pillar         | Purpose                             | Status     | Uniqueness                                       |
+| -------------- | ----------------------------------- | ---------- | ------------------------------------------------ |
+| **SENTINEL**   | Compliance guardrails as code       | ✅ Complete | Application-layer enforcement                    |
+| **BASTION**    | Kernel-level compliance enforcement | ✅ Complete | **World's First** - Physical impossibility       |
+| **BASTION-SC** | Smart contract compliance           | ✅ Complete | **World's First** - DeFi with 4-layer compliance |
+| **CORTEX**     | Multi-agent orchestration           | ✅ Complete | Byzantine Fault Tolerant consensus               |
+| **SYNAPSE**    | Long-term semantic memory           | ✅ Complete | pgvector + GDPR-compliant deletion               |
+| **ORACLE**     | AI explainability framework         | ✅ Complete | 5 explanation strategies                         |
 
 ---
 
@@ -245,7 +249,7 @@ revoke_lgpd_consent("customer_123")
 - **seccomp-BPF Enforcement**: Syscall filtering at Linux kernel level (same tech as Chrome, Docker, systemd)
 - **Physical Impossibility**: Compliance violations blocked before execution - mathematically impossible to bypass
 - **Defense-in-Depth**: Layered enforcement (Application + Kernel layers)
-- **Compliance Capabilities**: Token-based authorization (CAP_CONSENT_TOKEN, CAP_PII_READ, CAP_PII_WRITE)
+- **Compliance Capabilities**: Token-based authorization (CAP\_CONSENT\_TOKEN, CAP\_PII\_READ, CAP\_PII\_WRITE)
 - **LGPD Kernel Policies**:
   - Article 7 (Consent) - Blocks file access without consent token
   - Article 16 (Data Access) - Prevents unauthorized data modifications
@@ -258,25 +262,29 @@ revoke_lgpd_consent("customer_123")
 **Tests**: 120+ | **Coverage**: 95%+
 
 **Key Files**:
-- `neutron/compliance/bastion.py` (~800 LOC) - Core kernel enforcement framework
-- `neutron/compliance/auditors/lgpd_kernel.py` (~400 LOC) - LGPD kernel policies
-- `scripts/demo_bastion.py` (~600 LOC) - Interactive demonstration
-- `docs/reports/BASTION_OVERVIEW.md` (~400 LOC) - Stakeholder documentation
+
+- `neutron/compliance/bastion.py` (\~800 LOC) - Core kernel enforcement framework
+- `neutron/compliance/auditors/lgpd_kernel.py` (\~400 LOC) - LGPD kernel policies
+- `scripts/demo_bastion.py` (\~600 LOC) - Interactive demonstration
+- `docs/reports/BASTION_OVERVIEW.md` (\~400 LOC) - Stakeholder documentation
 
 ### Phase 2: Multi-Agent Coordination ✅
 
 **CORTEX - Agent Orchestration**
+
 - 5 consensus strategies (majority vote, weighted average, unanimous, best confidence, mean)
 - Async parallel execution
 - Byzantine Fault Tolerant inspired consensus
 
 **SYNAPSE - Long-Term Memory**
+
 - PostgreSQL + pgvector semantic search
 - 1536-dimensional embeddings (OpenAI compatible)
 - Soft deletion for GDPR compliance
 - Episodic, semantic, and procedural memory types
 
 **GDPR Compliance**
+
 - Article 15: Right to Access
 - Article 17: Right to Erasure
 - Article 22: Automated Decision-Making (human oversight)
@@ -286,6 +294,7 @@ revoke_lgpd_consent("customer_123")
 ### Phase 3: Enterprise Features ✅
 
 **ORACLE - Explainability Framework**
+
 - 5 explanation strategies:
   - Feature Importance
   - Counterfactual ("what if" scenarios)
@@ -295,6 +304,7 @@ revoke_lgpd_consent("customer_123")
 - Multiple output formats (human-readable, JSON, Markdown)
 
 **EU AI Act Compliance**
+
 - Article 5: Prohibited Practices (BLOCKS banned AI)
 - Article 13: Transparency requirements
 - Article 14: Human oversight for high-risk AI
@@ -307,18 +317,20 @@ revoke_lgpd_consent("customer_123")
 **The world's first DeFi protocol with complete 4-layer compliance integration.**
 
 **Week 17: BASTION-SC Smart Contract Foundation** ✅
-- **ComplianceGuardrail.sol**: Base contract for on-chain compliance rules (~200 LOC)
-- **LGPDConsent.sol**: LGPD Article 7 consent enforcement (~250 LOC)
+
+- **ComplianceGuardrail.sol**: Base contract for on-chain compliance rules (\~200 LOC)
+- **LGPDConsent.sol**: LGPD Article 7 consent enforcement (\~250 LOC)
 - **Smart Contract Modifiers**: `lgpdArticle7Consent` - automatic revert if no consent granted
 - **Comprehensive Tests**: 30+ tests for consent management and compliance enforcement
 
 **Week 18: IPFS + Arweave Audit Logging** ✅
-- **DecentralizedStorage (Python)**: IPFS + Arweave integration (~500 LOC)
-  - IPFS for mutable storage (~$5/month per 100GB)
-  - Arweave for permanent storage (~$0.005/MB one-time, 200+ year guarantee)
+
+- **DecentralizedStorage (Python)**: IPFS + Arweave integration (\~500 LOC)
+  - IPFS for mutable storage (\~$5/month per 100GB)
+  - Arweave for permanent storage (\~$0.005/MB one-time, 200+ year guarantee)
   - Local fallback for testing
   - Cost estimation and comparison
-- **AuditLogger.sol**: On-chain audit logging (~400 LOC)
+- **AuditLogger.sol**: On-chain audit logging (\~400 LOC)
   - Hybrid architecture (on-chain references + off-chain full logs)
   - Per-user audit history tracking
   - Per-regulation log indexing
@@ -327,7 +339,8 @@ revoke_lgpd_consent("customer_123")
 - **Comprehensive Tests**: 25+ Python tests, 30+ Solidity tests
 
 **Week 19: DeFi Lending Protocol** ✅
-- **LendingProtocol.sol**: Full DeFi lending with compliance (~500 LOC)
+
+- **LendingProtocol.sol**: Full DeFi lending with compliance (\~500 LOC)
   - Inherits LGPDConsent (Layer 3 enforcement)
   - Inherits AuditLogger (Layer 4 audit trails)
   - Collateralized loans (150% collateral ratio)
@@ -343,6 +356,7 @@ revoke_lgpd_consent("customer_123")
   - Gas cost optimization
 
 **Technical Achievements**:
+
 - **Layer 3 Enforcement**: Mathematically impossible to borrow without consent
 - **Layer 4 Audit**: All transactions logged to decentralized storage
 - **Storage Economics**: Arweave 300x cheaper than IPFS for long-term storage
@@ -352,6 +366,7 @@ revoke_lgpd_consent("customer_123")
 **Tests**: 85+ (55 Solidity + 30 Python) | **Coverage**: 95%+
 
 **Key Files**:
+
 - `contracts/src/ComplianceGuardrail.sol` - Base compliance contract
 - `contracts/src/LGPDConsent.sol` - LGPD consent enforcement
 - `contracts/src/AuditLogger.sol` - On-chain audit logging
@@ -409,35 +424,35 @@ result = await nexus_swarm.execute_with_memory(
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| **Total LOC (Production)** | 15,100+ (Python + Solidity) |
-| **Total LOC (Tests)** | 7,300+ (Python + Solidity) |
-| **Total Tests** | 585+ (Python + Foundry) |
-| **Test Coverage** | 90%+ |
-| **Compliance Frameworks** | 3 (LGPD, GDPR, EU AI Act) |
-| **Compliance Layers** | **4** (Application + Kernel + **Smart Contracts** + **Decentralized Audit**) ← **World's First** |
-| **Smart Contracts** | 2,500+ LOC Solidity |
-| **Blockchain Tests** | 115+ Foundry tests |
-| **Explanation Strategies** | 5 |
-| **Consensus Strategies** | 5 |
-| **Kernel Policies** | 3 (LGPD Art. 7, 16, 46) |
-| **Decentralized Storage** | IPFS + Arweave (200+ year permanence) |
-| **CI/CD Pipeline** | ~30 min full validation |
+| Metric                     | Value                                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------------ |
+| **Total LOC (Production)** | 15,100+ (Python + Solidity)                                                                      |
+| **Total LOC (Tests)**      | 7,300+ (Python + Solidity)                                                                       |
+| **Total Tests**            | 585+ (Python + Foundry)                                                                          |
+| **Test Coverage**          | 90%+                                                                                             |
+| **Compliance Frameworks**  | 3 (LGPD, GDPR, EU AI Act)                                                                        |
+| **Compliance Layers**      | **4** (Application + Kernel + **Smart Contracts** + **Decentralized Audit**) ← **World's First** |
+| **Smart Contracts**        | 2,500+ LOC Solidity                                                                              |
+| **Blockchain Tests**       | 115+ Foundry tests                                                                               |
+| **Explanation Strategies** | 5                                                                                                |
+| **Consensus Strategies**   | 5                                                                                                |
+| **Kernel Policies**        | 3 (LGPD Art. 7, 16, 46)                                                                          |
+| **Decentralized Storage**  | IPFS + Arweave (200+ year permanence)                                                            |
+| **CI/CD Pipeline**         | \~30 min full validation                                                                         |
 
 ---
 
 ## Documentation
 
-| Document | Description |
-|----------|-------------|
-| [CI/CD Guide](docs/CI_CD_GUIDE.md) | Comprehensive testing and CI/CD documentation |
-| [Phase 1 Report](docs/reports/PHASE1_COMPLETE.md) | SENTINEL compliance framework |
+| Document                                                 | Description                                     |
+| -------------------------------------------------------- | ----------------------------------------------- |
+| [CI/CD Guide](docs/CI_CD_GUIDE.md)                       | Comprehensive testing and CI/CD documentation   |
+| [Phase 1 Report](docs/reports/PHASE1_COMPLETE.md)        | SENTINEL compliance framework                   |
 | [**BASTION Overview**](docs/reports/BASTION_OVERVIEW.md) | **Kernel-level enforcement (World's First)** 🚀 |
-| [Phase 2 Report](docs/reports/PHASE2_COMPLETE.md) | Multi-agent orchestration |
-| [Phase 3 Report](docs/reports/PHASE3_COMPLETE.md) | Explainability & EU AI Act |
-| [Roadmap](ROADMAP.md) | Project roadmap and milestones |
-| [Quick Start](CI_CD_README.md) | Quick start guide for CI/CD |
+| [Phase 2 Report](docs/reports/PHASE2_COMPLETE.md)        | Multi-agent orchestration                       |
+| [Phase 3 Report](docs/reports/PHASE3_COMPLETE.md)        | Explainability & EU AI Act                      |
+| [Roadmap](ROADMAP.md)                                    | Project roadmap and milestones                  |
+| [Quick Start](CI_CD_README.md)                           | Quick start guide for CI/CD                     |
 
 ---
 
@@ -463,13 +478,13 @@ python scripts/run_all_tests.py --phase 3
 
 GitHub Actions automatically runs on every push:
 
-- ✅ Quick Validation (~5 min)
-- ✅ Full Test Suite (~15 min) - Python 3.11, 3.12, 3.13
-- ✅ Integration Tests (~10 min) - PostgreSQL + pgvector
-- ✅ Security Scan (~5 min) - Trivy vulnerability scanning
-- ✅ Compliance Check (~10 min) - LGPD + GDPR + EU AI Act
+- ✅ Quick Validation (\~5 min)
+- ✅ Full Test Suite (\~15 min) - Python 3.11, 3.12, 3.13
+- ✅ Integration Tests (\~10 min) - PostgreSQL + pgvector
+- ✅ Security Scan (\~5 min) - Trivy vulnerability scanning
+- ✅ Compliance Check (\~10 min) - LGPD + GDPR + EU AI Act
 
-**Total**: ~30 minutes for complete validation
+**Total**: \~30 minutes for complete validation
 
 ---
 
@@ -477,15 +492,16 @@ GitHub Actions automatically runs on every push:
 
 NEXUS is the **only platform** with built-in compliance for all three major frameworks across **4 enforcement layers**:
 
-| Framework | Coverage | Articles | Tests | Enforcement |
-|-----------|----------|----------|-------|-------------|
-| **LGPD** (Brazil) | ✅ Complete | Art. 7, 16, 18, 20, 46 | 135+ | **All 4 Layers** 🚀 |
-| **GDPR** (EU) | ✅ Complete | Art. 15, 17, 22 | 45+ | Application |
-| **EU AI Act** | ✅ Complete | Art. 5, 13, 14 + Risk | 60+ | Application |
+| Framework         | Coverage   | Articles               | Tests | Enforcement         |
+| ----------------- | ---------- | ---------------------- | ----- | ------------------- |
+| **LGPD** (Brazil) | ✅ Complete | Art. 7, 16, 18, 20, 46 | 135+  | **All 4 Layers** 🚀 |
+| **GDPR** (EU)     | ✅ Complete | Art. 15, 17, 22        | 45+   | Application         |
+| **EU AI Act**     | ✅ Complete | Art. 5, 13, 14 + Risk  | 60+   | Application         |
 
 **Automatic Validation**: Every build validates all three frameworks
 
 **Breakthrough**: LGPD compliance enforced at **4 layers**:
+
 1. **Application**: Python validation (SENTINEL)
 2. **Kernel**: seccomp-BPF syscall filtering (BASTION)
 3. **Smart Contracts**: Solidity modifiers (BASTION-SC) ← **World's First DeFi Integration**
@@ -497,30 +513,30 @@ Result: Compliance violations **mathematically impossible** at every layer
 
 ## Performance
 
-| Metric | Current | Target |
-|--------|---------|--------|
-| 10-agent consensus | < 1s | < 2s @ 50 agents |
-| Memory retrieval | < 100ms | < 200ms @ 10K |
-| Explanation generation | < 50ms | < 100ms |
-| Total transparency overhead | ~80ms | < 150ms |
+| Metric                      | Current | Target           |
+| --------------------------- | ------- | ---------------- |
+| 10-agent consensus          | < 1s    | < 2s @ 50 agents |
+| Memory retrieval            | < 100ms | < 200ms @ 10K    |
+| Explanation generation      | < 50ms  | < 100ms          |
+| Total transparency overhead | \~80ms  | < 150ms          |
 
 ---
 
 ## Roadmap
 
-- [x] **Phase 1**: SENTINEL (Compliance Guardrails) ✅
-- [x] **Phase 1.5**: BASTION (Kernel-Level Enforcement) ✅ 🚀 **World's First**
-- [x] **Phase 2**: CORTEX + SYNAPSE + GDPR ✅
-- [x] **Phase 3**: ORACLE + EU AI Act ✅
-- [x] **Phase 5**: BASTION-SC (Blockchain Foundation) ✅ 🚀 **World's First DeFi Compliance**
-  - [x] Week 17: Smart contract compliance framework
-  - [x] Week 18: IPFS + Arweave audit logging
-  - [x] Week 19: DeFi lending protocol with 4-layer compliance
-- [ ] **Phase 6**: DeFi Compliance Expansion (Weeks 20-23)
-  - [ ] Week 20: Sepolia testnet deployment
-  - [ ] Week 21: Frontend + Web3 integration
-  - [ ] Week 22: Advanced DeFi features
-  - [ ] Week 23: Production deployment
+- **Phase 1**: SENTINEL (Compliance Guardrails) ✅
+- **Phase 1.5**: BASTION (Kernel-Level Enforcement) ✅ 🚀 **World's First**
+- **Phase 2**: CORTEX + SYNAPSE + GDPR ✅
+- **Phase 3**: ORACLE + EU AI Act ✅
+- **Phase 5**: BASTION-SC (Blockchain Foundation) ✅ 🚀 **World's First DeFi Compliance**
+  - Week 17: Smart contract compliance framework
+  - Week 18: IPFS + Arweave audit logging
+  - Week 19: DeFi lending protocol with 4-layer compliance
+- **Phase 6**: DeFi Compliance Expansion (Weeks 20-23)
+  - Week 20: Sepolia testnet deployment
+  - Week 21: Frontend + Web3 integration
+  - Week 22: Advanced DeFi features
+  - Week 23: Production deployment
 
 See [ROADMAP.md](ROADMAP.md) for detailed timeline.
 
@@ -551,6 +567,7 @@ ruff check neutron/
 ## Acknowledgments
 
 Built with:
+
 - **Temporal** - Durable workflow orchestration
 - **Ray** - Distributed compute
 - **PostgreSQL + pgvector** - Vector similarity search
@@ -567,7 +584,9 @@ Built with:
 
 ---
 
+```html
 <div align="center">
+```
 
 **NEXUS Platform** - Enterprise-Grade AI Agent Orchestration with Blockchain Compliance
 
@@ -577,8 +596,10 @@ Built with:
 
 **585+ Tests** • **15,100+ LOC** • **4 Compliance Layers** • **200+ Year Audit Permanence**
 
-[![GitHub](https://img.shields.io/badge/GitHub-kernelcore%2Fneutron-black?style=for-the-badge&logo=github)](https://github.com/kernelcore/neutron)
-[![Documentation](https://img.shields.io/badge/Docs-Read-informational?style=for-the-badge&logo=readthedocs)](docs/)
-[![CI/CD](https://img.shields.io/badge/CI%2FCD-Automated-success?style=for-the-badge&logo=github-actions)](/.github/workflows/ci.yml)
+[!\[GitHub\](https://img.shields.io/badge/GitHub-kernelcore%2Fneutron-black?style=for-the-badge\&logo=github)](https://github.com/kernelcore/neutron)
+[!\[Documentation\](https://img.shields.io/badge/Docs-Read-informational?style=for-the-badge\&logo=readthedocs)](docs/)
+[!\[CI/CD\](https://img.shields.io/badge/CI%2FCD-Automated-success?style=for-the-badge\&logo=github-actions)](/.github/workflows/ci.yml)
 
+```html
 </div>
+```

@@ -15,14 +15,6 @@ with enterprise-grade explainability and compliance.
 
 import asyncio
 
-# CORTEX - Multi-Agent Orchestration
-from neutron.orchestration.cortex import (
-    AgentResult,
-    AgentSwarm,
-    ConsensusStrategy,
-    Task,
-)
-
 # EU AI Act - Compliance
 from neutron.compliance.auditors.ai_act import (
     AISystemRiskLevel,
@@ -33,6 +25,14 @@ from neutron.compliance.auditors.ai_act import (
 
 # Compliance
 from neutron.compliance.sentinel import AgentOutput
+
+# CORTEX - Multi-Agent Orchestration
+from neutron.orchestration.cortex import (
+    AgentResult,
+    AgentSwarm,
+    ConsensusStrategy,
+    Task,
+)
 
 # ORACLE - Explainability Framework
 from neutron.reasoning import (

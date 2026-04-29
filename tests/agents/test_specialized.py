@@ -1,16 +1,30 @@
 """Tests for specialized NEXUS agents."""
 
 import json
+from dataclasses import dataclass
 from unittest.mock import AsyncMock
 
 import pytest
 
-from mlops.llm.providers.base import LLMResponse, ProviderConfig
 from neutron.agents.specialized.base_agent import AgentConfig, BaseSpecializedAgent
 from neutron.agents.specialized.compliance_analyst import ComplianceAnalystAgent
 from neutron.agents.specialized.decision_maker import DecisionMakerAgent
 from neutron.agents.specialized.risk_assessor import RiskAssessorAgent
 from neutron.orchestration.cortex import Task
+
+
+@dataclass
+class ProviderConfig:
+    base_url: str
+    model: str
+
+
+@dataclass
+class LLMResponse:
+    content: str
+    model: str
+    total_tokens: int = 100
+    finish_reason: str = "stop"
 
 
 # --- Fixtures ---
@@ -22,9 +36,7 @@ class MockProvider:
     def __init__(self, response_content: str = "{}"):
         self._content = response_content
         self.config = ProviderConfig(base_url="http://mock", model="mock")
-        self.generate = AsyncMock(
-            return_value=LLMResponse(content=response_content, model="mock")
-        )
+        self.generate = AsyncMock(return_value=LLMResponse(content=response_content, model="mock"))
 
     def set_response(self, content: str):
         self._content = content
@@ -80,11 +92,13 @@ class TestBaseSpecializedAgent:
         config = AgentConfig(agent_id="a", role="r", system_prompt="s")
         agent = BaseSpecializedAgent(config, mock_provider)
 
-        raw = json.dumps({
-            "output": "approve",
-            "confidence": 0.95,
-            "explanation": "looks good",
-        })
+        raw = json.dumps(
+            {
+                "output": "approve",
+                "confidence": 0.95,
+                "explanation": "looks good",
+            }
+        )
         output, conf, expl = agent.parse_response(raw)
         assert output == "approve"
         assert conf == 0.95
@@ -131,11 +145,15 @@ class TestBaseSpecializedAgent:
 
     @pytest.mark.asyncio
     async def test_execute(self, mock_provider):
-        mock_provider.set_response(json.dumps({
-            "output": "approve",
-            "confidence": 0.9,
-            "explanation": "all clear",
-        }))
+        mock_provider.set_response(
+            json.dumps(
+                {
+                    "output": "approve",
+                    "confidence": 0.9,
+                    "explanation": "all clear",
+                }
+            )
+        )
         config = AgentConfig(agent_id="exec-agent", role="r", system_prompt="s")
         agent = BaseSpecializedAgent(config, mock_provider)
 
@@ -166,13 +184,17 @@ class TestComplianceAnalystAgent:
 
     @pytest.mark.asyncio
     async def test_execute_compliant(self, mock_provider):
-        mock_provider.set_response(json.dumps({
-            "output": "compliant",
-            "confidence": 0.95,
-            "explanation": "No violations found",
-            "violations": [],
-            "risk_level": "low",
-        }))
+        mock_provider.set_response(
+            json.dumps(
+                {
+                    "output": "compliant",
+                    "confidence": 0.95,
+                    "explanation": "No violations found",
+                    "violations": [],
+                    "risk_level": "low",
+                }
+            )
+        )
         agent = ComplianceAnalystAgent(mock_provider)
         result = await agent.execute(make_task("check"))
         assert result.output == "compliant"
@@ -198,13 +220,17 @@ class TestRiskAssessorAgent:
 
     @pytest.mark.asyncio
     async def test_execute_approve(self, mock_provider):
-        mock_provider.set_response(json.dumps({
-            "output": "approve",
-            "confidence": 0.85,
-            "explanation": "Low risk profile",
-            "risk_score": 0.2,
-            "risk_factors": [],
-        }))
+        mock_provider.set_response(
+            json.dumps(
+                {
+                    "output": "approve",
+                    "confidence": 0.85,
+                    "explanation": "Low risk profile",
+                    "risk_score": 0.2,
+                    "risk_factors": [],
+                }
+            )
+        )
         agent = RiskAssessorAgent(mock_provider)
         result = await agent.execute(make_task("risk"))
         assert result.output == "approve"
@@ -228,12 +254,16 @@ class TestDecisionMakerAgent:
 
     @pytest.mark.asyncio
     async def test_execute_deny(self, mock_provider):
-        mock_provider.set_response(json.dumps({
-            "output": "deny",
-            "confidence": 0.92,
-            "explanation": "Too risky",
-            "requires_human_review": False,
-        }))
+        mock_provider.set_response(
+            json.dumps(
+                {
+                    "output": "deny",
+                    "confidence": 0.92,
+                    "explanation": "Too risky",
+                    "requires_human_review": False,
+                }
+            )
+        )
         agent = DecisionMakerAgent(mock_provider)
         result = await agent.execute(make_task("decision"))
         assert result.output == "deny"
@@ -241,13 +271,17 @@ class TestDecisionMakerAgent:
 
     @pytest.mark.asyncio
     async def test_execute_conditional(self, mock_provider):
-        mock_provider.set_response(json.dumps({
-            "output": "conditional_approve",
-            "confidence": 0.75,
-            "explanation": "Approved with conditions",
-            "conditions": ["additional documentation required"],
-            "requires_human_review": True,
-        }))
+        mock_provider.set_response(
+            json.dumps(
+                {
+                    "output": "conditional_approve",
+                    "confidence": 0.75,
+                    "explanation": "Approved with conditions",
+                    "conditions": ["additional documentation required"],
+                    "requires_human_review": True,
+                }
+            )
+        )
         agent = DecisionMakerAgent(mock_provider)
         result = await agent.execute(make_task("decision"))
         assert result.output == "conditional_approve"

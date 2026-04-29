@@ -28,7 +28,7 @@ from neutron.compliance.bastion import (
     revoke_capability,
 )
 
-from .bastion_test_helpers import run_in_subprocess, requires_linux, skip_in_ci
+from .bastion_test_helpers import run_in_subprocess, skip_in_ci
 
 # =============================================================================
 # BPF Program Tests

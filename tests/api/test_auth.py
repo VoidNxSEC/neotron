@@ -3,6 +3,7 @@ Tests for Enterprise Authentication & Authorization
 """
 
 import os
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,8 +12,8 @@ os.environ["API_SECRET_KEY"] = "test_secret_key_for_neutron_2026"
 os.environ["ADMIN_USERNAME"] = "admin"
 os.environ["ADMIN_PASSWORD"] = "test_admin_password"
 
-from neutron.api.server import app
 from neutron.api.auth import Role, get_auth_store
+from neutron.api.server import app
 
 
 @pytest.fixture

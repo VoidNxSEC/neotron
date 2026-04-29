@@ -19,7 +19,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastapi import Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
@@ -77,7 +77,7 @@ class User:
     password_hash: str  # SHA256 hash
     role: Role
     created_at: float = field(default_factory=time.time)
-    last_login: Optional[float] = None
+    last_login: float | None = None
 
 
 @dataclass
@@ -90,10 +90,10 @@ class APIKey:
     role: Role
     created_at: float
     created_by: str
-    last_used: Optional[float] = None
+    last_used: float | None = None
     revoked: bool = False
-    revoked_at: Optional[float] = None
-    revoked_by: Optional[str] = None
+    revoked_at: float | None = None
+    revoked_by: str | None = None
 
 
 @dataclass
@@ -162,14 +162,14 @@ class APIKeyInfo(BaseModel):
     role: str
     created_at: float
     created_by: str
-    last_used: Optional[float] = None
+    last_used: float | None = None
     revoked: bool = False
 
 
 class APIKeyListResponse(BaseModel):
     """List of API keys."""
 
-    keys: List[APIKeyInfo]
+    keys: list[APIKeyInfo]
 
 
 class AuthPrincipal(BaseModel):
@@ -179,7 +179,7 @@ class AuthPrincipal(BaseModel):
     username: str
     role: Role
     auth_method: str  # "jwt" or "apikey"
-    key_id: Optional[str] = None  # Set if authenticated via API key
+    key_id: str | None = None  # Set if authenticated via API key
 
 
 # ---------------------------------------------------------------------------
@@ -191,9 +191,9 @@ class AuthStore:
     """In-memory authentication store."""
 
     def __init__(self):
-        self.users: Dict[str, User] = {}
-        self.api_keys: Dict[str, APIKey] = {}  # key_id -> APIKey
-        self.refresh_tokens: Dict[str, RefreshToken] = {}  # token_id -> RefreshToken
+        self.users: dict[str, User] = {}
+        self.api_keys: dict[str, APIKey] = {}  # key_id -> APIKey
+        self.refresh_tokens: dict[str, RefreshToken] = {}  # token_id -> RefreshToken
 
         # Create default admin user
         self._create_default_admin()
@@ -218,7 +218,7 @@ class AuthStore:
         self.users[username] = user
         return user
 
-    def authenticate_user(self, username: str, password: str) -> Optional[User]:
+    def authenticate_user(self, username: str, password: str) -> User | None:
         """Authenticate user by username/password."""
         user = self.users.get(username)
         if not user:
@@ -248,7 +248,7 @@ class AuthStore:
         self.api_keys[key_id] = api_key
         return api_key, actual_key
 
-    def verify_api_key(self, api_key: str) -> Optional[APIKey]:
+    def verify_api_key(self, api_key: str) -> APIKey | None:
         """Verify API key and return APIKey object if valid."""
         # Extract key_id from the key (format: nk_xxxxx_yyyyyy)
         parts = api_key.split("_", 2)
@@ -283,7 +283,7 @@ class AuthStore:
         api_key.revoked_by = revoked_by
         return True
 
-    def list_api_keys(self, include_revoked: bool = False) -> List[APIKey]:
+    def list_api_keys(self, include_revoked: bool = False) -> list[APIKey]:
         """List all API keys."""
         keys = list(self.api_keys.values())
         if not include_revoked:
@@ -306,7 +306,7 @@ class AuthStore:
         self.refresh_tokens[token_id] = refresh_token
         return actual_token
 
-    def verify_refresh_token(self, token: str) -> Optional[str]:
+    def verify_refresh_token(self, token: str) -> str | None:
         """Verify refresh token and return user_id if valid."""
         token_hash = hashlib.sha256(token.encode()).hexdigest()
 
@@ -517,9 +517,7 @@ def create_access_token(user_id: str, role: Role) -> tuple[str, int]:
     return token, JWT_EXPIRATION_SECONDS
 
 
-def audit_log_auth_event(event_type: str, user_id: str, details: Dict[str, Any]):
+def audit_log_auth_event(event_type: str, user_id: str, details: dict[str, Any]):
     """Log authentication events for audit trail."""
-    logger.info(
-        f"AUTH_AUDIT: event={event_type} user={user_id} details={json.dumps(details)}"
-    )
+    logger.info(f"AUTH_AUDIT: event={event_type} user={user_id} details={json.dumps(details)}")
     # TODO: Send to compliance audit logger (neutron.compliance.audit_logger)

@@ -2,14 +2,15 @@
 Integration tests for 4-layer NEXUS compliance flow.
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from neutron.compliance.nexus_flow import (
     ComplianceDecision,
     ComplianceRequest,
-    NEXUSComplianceFlow,
     LayerResult,
+    NEXUSComplianceFlow,
 )
 
 

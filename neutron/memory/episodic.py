@@ -1,20 +1,19 @@
 """
 Synapse Episodic Memory - PostgreSQL + pgvector Implementation
 """
-import json
+
 import logging
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
 from datetime import datetime
-import sqlalchemy
-from sqlalchemy import create_engine, text, Column, Integer, String, DateTime, JSON
-from sqlalchemy.orm import sessionmaker, declarative_base
+
+from sqlalchemy import Column, DateTime, Integer, String, create_engine, text
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Configure logging
 logger = logging.getLogger("neutron.memory.episodic")
 
 Base = declarative_base()
+
 
 class MemoryModel(Base):
     __tablename__ = "synapse_memory"
@@ -24,16 +23,22 @@ class MemoryModel(Base):
     content = Column(String, nullable=False)
     # Vector column would be: embedding = Column(Vector(1536)) - requires pgvector-python
     # For now using raw SQL for vector operations to minimize dependency friction
-    embedding = Column(JSONB) # Storing as device-independent JSON for now, can perform exact match or use specialized index
+    embedding = Column(
+        JSONB
+    )  # Storing as device-independent JSON for now, can perform exact match or use specialized index
     metadata_ = Column("metadata", JSONB, default={})
     created_at = Column(DateTime, default=datetime.utcnow)
+
 
 class EpisodicMemory:
     """
     Real persistence layer for Agent Memory.
     Uses PostgreSQL for structured storage and planned pgvector integration.
     """
-    def __init__(self, connection_string: str = "postgresql://neutron:neutron@localhost:5432/temporal"):
+
+    def __init__(
+        self, connection_string: str = "postgresql://neutron:neutron@localhost:5432/temporal"
+    ):
         self.engine = create_engine(connection_string, pool_size=5, max_overflow=10)
         self.Session = sessionmaker(bind=self.engine)
         self._init_db()
@@ -49,7 +54,13 @@ class EpisodicMemory:
         except Exception as e:
             logger.error(f"Failed to init DB (is Postgres running?): {e}")
 
-    def store(self, agent_id: str, content: str, embedding: Optional[List[float]] = None, meta: Dict = None):
+    def store(
+        self,
+        agent_id: str,
+        content: str,
+        embedding: list[float] | None = None,
+        meta: dict = None,
+    ):
         """Store a memory episode."""
         session = self.Session()
         try:
@@ -57,7 +68,7 @@ class EpisodicMemory:
                 agent_id=agent_id,
                 content=content,
                 # embedding=embedding, # TODO: Serialize for pgvector
-                metadata_=meta or {}
+                metadata_=meta or {},
             )
             session.add(entry)
             session.commit()
@@ -69,7 +80,9 @@ class EpisodicMemory:
         finally:
             session.close()
 
-    def search(self, query_embedding: List[float], limit: int = 5, agent_id: str = None) -> List[Dict]:
+    def search(
+        self, query_embedding: list[float], limit: int = 5, agent_id: str = None
+    ) -> list[dict]:
         """
         Semantic search using vector similarity.
         (Currently simulated with latest-k retrieval until pgvector logic is fully wired)
@@ -80,15 +93,18 @@ class EpisodicMemory:
             q = session.query(MemoryModel).order_by(MemoryModel.created_at.desc())
             if agent_id:
                 q = q.filter(MemoryModel.agent_id == agent_id)
-            
+
             results = q.limit(limit).all()
-            
-            return [{
-                "id": r.id,
-                "content": r.content,
-                "created_at": r.created_at.isoformat(),
-                "score": 1.0 # Placeholder score
-            } for r in results]
+
+            return [
+                {
+                    "id": r.id,
+                    "content": r.content,
+                    "created_at": r.created_at.isoformat(),
+                    "score": 1.0,  # Placeholder score
+                }
+                for r in results
+            ]
         finally:
             session.close()
 

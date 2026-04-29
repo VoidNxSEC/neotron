@@ -4,11 +4,10 @@ Tests for SYNAPSE Memory Store
 Tests semantic search, memory storage, and GDPR compliance features.
 """
 
-from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock, patch
-
 import sys
+from datetime import UTC, datetime, timedelta
 from types import ModuleType
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -60,7 +59,7 @@ def sample_memory(sample_embedding):
         content="Customer prefers low-risk investments",
         embedding=sample_embedding,
         metadata={"customer_id": "12345"},
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         importance_score=0.75,
         memory_type="episodic",
         tags=["preference", "investment"],
@@ -178,7 +177,7 @@ class TestMemoryStoreMocked:
                 "content": "Memory 1",
                 "embedding": sample_embedding.tolist(),
                 "metadata": {"key": "value"},
-                "timestamp": datetime.now(timezone.utc),
+                "timestamp": datetime.now(UTC),
                 "importance_score": 0.8,
                 "memory_type": "episodic",
                 "tags": ["tag1"],
@@ -190,7 +189,7 @@ class TestMemoryStoreMocked:
                 "content": "Memory 2",
                 "embedding": sample_embedding.tolist(),
                 "metadata": {},
-                "timestamp": datetime.now(timezone.utc),
+                "timestamp": datetime.now(UTC),
                 "importance_score": 0.7,
                 "memory_type": "semantic",
                 "tags": [],
@@ -219,7 +218,7 @@ class TestMemoryStoreMocked:
             "content": "Test memory",
             "embedding": sample_embedding.tolist(),
             "metadata": {"key": "value"},
-            "timestamp": datetime.now(timezone.utc),
+            "timestamp": datetime.now(UTC),
             "importance_score": 0.8,
             "memory_type": "episodic",
             "tags": ["tag1"],
@@ -297,8 +296,8 @@ class TestMemoryStoreMocked:
             "active_memories": 95,
             "deleted_memories": 5,
             "avg_importance": 0.75,
-            "last_memory_at": datetime.now(timezone.utc),
-            "first_memory_at": datetime.now(timezone.utc) - timedelta(days=30),
+            "last_memory_at": datetime.now(UTC),
+            "first_memory_at": datetime.now(UTC) - timedelta(days=30),
         }
 
         store = MemoryStore()

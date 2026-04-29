@@ -25,19 +25,9 @@ Requirements:
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import numpy as np
-
-# SYNAPSE - Memory
-from neutron.memory import MemoryStore
-
-# CORTEX - Multi-Agent
-from neutron.orchestration.cortex import (
-    AgentResult,
-    ConsensusEngine,
-    Task,
-)
 
 # NEXUS - Integrated Workflow
 from neutron.orchestration.nexus_workflow import (
@@ -49,6 +39,16 @@ from neutron.compliance.auditors import validate_with_gdpr
 
 # GDPR - Compliance
 from neutron.compliance.sentinel import ComplianceViolation
+
+# SYNAPSE - Memory
+from neutron.memory import MemoryStore
+
+# CORTEX - Multi-Agent
+from neutron.orchestration.cortex import (
+    AgentResult,
+    ConsensusEngine,
+    Task,
+)
 
 # =============================================================================
 # Demo Utilities
@@ -250,7 +250,7 @@ def demo_4_gdpr_high_risk_compliant():
     print("Creating high-risk decision with human review...")
     from neutron.compliance.sentinel import AgentOutput
 
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     output = AgentOutput(
         content="Loan application APPROVED - $50,000 at 4.5% APR",
         metadata={

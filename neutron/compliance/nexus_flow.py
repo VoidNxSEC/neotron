@@ -14,13 +14,12 @@ mathematically impossible through defense-in-depth architecture.
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 logger = logging.getLogger("neutron.compliance.nexus_flow")
 
@@ -41,10 +40,10 @@ class ComplianceRequest:
     request_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     customer_id: str = ""
     action: str = ""  # e.g., "loan_approval", "data_processing"
-    data: Dict[str, Any] = field(default_factory=dict)
-    consent_token: Optional[str] = None
+    data: dict[str, Any] = field(default_factory=dict)
+    consent_token: str | None = None
     regulation: str = "LGPD"  # LGPD, GDPR, AI_ACT
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     timestamp: float = field(default_factory=time.time)
 
 
@@ -57,8 +56,8 @@ class LayerResult:
     status: str
     details: str
     processing_time_ms: float = 0.0
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    error: Optional[str] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+    error: str | None = None
 
 
 @dataclass
@@ -70,9 +69,9 @@ class ComplianceResponse:
     confidence: float
     explanation: str
     audit_hash: str  # IPFS/Arweave hash
-    layers: Dict[str, LayerResult]
+    layers: dict[str, LayerResult]
     total_processing_time_ms: float
-    blockchain_tx: Optional[str] = None
+    blockchain_tx: str | None = None
     timestamp: float = field(default_factory=time.time)
 
 
@@ -236,7 +235,7 @@ class NEXUSComplianceFlow:
 
             # SENTINEL validates the request structure
             # In production, this would call actual SENTINEL guardrails
-            logger.info(f"[Layer 1: SENTINEL] ✓ Passed - Consent validated")
+            logger.info("[Layer 1: SENTINEL] ✓ Passed - Consent validated")
 
             return LayerResult(
                 layer_name="SENTINEL",
@@ -360,9 +359,7 @@ class NEXUSComplianceFlow:
                 error=str(e),
             )
 
-    async def _layer3_cortex_oracle(
-        self, request: ComplianceRequest
-    ) -> tuple[LayerResult, str]:
+    async def _layer3_cortex_oracle(self, request: ComplianceRequest) -> tuple[LayerResult, str]:
         """
         Layer 3: CORTEX + ORACLE - Multi-agent decision with explainability.
 
@@ -370,9 +367,7 @@ class NEXUSComplianceFlow:
         ORACLE: Generates human-readable explanation
         """
         start = time.time()
-        logger.info(
-            f"[Layer 3: CORTEX] Processing with multi-agent swarm for {request.request_id}"
-        )
+        logger.info(f"[Layer 3: CORTEX] Processing with multi-agent swarm for {request.request_id}")
 
         try:
             swarm = self._get_cortex_swarm()
@@ -404,10 +399,8 @@ class NEXUSComplianceFlow:
 
             # Generate ORACLE explanations
             from neutron.reasoning.oracle import (
-                ExplanationType,
-                FeatureImportanceExplainer,
                 ChainOfThoughtExplainer,
-                explain_agent_decision,
+                FeatureImportanceExplainer,
             )
 
             # Feature importance analysis on input data
@@ -466,7 +459,11 @@ class NEXUSComplianceFlow:
                         "oracle": {
                             "feature_importance": {
                                 "evidence": [
-                                    {"feature": e.feature, "value": e.value, "importance": e.importance}
+                                    {
+                                        "feature": e.feature,
+                                        "value": e.value,
+                                        "importance": e.importance,
+                                    }
                                     for e in feature_result.evidence
                                 ],
                                 "reasoning": feature_result.reasoning,
@@ -484,6 +481,7 @@ class NEXUSComplianceFlow:
         except Exception as e:
             logger.error(f"[Layer 3: CORTEX] Error: {e}")
             import traceback
+
             traceback.print_exc()
             return (
                 LayerResult(
@@ -501,7 +499,7 @@ class NEXUSComplianceFlow:
         self,
         request: ComplianceRequest,
         decision: ComplianceDecision,
-        layers: Dict[str, LayerResult],
+        layers: dict[str, LayerResult],
         explanation: str,
     ) -> LayerResult:
         """
@@ -514,7 +512,7 @@ class NEXUSComplianceFlow:
         logger.info(f"[Layer 4: AUDIT] Creating immutable audit for {request.request_id}")
 
         try:
-            from neutron.storage.decentralized import ComplianceLog, DecentralizedStorage
+            from neutron.storage.decentralized import ComplianceLog
 
             storage = self._get_storage()
 
@@ -536,9 +534,9 @@ class NEXUSComplianceFlow:
                         }
                         for name, layer in layers.items()
                     },
-                    "consent_token": request.consent_token[:20] + "..."
-                    if request.consent_token
-                    else None,
+                    "consent_token": (
+                        request.consent_token[:20] + "..." if request.consent_token else None
+                    ),
                 },
             )
 
@@ -597,7 +595,7 @@ class NEXUSComplianceFlow:
         overall_start = time.time()
         logger.info(f"🚀 Starting 4-layer compliance flow for {request.request_id}")
 
-        layers: Dict[str, LayerResult] = {}
+        layers: dict[str, LayerResult] = {}
         explanation = ""
 
         # Layer 1: SENTINEL
@@ -607,9 +605,7 @@ class NEXUSComplianceFlow:
         if not layer1.passed:
             # Early rejection if SENTINEL fails
             total_time = (time.time() - overall_start) * 1000
-            logger.warning(
-                f"⚠️  Layer 1 (SENTINEL) failed - Request {request.request_id} rejected"
-            )
+            logger.warning(f"⚠️  Layer 1 (SENTINEL) failed - Request {request.request_id} rejected")
 
             return ComplianceResponse(
                 request_id=request.request_id,
@@ -627,9 +623,7 @@ class NEXUSComplianceFlow:
 
         if not layer2.passed:
             total_time = (time.time() - overall_start) * 1000
-            logger.warning(
-                f"⚠️  Layer 2 (BASTION) failed - Request {request.request_id} rejected"
-            )
+            logger.warning(f"⚠️  Layer 2 (BASTION) failed - Request {request.request_id} rejected")
 
             return ComplianceResponse(
                 request_id=request.request_id,
@@ -659,9 +653,7 @@ class NEXUSComplianceFlow:
         layer4 = await self._layer4_audit(request, decision, layers, explanation)
         layers["AUDIT"] = layer4
 
-        audit_hash = (
-            layer4.metadata.get("ipfs_cid", "") if layer4.passed else "audit_failed"
-        )
+        audit_hash = layer4.metadata.get("ipfs_cid", "") if layer4.passed else "audit_failed"
 
         total_time = (time.time() - overall_start) * 1000
 

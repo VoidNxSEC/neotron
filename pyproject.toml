@@ -23,6 +23,8 @@ dependencies = [
   "PyYAML>=6.0.3",
   # Note: ML deps (mlflow, ray, torch, anthropic, openai, dspy, etc.)
   # have been moved to ml-offload-api/python/pyproject.toml (mlops package)
+  "lint (>=1.2.1,<2.0.0)",
+  "pip (>=26.0.1,<27.0.0)",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +54,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["neutron"]
+
+[tool.poetry]
+packages = [{include = "neutron"}]
 
 [tool.uv]
 index-url = "https://pypi.org/simple"

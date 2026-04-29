@@ -13,7 +13,7 @@ import hashlib
 import json
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Literal
 
 # =============================================================================
@@ -212,7 +212,7 @@ class ComplianceGuardrail:
         # Log to immutable audit store
         audit_id = self._audit_logger.log(
             {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "guardrail_name": self.name,
                 "regulation": self.regulation,
                 "agent_output_hash": output_hash,

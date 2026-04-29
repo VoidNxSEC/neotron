@@ -2,18 +2,20 @@
 Document Ingestion Agent
 Specialized agent for analyzing and structuring compliance documents.
 """
+
 import logging
-from typing import Dict, Any
+from typing import Any
 
 from neutron.agents.cortex import Agent
 
 logger = logging.getLogger("neutron.agents.document")
 
+
 class DocumentIngestionAgent(Agent):
     """
     Agent specialized in ingesting and analyzing regulatory documents.
     """
-    
+
     def __init__(self, name: str, role: str = "compliance_librarian"):
         super().__init__(name=name, role=role)
         self.system_prompt = (
@@ -22,12 +24,12 @@ class DocumentIngestionAgent(Agent):
             "Always output strict JSON."
         )
 
-    def build_prompt(self, task: Dict[str, Any]) -> str:
+    def build_prompt(self, task: dict[str, Any]) -> str:
         """Construct a prompt specialized for document analysis."""
         data = task.get("data", {})
         doc_content = data.get("text", "")
         filename = data.get("filename", "unknown")
-        
+
         # Simple truncation strategy for MVP
         # In production, this would use chunking/embedding
         truncated_content = doc_content[:15000]

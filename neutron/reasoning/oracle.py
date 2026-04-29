@@ -68,9 +68,7 @@ class ExplanationResult:
                 remaining = len(self.evidence) - max_evidence
 
             for e in display_evidence:
-                lines.append(
-                    f"  - {e.feature}: {e.value} (importance: {e.importance})"
-                )
+                lines.append(f"  - {e.feature}: {e.value} (importance: {e.importance})")
                 if e.description:
                     lines.append(f"    {e.description}")
 
@@ -126,9 +124,7 @@ class ExplanationResult:
             lines.append("| Feature | Value | Importance | Description |")
             lines.append("|---------|-------|------------|-------------|")
             for e in self.evidence:
-                lines.append(
-                    f"| {e.feature} | {e.value} | {e.importance} | {e.description} |"
-                )
+                lines.append(f"| {e.feature} | {e.value} | {e.importance} | {e.description} |")
             lines.append("")
 
         lines.append("## Reasoning")
@@ -161,8 +157,7 @@ class Explainer(ABC):
         input_data: dict[str, Any],
         output_data: dict[str, Any],
         metadata: dict[str, Any] | None = None,
-    ) -> ExplanationResult:
-        ...
+    ) -> ExplanationResult: ...
 
 
 # ---------------------------------------------------------------------------
@@ -244,9 +239,7 @@ class CounterfactualExplainer(Explainer):
             if threshold is not None and isinstance(value, (int, float)):
                 # Generate a counterfactual below the threshold
                 cf_value = threshold - 1 if isinstance(threshold, int) else threshold - 0.1
-                counterfactuals.append(
-                    {feature: cf_value, "outcome": f"opposite of '{decision}'"}
-                )
+                counterfactuals.append({feature: cf_value, "outcome": f"opposite of '{decision}'"})
                 evidence.append(
                     ExplanationEvidence(
                         feature=feature,
@@ -281,7 +274,9 @@ class CounterfactualExplainer(Explainer):
 
         # Ensure at least one counterfactual even with empty input
         if not counterfactuals:
-            counterfactuals.append({"scenario": "alternative", "outcome": f"opposite of '{decision}'"})
+            counterfactuals.append(
+                {"scenario": "alternative", "outcome": f"opposite of '{decision}'"}
+            )
 
         reasoning = (
             f"Counterfactual analysis explores what if key factors were different. "
@@ -436,8 +431,7 @@ class RuleBasedExplainer(Explainer):
             )
 
         reasoning = (
-            f"The decision '{decision}' was determined by {len(rules)} rule(s): "
-            + "; ".join(rules)
+            f"The decision '{decision}' was determined by {len(rules)} rule(s): " + "; ".join(rules)
         )
 
         return ExplanationResult(

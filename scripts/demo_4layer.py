@@ -20,19 +20,17 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import os
 import sys
 import time
 from datetime import datetime
 
-# ── SENTINEL imports ─────────────────────────────────────────────────────
-from neutron.compliance.sentinel import (
-    AgentOutput,
-    ComplianceGuardrail,
-    ComplianceViolation,
-    ValidationResult,
-    create_guardrail,
-)
+# ── Provider + Specialized agents ────────────────────────────────────────
+from neutron.agents.providers.base import ProviderConfig
+from neutron.agents.providers.llamacpp import LlamaCppProvider
+
+from neutron.agents.specialized.compliance_analyst import ComplianceAnalystAgent
+from neutron.agents.specialized.decision_maker import DecisionMakerAgent
+from neutron.agents.specialized.risk_assessor import RiskAssessorAgent
 from neutron.compliance.audit_logger import AuditLogger
 
 # ── BASTION imports ──────────────────────────────────────────────────────
@@ -45,20 +43,20 @@ from neutron.compliance.bastion import (
     revoke_capability,
 )
 
+# ── SENTINEL imports ─────────────────────────────────────────────────────
+from neutron.compliance.sentinel import (
+    AgentOutput,
+    ComplianceViolation,
+    ValidationResult,
+    create_guardrail,
+)
+
 # ── CORTEX imports ───────────────────────────────────────────────────────
 from neutron.orchestration.cortex import (
     AgentSwarm,
     ConsensusStrategy,
     Task,
 )
-
-# ── Provider + Specialized agents ────────────────────────────────────────
-from neutron.agents.providers.base import ProviderConfig
-from neutron.agents.providers.llamacpp import LlamaCppProvider
-from neutron.agents.specialized.compliance_analyst import ComplianceAnalystAgent
-from neutron.agents.specialized.risk_assessor import RiskAssessorAgent
-from neutron.agents.specialized.decision_maker import DecisionMakerAgent
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Helpers
@@ -101,6 +99,7 @@ def info(msg: str) -> None:
 # ═══════════════════════════════════════════════════════════════════════════
 # LAYER 1 — SENTINEL (Application-Level Guardrails)
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def demo_sentinel() -> None:
     """Demonstrate SENTINEL guardrail enforcement."""
@@ -226,6 +225,7 @@ def demo_sentinel() -> None:
 # LAYER 2 — BASTION (Kernel-Level Enforcement)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def demo_bastion() -> None:
     """Demonstrate BASTION kernel-level enforcement (simulated on non-Linux)."""
     banner("BASTION — Kernel-Level seccomp-BPF Enforcement", "Layer 2")
@@ -295,6 +295,7 @@ def demo_bastion() -> None:
 # LAYER 3 — Smart Contracts (On-Chain Reference)
 # ═══════════════════════════════════════════════════════════════════════════
 
+
 def demo_smart_contracts() -> None:
     """Reference smart contract layer (would require EVM/Foundry)."""
     banner("Smart Contracts — On-Chain Compliance", "Layer 3")
@@ -324,6 +325,7 @@ def demo_smart_contracts() -> None:
 # ═══════════════════════════════════════════════════════════════════════════
 # LAYER 4 — Audit Trail
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def demo_audit_trail() -> None:
     """Show the full audit trail from all layers."""
@@ -360,6 +362,7 @@ def demo_audit_trail() -> None:
 # ═══════════════════════════════════════════════════════════════════════════
 # CORTEX — Multi-Agent Consensus (optional live LLM)
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 async def demo_cortex(base_url: str) -> None:
     """Demonstrate 3-agent CORTEX consensus with live llama.cpp."""
@@ -407,7 +410,7 @@ async def demo_cortex(base_url: str) -> None:
     )
 
     info(f"Task: {task.type} | Strategy: {task.consensus_strategy.value}")
-    info(f"Scenario: Cross-border PII transfer (Brazil → Germany)")
+    info("Scenario: Cross-border PII transfer (Brazil → Germany)")
     print()
 
     t0 = time.monotonic()
@@ -477,6 +480,7 @@ async def demo_cortex(base_url: str) -> None:
 # ═══════════════════════════════════════════════════════════════════════════
 # Main
 # ═══════════════════════════════════════════════════════════════════════════
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="NEUTRON 4-Layer Compliance Demo")

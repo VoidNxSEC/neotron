@@ -8,7 +8,7 @@ allowing direct access to decision explanations.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -22,13 +22,19 @@ class OracleExplainRequest(BaseModel):
     """Request for an ORACLE explanation."""
 
     decision: str = Field(..., description="The decision to explain (e.g., 'approved', 'rejected')")
-    input_data: Dict[str, Any] = Field(default_factory=dict, description="Input data that led to the decision")
-    output_data: Dict[str, Any] = Field(default_factory=dict, description="Output/result data from the decision")
+    input_data: dict[str, Any] = Field(
+        default_factory=dict, description="Input data that led to the decision"
+    )
+    output_data: dict[str, Any] = Field(
+        default_factory=dict, description="Output/result data from the decision"
+    )
     explanation_type: str = Field(
         default="feature_importance",
         description="Type of explanation: feature_importance, counterfactual, chain_of_thought, rule_based, example_based",
     )
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata for explainers")
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata for explainers"
+    )
 
 
 class OracleExplainResponse(BaseModel):
@@ -37,9 +43,9 @@ class OracleExplainResponse(BaseModel):
     decision: str
     explanation_type: str
     confidence: float
-    evidence: list[Dict[str, Any]]
+    evidence: list[dict[str, Any]]
     reasoning: str
-    counterfactuals: list[Dict[str, Any]] = []
+    counterfactuals: list[dict[str, Any]] = []
     human_readable: str
     markdown: str
 

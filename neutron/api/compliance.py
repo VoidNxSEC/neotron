@@ -7,15 +7,13 @@ Exposes the 4-layer NEXUS compliance flow via REST API.
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, Optional
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from neutron.compliance.nexus_flow import (
-    ComplianceDecision,
     ComplianceRequest,
-    ComplianceResponse,
     NEXUSComplianceFlow,
 )
 
@@ -24,7 +22,7 @@ logger = logging.getLogger("neutron.api.compliance")
 router = APIRouter(prefix="/v1/compliance", tags=["compliance"])
 
 # Global flow instance (singleton)
-_flow_instance: Optional[NEXUSComplianceFlow] = None
+_flow_instance: NEXUSComplianceFlow | None = None
 
 
 def get_flow() -> NEXUSComplianceFlow:
@@ -35,8 +33,7 @@ def get_flow() -> NEXUSComplianceFlow:
 
         _flow_instance = NEXUSComplianceFlow(
             enable_bastion=os.getenv("ENABLE_BASTION", "true").lower() == "true",
-            enable_smart_contracts=os.getenv("ENABLE_SMART_CONTRACTS", "false").lower()
-            == "true",
+            enable_smart_contracts=os.getenv("ENABLE_SMART_CONTRACTS", "false").lower() == "true",
             enable_memory=os.getenv("ENABLE_MEMORY", "true").lower() == "true",
         )
     return _flow_instance
@@ -52,16 +49,12 @@ class ComplianceValidateRequest(BaseModel):
     action: str = Field(
         ..., description="Action to validate (e.g., loan_approval, data_processing)"
     )
-    data: Dict[str, Any] = Field(
-        default_factory=dict, description="Action-specific data"
-    )
-    consent_token: Optional[str] = Field(
-        None, description="LGPD/GDPR consent token"
-    )
+    data: dict[str, Any] = Field(default_factory=dict, description="Action-specific data")
+    consent_token: str | None = Field(None, description="LGPD/GDPR consent token")
     regulation: str = Field(
         default="LGPD", description="Regulation to enforce (LGPD, GDPR, AI_ACT)"
     )
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
 class LayerResultResponse(BaseModel):
@@ -72,8 +65,8 @@ class LayerResultResponse(BaseModel):
     status: str
     details: str
     processing_time_ms: float
-    metadata: Dict[str, Any] = Field(default_factory=dict)
-    error: Optional[str] = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    error: str | None = None
 
 
 class ComplianceValidateResponse(BaseModel):
@@ -84,9 +77,9 @@ class ComplianceValidateResponse(BaseModel):
     confidence: float
     explanation: str
     audit_hash: str
-    layers: Dict[str, LayerResultResponse]
+    layers: dict[str, LayerResultResponse]
     total_processing_time_ms: float
-    blockchain_tx: Optional[str] = None
+    blockchain_tx: str | None = None
     timestamp: float
 
 
@@ -100,7 +93,7 @@ class ComplianceHealthResponse(BaseModel):
     """Health check for compliance system."""
 
     status: str
-    layers: Dict[str, dict]
+    layers: dict[str, dict]
     version: str
 
 
@@ -265,7 +258,7 @@ async def health_check() -> ComplianceHealthResponse:
 
 
 @router.get("/audit/{audit_hash}")
-async def get_audit_log(audit_hash: str) -> Dict[str, Any]:
+async def get_audit_log(audit_hash: str) -> dict[str, Any]:
     """
     Retrieve audit log by hash (IPFS CID or Arweave TX).
 

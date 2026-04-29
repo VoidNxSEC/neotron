@@ -12,11 +12,10 @@ import logging
 import os
 from dataclasses import dataclass, field
 from urllib.request import Request, urlopen
-from urllib.error import URLError
 
 logger = logging.getLogger("neutron.agents.llm_http_client")
 
-ML_OFFLOAD_URL = os.getenv("ML_OFFLOAD_URL", "http://localhost:8080")
+ML_OFFLOAD_URL = os.getenv("ML_OFFLOAD_URL", "http://localhost:8081")
 
 
 @dataclass

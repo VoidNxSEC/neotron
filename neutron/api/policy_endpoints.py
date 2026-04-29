@@ -7,7 +7,6 @@ Provides full CRUD for compliance policies.
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -113,18 +112,18 @@ async def create_policy(
         tags=request.tags,
     )
 
-    logger.info(
-        f"Policy created: {policy.policy_id} ({policy.name}) by {principal.username}"
-    )
+    logger.info(f"Policy created: {policy.policy_id} ({policy.name}) by {principal.username}")
 
     return policy_to_response(policy)
 
 
 @router.get("", response_model=PolicyListResponse)
 async def list_policies(
-    policy_type: Optional[PolicyType] = Query(None, description="Filter by policy type"),
-    status_filter: Optional[PolicyStatus] = Query(None, description="Filter by status", alias="status"),
-    tags: Optional[str] = Query(None, description="Comma-separated tags to filter"),
+    policy_type: PolicyType | None = Query(None, description="Filter by policy type"),
+    status_filter: PolicyStatus | None = Query(
+        None, description="Filter by status", alias="status"
+    ),
+    tags: str | None = Query(None, description="Comma-separated tags to filter"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Page size (max 100)"),
     principal: AuthPrincipal = Depends(get_current_user),
@@ -234,9 +233,7 @@ async def update_policy(
             detail=f"Policy not found: {policy_id}",
         )
 
-    logger.info(
-        f"Policy updated: {policy.policy_id} ({policy.name}) by {principal.username}"
-    )
+    logger.info(f"Policy updated: {policy.policy_id} ({policy.name}) by {principal.username}")
 
     return policy_to_response(policy)
 

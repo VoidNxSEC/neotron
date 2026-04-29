@@ -18,6 +18,7 @@ def pytest_collection_modifyitems(items):
                 @functools.wraps(fn)
                 def wrapper(*args, **kwargs):
                     return asyncio.run(fn(*args, **kwargs))
+
                 return wrapper
 
             item.obj = make_sync()

@@ -145,15 +145,14 @@ class LLMConfig:
             fallback_chain=fallback_chain,
             providers=providers,
             enable_retries=os.getenv("LLM_ENABLE_RETRIES", "true").lower() == "true",
-            enable_circuit_breaker=os.getenv("LLM_ENABLE_CIRCUIT_BREAKER", "true").lower() == "true",
+            enable_circuit_breaker=os.getenv("LLM_ENABLE_CIRCUIT_BREAKER", "true").lower()
+            == "true",
             log_requests=os.getenv("LLM_LOG_REQUESTS", "true").lower() == "true",
         )
 
     def get_provider_config(self, provider_type: ProviderType) -> ProviderConfig:
         """Get configuration for a provider."""
-        return self.providers.get(
-            provider_type, ProviderConfig(provider_type=provider_type)
-        )
+        return self.providers.get(provider_type, ProviderConfig(provider_type=provider_type))
 
     def get_enabled_providers(self) -> list[ProviderType]:
         """Get list of enabled providers in fallback order."""
@@ -182,7 +181,9 @@ class NEXUSConfig:
     )
 
     # Vault configuration
-    vault_addr: str = field(default_factory=lambda: os.getenv("VAULT_ADDR", "http://localhost:8200"))
+    vault_addr: str = field(
+        default_factory=lambda: os.getenv("VAULT_ADDR", "http://localhost:8200")
+    )
     vault_token: str = field(default_factory=lambda: os.getenv("VAULT_TOKEN", ""))
 
     # API configuration
@@ -192,7 +193,9 @@ class NEXUSConfig:
 
     # IPFS/Arweave configuration
     ipfs_url: str = field(default_factory=lambda: os.getenv("IPFS_URL", "http://localhost:5001"))
-    arweave_url: str = field(default_factory=lambda: os.getenv("ARWEAVE_URL", "https://arweave.net"))
+    arweave_url: str = field(
+        default_factory=lambda: os.getenv("ARWEAVE_URL", "https://arweave.net")
+    )
 
     # Feature flags
     enable_bastion: bool = field(
