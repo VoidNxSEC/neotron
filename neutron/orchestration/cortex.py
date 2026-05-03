@@ -44,7 +44,7 @@ class AgentResult:
     agent_id: str
     output: Any
     confidence: float
-    explanation: str
+    explanation: str = ""
     processing_time_ms: float = 0.0
 
     def __post_init__(self) -> None:

@@ -56,7 +56,7 @@ class MemoryStore:
 
     def __init__(self, connection_string: str | None = None):
         self.connection_string = connection_string or os.getenv(
-            "DATABASE_URL", "postgresql://neutron:neutron@localhost:5432/temporal"
+            "DATABASE_URL", "postgresql://neutron:neutron@localhost:5433/neutron"
         )
         self._conn = None
 

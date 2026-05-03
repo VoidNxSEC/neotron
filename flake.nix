@@ -5,6 +5,7 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     pre-commit-hooks.url = "github:cachix/pre-commit-hooks.nix";
+    sops.url = "github:Mic92/sops-nix";
 
     ml-ops-api = {
       url = "git+ssh://git@github.com/VoidNxSEC/ml-ops-api";
@@ -19,6 +20,7 @@
     , nixpkgs
     , flake-utils
     , pre-commit-hooks
+    , sops
     , ...
     }@inputs:
     flake-utils.lib.eachDefaultSystem
@@ -105,6 +107,18 @@
 
         in
         {
+          # sops-nix secrets para dev shell
+          nexusSecrets = sops.lib.${system}.mkSecretOnDisk {
+            sopsFile = ./secrets/nexus.enc.yaml;
+            format = "yaml";
+            secrets = {
+              database_url = { };
+              api_secret_key = { };
+              vault_token = { };
+            };
+            secretsDir = "/run/secrets/nexus";
+          };
+
           # Development shells
           devShells = {
             # Default shell - Poetry + todas ferramentas
@@ -182,6 +196,9 @@
                 export TEMPORAL_ADDRESS="localhost:7233"
                 export RAY_ADDRESS="auto"
                 export ML_GPU_COST_PER_HOUR="0.90"
+
+                # SOPS secrets — expostos via /run/secrets para neutron.core.sops
+                export SOPS_SECRETS_DIR="/run/secrets/nexus"
 
                 # uv configuration
                 export UV_PYTHON=${pkgs.python313}/bin/python

@@ -1,7 +1,7 @@
 cerebro:
   optimizer:
     enabled: true
-    model: "claude-3-5-sonnet-20241022"  # or gpt-4
+    model: "claude-opus-4.7" # "gpt-5.5" or "gemini-3-pro-preview"
     temperature: 0.7
     max_tokens: 4096
     num_suggestions: 5

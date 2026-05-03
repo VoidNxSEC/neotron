@@ -2,9 +2,7 @@
 
 **Enterprise-Grade AI Agent Orchestration with Compliance-as-Code**
 
-```html
-<div align="center">
-```
+<div style="text-align: center;">
 
 [!\[Tests\](https://img.shields.io/badge/Tests-350%2B\_Passing-success?style=for-the-badge\&logo=pytest\&logoColor=white)](https://github.com/kernelcore/neutron)
 [!\[Coverage\](https://img.shields.io/badge/Coverage-90%25%2B-2ea44f?style=for-the-badge\&logo=codecov\&logoColor=white)](https://codecov.io)
@@ -19,9 +17,7 @@
 [!\[Docs\](https://img.shields.io/badge/Docs-Comprehensive-FF6F00?style=for-the-badge\&logo=readthedocs\&logoColor=white)](docs/)
 [!\[Code Quality\](https://img.shields.io/badge/Quality-A%2B-success?style=for-the-badge)](scripts/run_all_tests.py)
 
-```html
 </div>
-```
 
 ---
 

@@ -1,0 +1,5 @@
+creation_rules:
+  - path_regex: secrets/nexus\.yaml$
+    age: >-
+      age1h0m5uwsjq9twc0rvpm3nv2uqtwarxpq6mq5uqxsxwu6tgzgwcagqw3d0xn,
+      age176ca9a693ujm2d6fmqm6ezuwy0ka2fm39u5gu9tvr7njlzps6qhqqfnecn
