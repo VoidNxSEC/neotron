@@ -28,7 +28,7 @@ import asyncio
 import sys
 
 # LGPD Kernel enforcement
-from neutron.compliance.auditors.lgpd_kernel import (
+from neotron.compliance.auditors.lgpd_kernel import (
     check_lgpd_consent,
     get_lgpd_kernel_policies,
     grant_lgpd_consent,
@@ -38,7 +38,7 @@ from neutron.compliance.auditors.lgpd_kernel import (
 )
 
 # BASTION - Kernel enforcement
-from neutron.compliance.bastion import (
+from neotron.compliance.bastion import (
     ComplianceCapability,
     KernelPolicy,
     grant_capability,

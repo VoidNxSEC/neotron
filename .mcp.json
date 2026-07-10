@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "securellm-mcp": {
-      "command": "/run/current-system/sw/bin/securellm-mcp",
+      "command": "/home/kernelcore/master/securellm-mcp/build/src/index.js",
       "args": [],
       "env": {
         "PROJECT_ROOT": "/etc/nixos",

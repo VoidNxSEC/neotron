@@ -8,10 +8,27 @@ import { useLiquidate } from '@/lib/hooks/useLiquidate'
 import { formatETH, formatAddress } from '@/lib/utils/formatters'
 import { AlertTriangle } from 'lucide-react'
 
-// Mock liquidatable loans - in production, this would query the contract
-// for all loans with health factor < 120%
 const mockLiquidatableLoans: any[] = [
-  // Empty by default - would be populated from contract query
+  {
+    loanId: '0x3c4f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f' as `0x${string}`,
+    borrower: '0x9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b' as `0x${string}`,
+    healthFactor: 11200, // 112%
+    totalDebt: 450000000000000000n, // 0.45 ETH
+    collateral: 675000000000000000n, // 0.675 ETH
+    taskName: 'Nix Sandbox: docker-image-analyzer',
+    threatType: 'Boiling-Frog Syscall Escalation (L2 Landlock LSM Alert)',
+    lastViolation: 'Unauthorized read request to /etc/shadow blocked'
+  },
+  {
+    loanId: '0x7e1a3c4f9a8b7c6d5e4f3a2b1c0d9e8f7a6b5c4d' as `0x${string}`,
+    borrower: '0x4f5e6d7c8b9a0f1e2d3c4b5a698f7e6d5c4b3a21' as `0x${string}`,
+    healthFactor: 10500, // 105%
+    totalDebt: 1200000000000000000n, // 1.20 ETH
+    collateral: 1800000000000000000n, // 1.80 ETH
+    taskName: 'Cortex Swarm Agent: web-scraper-3',
+    threatType: 'PII Leakage Attempt (L1 Sentinel Violation)',
+    lastViolation: 'Credit card regex match in outgoing HTTP payload blocked'
+  }
 ]
 
 export function LiquidatableLoans() {
@@ -47,10 +64,10 @@ export function LiquidatableLoans() {
           <div className="mt-4 p-4 bg-muted rounded-lg">
             <h4 className="font-semibold mb-2">How Liquidation Works:</h4>
             <ul className="text-sm space-y-1 list-disc list-inside text-muted-foreground">
-              <li>Loans become liquidatable when health factor drops below 120%</li>
-              <li>Liquidators repay the debt and seize the collateral</li>
-              <li>This protects the protocol from bad debt</li>
-              <li>Liquidators earn profit from the collateral premium</li>
+              <li>Loans become liquidatable when health factor drops below 120%</li> //
+              <li>Liquidators repay the debt and seize the collateral</li> // TODO: Liquidators not are users, but external agents that are acting on tasks from users
+              <li>This protects the protocol from bad debt</li> // TODO:
+              <li>Liquidators earn profit from the collateral premium</li> // TODO: Liquidators not are users, but external agents that are acting on tasks from users
             </ul>
           </div>
         </CardContent>
@@ -64,7 +81,7 @@ export function LiquidatableLoans() {
         <AlertTriangle className="h-6 w-6 text-red-600" />
         Liquidatable Loans ({mockLiquidatableLoans.length})
       </h2>
-
+// TODO: Here, loans are threat model specs and health for possible syscall stop or interception on behavior
       <Alert variant="warning">
         <AlertDescription>
           These loans have fallen below the 120% health factor threshold and can be liquidated

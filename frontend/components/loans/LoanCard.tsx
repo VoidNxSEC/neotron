@@ -9,6 +9,7 @@ import { useLoanHealth } from '@/lib/hooks/useLoanHealth'
 import { useRepay } from '@/lib/hooks/useRepay'
 import { formatETH, formatAddress, formatDate } from '@/lib/utils/formatters'
 import { useState } from 'react'
+import { Cpu, Calendar, ShieldAlert, Award } from 'lucide-react'
 
 interface LoanCardProps {
   loanId: `0x${string}`
@@ -22,15 +23,15 @@ export function LoanCard({ loanId }: LoanCardProps) {
 
   if (isLoadingLoan || !loan) {
     return (
-      <Card className="animate-pulse">
+      <Card className="animate-pulse bg-zinc-900 border border-zinc-800">
         <CardHeader>
-          <div className="h-6 bg-muted rounded w-48"></div>
+          <div className="h-6 bg-zinc-800 rounded w-48 animate-pulse"></div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
-            <div className="h-4 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded"></div>
-            <div className="h-4 bg-muted rounded"></div>
+          <div className="space-y-3">
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-full"></div>
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-5/6"></div>
+            <div className="h-4 bg-zinc-800 rounded animate-pulse w-4/5"></div>
           </div>
         </CardContent>
       </Card>
@@ -52,53 +53,71 @@ export function LoanCard({ loanId }: LoanCardProps) {
   }
 
   return (
-    <Card className={isLiquidatable ? 'border-red-500' : ''}>
-      <CardHeader>
+    <Card className={`bg-gradient-to-br from-zinc-950 to-zinc-900 border transition duration-300 relative overflow-hidden ${
+      isLiquidatable 
+        ? 'border-red-900 shadow-[0_0_20px_rgba(239,68,68,0.1)]' 
+        : 'border-zinc-800 hover:border-zinc-700 shadow-xl'
+    }`}>
+      <div className={`absolute top-0 left-0 w-[3px] h-full ${
+        isLiquidatable ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'
+      }`} />
+      
+      <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-lg">Loan {formatAddress(loanId)}</CardTitle>
-            <p className="text-sm text-muted-foreground mt-1">
-              Started: {formatDate(Number(loan.startTime))}
+          <div className="space-y-1">
+            <CardTitle className="text-base font-bold text-zinc-100 flex items-center gap-2">
+              <Cpu className="h-4 w-4 text-zinc-400" />
+              Sandbox Workload {formatAddress(loanId)}
+            </CardTitle>
+            <p className="text-xs text-zinc-500 flex items-center gap-1">
+              <Calendar className="h-3 w-3" />
+              Created: {formatDate(Number(loan.startTime))}
             </p>
           </div>
           <HealthFactorBadge healthFactor={healthFactorPercent} />
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      
+      <CardContent className="space-y-4 pt-2">
+        <div className="grid grid-cols-2 gap-3 text-xs bg-zinc-950/40 p-3 rounded-lg border border-zinc-800/40">
           <div>
-            <p className="text-sm text-muted-foreground">Principal</p>
-            <p className="text-lg font-semibold">{formatETH(loan.principal)} ETH</p>
+            <p className="text-zinc-500 mb-0.5">Compute Allocation</p>
+            <p className="text-sm font-bold text-zinc-200">{formatETH(loan.principal)} ETH</p>
           </div>
           <div>
-            <p className="text-sm text-muted-foreground">Collateral</p>
-            <p className="text-lg font-semibold">{formatETH(loan.collateral)} ETH</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-sm text-muted-foreground">Interest Accrued</p>
-            <p className="text-lg font-semibold">{formatETH(accruedInterest)} ETH</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Total Owed</p>
-            <p className="text-lg font-semibold">{formatETH(totalOwed)} ETH</p>
+            <p className="text-zinc-500 mb-0.5">Escrow Deposit</p>
+            <p className="text-sm font-bold text-zinc-200">{formatETH(loan.collateral)} ETH</p>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Health Factor</span>
-            <span className="font-medium">{healthFactorPercent.toFixed(2)}%</span>
+        <div className="grid grid-cols-2 gap-3 text-xs bg-zinc-950/40 p-3 rounded-lg border border-zinc-800/40">
+          <div>
+            <p className="text-zinc-500 mb-0.5">Resource Fee Accrued</p>
+            <p className="text-sm font-bold text-zinc-200">{formatETH(accruedInterest)} ETH</p>
+          </div>
+          <div>
+            <p className="text-zinc-500 mb-0.5">Total Compute Debt</p>
+            <p className="text-sm font-bold text-zinc-200">{formatETH(totalOwed)} ETH</p>
+          </div>
+        </div>
+
+        <div className="space-y-2 pt-1">
+          <div className="flex justify-between text-xs font-semibold">
+            <span className="text-zinc-400 flex items-center gap-1">
+              <ShieldAlert className="h-3.5 w-3.5 text-zinc-500" />
+              Behavior Safety Score
+            </span>
+            <span className={healthFactorPercent < 120 ? 'text-red-500 font-extrabold' : 'text-zinc-300'}>
+              {healthFactorPercent.toFixed(2)}%
+            </span>
           </div>
           <Progress
             value={Math.min(healthFactorPercent, 200)}
-            className={healthFactorPercent < 120 ? 'bg-red-500' : 'bg-green-500'}
+            className={`h-2 ${healthFactorPercent < 120 ? 'bg-red-500' : 'bg-emerald-500'}`}
           />
           {isLiquidatable && (
-            <p className="text-sm text-red-600 font-medium">
-              ⚠️ This loan is at risk of liquidation!
+            <p className="text-[10px] text-red-400 font-bold bg-red-950/20 p-2 rounded border border-red-900/30 flex items-center gap-1.5 animate-pulse">
+              ⚠️ Under Threat Alert! Safety score below 120% threshold.
             </p>
           )}
         </div>
@@ -106,10 +125,15 @@ export function LoanCard({ loanId }: LoanCardProps) {
         <Button
           onClick={handleRepay}
           disabled={isPending || isConfirming || isRepaying}
-          className="w-full"
-          variant={isLiquidatable ? 'destructive' : 'default'}
+          className="w-full text-xs font-bold py-5 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 hover:border-zinc-700 text-zinc-200 flex items-center gap-1.5"
+          variant="outline"
         >
-          {isPending || isConfirming ? 'Processing...' : `Repay ${formatETH(totalOwed)} ETH`}
+          {isPending || isConfirming ? 'Processing...' : (
+            <>
+              <Award className="h-3.5 w-3.5 text-yellow-500" />
+              Release Workload & Reclaim Escrow
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>

@@ -595,6 +595,38 @@ dag-export experiment_name output_file="dag_tasks.json":
     "
 
 # ============================================================================
+# Blockchain & Contracts (ROADMAP 2)
+# ============================================================================
+
+# Build Solidity contracts
+contracts-build:
+    cd contracts && forge build --sizes
+
+# Run Foundry tests
+contracts-test:
+    cd contracts && forge test --gas-report -v
+
+# Run E2E contracts test on local Anvil
+e2e-contracts:
+    bash scripts/e2e-contracts.sh
+
+# Deploy supply chain contracts to Anvil
+contracts-deploy-local:
+    cd contracts && PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+        forge script script/DeploySupplyChain.s.sol:DeploySupplyChain \
+        --fork-url http://localhost:8545 --broadcast
+
+# Deploy IntelAgent DAO contracts to Anvil
+dao-deploy-local:
+    cd contracts && PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+        forge script script/DeployDAO.s.sol:DeployDAO \
+        --fork-url http://localhost:8545 --broadcast
+
+# Run only IntelAgent DAO tests
+dao-test:
+    cd contracts && forge test --match-contract IntelAgentDAO -v --gas-report
+
+# ============================================================================
 # Quick Start Combo
 # ============================================================================
 

@@ -2,11 +2,13 @@
 src = "src"
 out = "out"
 libs = ["lib"]
-solc_version = "0.8.20"
+solc_version = "0.8.28"
+via_ir = true
 
 # Remappings
 remappings = [
-    "forge-std/=lib/forge-std/src/"
+    "forge-std/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
 ]
 
 # Optimizer settings
@@ -34,3 +36,4 @@ localhost = "http://localhost:8545"
 # Etherscan verification
 [etherscan]
 sepolia = { key = "${ETHERSCAN_API_KEY}" }
+

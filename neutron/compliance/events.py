@@ -1,8 +1,14 @@
 """
-Compliance event publisher — structured JSON over NATS.
+Compliance event publisher — structured JSON over NATS (or SPECTRE Proxy).
 
 Todos os eventos de compliance (SENTINEL + BASTION + Cortex) são publicados
-como JSON estruturado no bus NATS, consumível por:
+como JSON estruturado. Dois modos de transporte:
+
+  1. NATS direto (default): Neotron → NATS → Owasaka SIEM
+  2. SPECTRE Proxy (SPECTRE_PROXY_URL definida):
+     Neotron → spectre-proxy (JWT auth + rate limit + circuit breaker) → NATS → Owasaka
+
+Consumidores:
   - Owasaka (SIEM correlation + alerting)
   - Vector (log shipping → Loki/OpenSearch)
   - adr-ledger (imutabilidade — via neotron.compliance.bastion.v1)
@@ -55,11 +61,15 @@ async def _get_nc():
 
 async def publish(subject: str, payload: dict[str, Any]) -> None:
     """
-    Publica *payload* como JSON no *subject* NATS.
+    Publica *payload* como JSON no *subject* NATS (ou via SPECTRE Proxy).
 
-    Sempre loga via `logging` (para Vector/stdout JSON) mesmo se NATS falhar.
+    Sempre loga via `logging` (para Vector/stdout JSON) mesmo se transporte falhar.
     Nunca lança excepção — compliance logging é best-effort no transporte
     mas SEMPRE regista localmente.
+
+    Se SPECTRE_PROXY_URL estiver definida, publica via spectre-proxy
+    (que adiciona JWT auth, rate limit, circuit breaker, typed schemas).
+    Caso contrário, publica diretamente no NATS.
     """
     payload.setdefault("timestamp", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     payload.setdefault("source", "neotron")
@@ -68,7 +78,12 @@ async def publish(subject: str, payload: dict[str, Any]) -> None:
     # 1. Structured JSON log — ingerido pelo Vector → Loki
     logger.info(json.dumps(payload, ensure_ascii=False, default=str))
 
-    # 2. NATS publish — ingerido pelo Owasaka / Phantom / adr-ledger
+    # 2. SPECTRE Proxy (preferred) or NATS (fallback)
+    if os.environ.get("SPECTRE_PROXY_URL"):
+        _publish_via_spectre(subject, payload)
+        return
+
+    # 3. NATS publish — ingerido pelo Owasaka / Phantom / adr-ledger
     nc = await _get_nc()
     if nc is not None:
         try:
@@ -81,9 +96,33 @@ def publish_sync(subject: str, payload: dict[str, Any]) -> None:
     """
     Versão síncrona para contextos sem event loop (ex: seccomp enforce).
 
-    Só faz o log JSON — sem NATS (requer asyncio).
+    Sempre loga JSON localmente. Se SPECTRE_PROXY_URL estiver definida,
+    publica via SPECTRE Proxy (HTTP, síncrono). Caso contrário, só loga.
     """
     payload.setdefault("timestamp", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()))
     payload.setdefault("source", "neotron")
     payload.setdefault("subject", subject)
     logger.info(json.dumps(payload, ensure_ascii=False, default=str))
+
+    # SPECTRE Proxy — sync HTTP (works without event loop)
+    if os.environ.get("SPECTRE_PROXY_URL"):
+        _publish_via_spectre(subject, payload)
+
+
+def _publish_via_spectre(subject: str, payload: dict[str, Any]) -> None:
+    """
+    Publish a compliance event through the SPECTRE Proxy.
+
+    Uses the global SpectreProxyClient singleton. Auto-routes to the
+    correct compliance endpoint based on subject and event fields.
+
+    Best-effort — never raises. Logs success or failure.
+    """
+    try:
+        from neutron.spectre import get_spectre_client
+
+        client = get_spectre_client()
+        result = client.publish(payload)
+        logger.debug("SPECTRE proxy published: %s", result.get("event_id", "unknown"))
+    except Exception as exc:
+        logger.warning("SPECTRE proxy publish failed for %s: %s", subject, exc)

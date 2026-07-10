@@ -39,7 +39,10 @@ def operator_token(client):
     from neutron.api.auth import Role, get_auth_store
 
     store = get_auth_store()
-    store.create_user("operator_test", "operator_pass", Role.OPERATOR)
+    try:
+        store.create_user("operator_test", "operator_pass", Role.OPERATOR)
+    except ValueError:
+        pass
 
     response = client.post(
         "/v1/auth/login",

@@ -1,0 +1,15 @@
+# Summary
+- [Home](README.md)
+# src
+  - [❱ supplychain](src/supplychain/README.md)
+    - [BuildAttestation](src/supplychain/BuildAttestation.sol/contract.BuildAttestation.md)
+    - [LicenseRegistry](src/supplychain/LicenseRegistry.sol/contract.LicenseRegistry.md)
+    - [SBOMRegistry](src/supplychain/SBOMRegistry.sol/contract.SBOMRegistry.md)
+    - [SupplyChainGuardian](src/supplychain/SupplyChainGuardian.sol/contract.SupplyChainGuardian.md)
+  - [AuditLogger](src/AuditLogger.sol/contract.AuditLogger.md)
+  - [ComplianceGuardrail](src/ComplianceGuardrail.sol/abstract.ComplianceGuardrail.md)
+  - [EmergencyStop](src/EmergencyStop.sol/abstract.EmergencyStop.md)
+  - [LGPDConsent](src/LGPDConsent.sol/contract.LGPDConsent.md)
+  - [LendingProtocol](src/LendingProtocol.sol/contract.LendingProtocol.md)
+  - [IPriceOracle](src/PriceOracle.sol/interface.IPriceOracle.md)
+  - [PriceOracle](src/PriceOracle.sol/contract.PriceOracle.md)

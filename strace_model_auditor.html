@@ -1,0 +1,333 @@
+
+<h2 class="sr-only">Strace Syscall Audit Tool — paste a strace log to analyze model process syscall behavior, categories, and security alerts</h2>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.mono{font-family:var(--font-mono,'JetBrains Mono','Fira Code',monospace)!important}
+.wrap{padding:1rem 0;font-family:var(--font-sans)}
+.hdr{display:flex;align-items:center;gap:12px;margin-bottom:1.5rem;padding-bottom:12px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.hdr-t{font-family:var(--font-mono);font-size:15px;font-weight:500;color:var(--color-text-primary);letter-spacing:.08em}
+.hdr-s{font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono)}
+.inp-box{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:1rem;margin-bottom:1.5rem;background:var(--color-background-secondary)}
+.log-ta{width:100%;height:140px;resize:vertical;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:11px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px;background:var(--color-background-primary);color:var(--color-text-primary);line-height:1.5}
+.log-ta:focus{outline:none;border-color:var(--color-border-primary)}
+.btn-row{display:flex;gap:8px;margin-top:10px;align-items:center}
+.lbl{font-size:10px;color:var(--color-text-tertiary);font-family:var(--font-mono);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:1.5rem}
+.stat-c{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px;text-align:center}
+.stat-v{font-family:var(--font-mono);font-size:22px;font-weight:500;color:var(--color-text-primary)}
+.stat-l{font-size:10px;color:var(--color-text-tertiary);letter-spacing:.1em;margin-top:3px;text-transform:uppercase}
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1.5rem}
+.ch-c{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem}
+.al-c{border:0.5px solid var(--color-border-danger);border-radius:var(--border-radius-lg);padding:1rem;margin-bottom:1.5rem;background:var(--color-background-danger)}
+.al-item{display:flex;gap:8px;align-items:flex-start;padding:6px 0;border-bottom:0.5px solid var(--color-border-tertiary);font-size:11px;font-family:var(--font-mono)}
+.al-item:last-child{border-bottom:none}
+.badge{display:inline-flex;align-items:center;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:500;font-family:var(--font-mono);letter-spacing:.04em;white-space:nowrap;line-height:1.6}
+.tbl-c{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem}
+.flt-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.flt-row input,.flt-row select{font-family:var(--font-mono);font-size:11px}
+.flt-row label{font-size:11px;color:var(--color-text-secondary);display:flex;align-items:center;gap:4px;cursor:pointer;font-family:var(--font-mono)}
+.data-table{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--font-mono)}
+.data-table thead th{text-align:left;padding:4px 8px;font-size:10px;color:var(--color-text-tertiary);letter-spacing:.1em;border-bottom:0.5px solid var(--color-border-secondary);font-weight:500}
+.data-table tbody tr:hover{background:var(--color-background-secondary)}
+.data-table tbody td{padding:4px 8px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top}
+.pg{display:flex;gap:8px;margin-top:12px;align-items:center;justify-content:center;font-size:11px;color:var(--color-text-secondary);font-family:var(--font-mono)}
+.hidden{display:none!important}
+</style>
+
+<div class="wrap">
+  <div class="hdr">
+    <div>
+      <div class="hdr-t">strace_audit</div>
+      <div class="hdr-s">// syscall behavioral analysis for model processes</div>
+    </div>
+    <div id="pills" style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap"></div>
+  </div>
+
+  <div class="inp-box" id="inp-area">
+    <div class="lbl">paste strace output</div>
+    <textarea class="log-ta" id="log-in" placeholder="$ strace -f -tt -o audit.log python model.py&#10;$ cat audit.log&#10;&#10;(cole aqui, ou carregue o sample para testar)" oninput="countLines()"></textarea>
+    <div class="btn-row">
+      <button onclick="doParseLog()" style="font-family:var(--font-mono);font-size:12px">▶ parse log</button>
+      <button onclick="loadSample()" style="font-family:var(--font-mono);font-size:12px">load sample</button>
+      <span id="lc" style="margin-left:auto;font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono)">0 linhas</span>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="charts-row">
+      <div class="ch-c">
+        <div class="lbl">categorias de syscalls</div>
+        <div style="position:relative;height:160px"><canvas id="cat-ch" role="img" aria-label="Bar chart of syscall categories"></canvas></div>
+      </div>
+      <div class="ch-c">
+        <div class="lbl">top syscalls</div>
+        <div style="position:relative;height:160px"><canvas id="top-ch" role="img" aria-label="Bar chart of top syscalls by frequency"></canvas></div>
+      </div>
+    </div>
+    <div class="al-c hidden" id="al-panel">
+      <div class="lbl" style="color:var(--color-text-danger);margin-bottom:10px" id="al-title">alertas de segurança</div>
+      <div id="al-list"></div>
+    </div>
+    <div class="tbl-c">
+      <div class="flt-row">
+        <span class="lbl" style="margin-bottom:0">syscall table</span>
+        <input type="text" id="srch" placeholder="search..." style="width:140px" oninput="applyFlt()">
+        <select id="cat-flt" onchange="applyFlt()"><option value="all">all categories</option></select>
+        <select id="pid-flt" onchange="applyFlt()"><option value="all">all PIDs</option></select>
+        <label><input type="checkbox" id="err-flt" onchange="applyFlt()"> errors only</label>
+        <button onclick="resetAll()" style="margin-left:auto;font-family:var(--font-mono);font-size:11px">✕ reset</button>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>PID</th><th>SYSCALL</th><th>CAT</th><th>ARGS</th><th>RETVAL</th></tr></thead>
+          <tbody id="tbl-body"></tbody>
+        </table>
+      </div>
+      <div class="pg" id="pg"></div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const CATS={
+  file_io:{l:'File I/O',c:'#378ADD',calls:['open','openat','read','write','close','stat','fstat','lstat','access','creat','unlink','rename','chmod','chown','truncate','readlink','mkdir','rmdir','getdents','getdents64','pread64','pwrite64','readv','writev','sendfile','copy_file_range','lseek','ftruncate','symlink','link','statx','newfstatat']},
+  network:{l:'Network',c:'#EF9F27',calls:['socket','connect','bind','listen','accept','accept4','sendto','recvfrom','sendmsg','recvmsg','getsockname','getpeername','setsockopt','getsockopt','shutdown','socketpair','poll','ppoll','epoll_create','epoll_create1','epoll_ctl','epoll_wait','epoll_pwait','select','pselect6']},
+  memory:{l:'Memory',c:'#1D9E75',calls:['mmap','mmap2','mprotect','munmap','brk','madvise','mremap','msync','mincore','mlock','munlock','mlockall','munlockall','shmget','shmat','shmdt','shmctl','remap_file_pages']},
+  process:{l:'Process',c:'#7F77DD',calls:['fork','vfork','clone','clone3','execve','execveat','exit','exit_group','wait4','waitpid','waitid','kill','tkill','tgkill','getpid','getppid','gettid','setpgid','getpgid','setsid','getsid','nanosleep','clock_nanosleep','sched_yield','prlimit64','getrlimit','setrlimit']},
+  security:{l:'Security',c:'#E24B4A',calls:['ptrace','seccomp','capget','capset','prctl','setuid','setgid','setreuid','setregid','setresuid','setresgid','getuid','getgid','geteuid','getegid','setfsuid','setfsgid','keyctl','add_key','request_key','umask']},
+  ipc:{l:'IPC',c:'#639922',calls:['pipe','pipe2','dup','dup2','dup3','fcntl','ioctl','futex','eventfd','eventfd2','signalfd','signalfd4','timerfd_create','inotify_init1','semget','semop','semctl','msgget','msgsnd','msgrcv','msgctl']}
+};
+
+function getCat(s){for(const[k,v]of Object.entries(CATS))if(v.calls.includes(s))return k;return'other';}
+
+function parseLine(line){
+  const orig=line;line=line.trim();
+  if(!line||line.startsWith('---')||line.startsWith('+++')||line.startsWith('Process '))return null;
+  let pid=null;
+  let m=line.match(/^\[pid\s+(\d+)\]\s*/);
+  if(m){pid=+m[1];line=line.slice(m[0].length);}
+  if(pid===null){m=line.match(/^(\d{2,7})\s{1,6}/);if(m){pid=+m[1];line=line.slice(m[0].length);}}
+  m=line.match(/^[\d:]+\.\d+\s+/);if(m)line=line.slice(m[0].length);
+  if(line.startsWith('<...')){
+    m=line.match(/^<\.\.\. (\w+) resumed>(.*)/);
+    if(m)return{pid,syscall:m[1],args:m[2].trim().substring(0,160),resumed:true,category:getCat(m[1]),raw:orig};
+    return null;
+  }
+  m=line.match(/^(\w+)\s*\((.*)\)\s*=\s*(.+)$/s);
+  if(m){
+    const[,syscall,args,retval]=m;const cat=getCat(syscall);
+    const em=retval.match(/\s+(E[A-Z0-9_]+)/);
+    return{pid,syscall,args:args.substring(0,160),retval:retval.trim().substring(0,60),category:cat,isError:!!em,errCode:em?.[1],raw:orig};
+  }
+  m=line.match(/^(\w+)\s*\((.*)<unfinished/s);
+  if(m)return{pid,syscall:m[1],args:m[2].trim(),unfinished:true,category:getCat(m[1]),raw:orig};
+  return null;
+}
+
+const RULES=[
+  {t:e=>e.syscall==='connect'&&e.args?.includes('AF_INET')&&!e.isError,s:'HIGH',ty:'NETWORK_OUT',m:e=>{const ip=e.args?.match(/sin_addr=inet_addr\("([^"]+)"\)/);return'Outbound TCP connection'+(ip?' to '+ip[1]:'');}},
+  {t:e=>e.syscall==='socket'&&(e.args?.includes('AF_INET')||e.args?.includes('AF_INET6'))&&!e.isError,s:'MEDIUM',ty:'SOCKET',m:()=>'Network socket created (AF_INET/AF_INET6)'},
+  {t:e=>['sendto','sendmsg'].includes(e.syscall)&&!e.isError,s:'HIGH',ty:'DATA_OUT',m:()=>'Data sent via socket — possible exfiltration'},
+  {t:e=>e.syscall==='execve'&&!e.isError,s:'HIGH',ty:'EXEC',m:e=>{const p=e.args?.match(/^"([^"]+)"/);return'execve: '+(p?p[1]:e.args?.substring(0,50));}},
+  {t:e=>e.syscall==='ptrace'&&!e.args?.includes('PTRACE_TRACEME'),s:'CRITICAL',ty:'PTRACE',m:()=>'ptrace detected — debugging or injection attempt'},
+  {t:e=>(e.syscall==='openat'||e.syscall==='open')&&(e.args?.includes('/etc/passwd')||e.args?.includes('/etc/shadow')||e.args?.includes('/etc/sudoers')),s:'CRITICAL',ty:'CRED_FILE',m:e=>{const f=e.args?.match(/"([^"]*etc\/(passwd|shadow|sudoers)[^"]*)"/);return'Credential file access: '+(f?f[1]:'/etc/passwd|shadow');}},
+  {t:e=>e.args?.includes('/.ssh/')||e.args?.includes('/root/.ssh'),s:'CRITICAL',ty:'SSH_KEY',m:()=>'SSH key directory accessed'},
+  {t:e=>!!(e.args?.includes('/proc/self/mem')||e.args?.match(/\/proc\/\d+\/mem/)),s:'CRITICAL',ty:'PROC_MEM',m:()=>'Access to /proc/*/mem — direct process memory read'},
+  {t:e=>e.syscall==='prctl'&&e.args?.includes('PR_SET_SECCOMP'),s:'MEDIUM',ty:'SECCOMP',m:()=>'Seccomp filter installed'},
+  {t:e=>e.syscall==='mprotect'&&e.args?.includes('PROT_EXEC')&&e.args?.includes('PROT_WRITE')&&!e.isError,s:'HIGH',ty:'MEM_W_X',m:()=>'mprotect PROT_WRITE|PROT_EXEC — W^X violation'},
+  {t:e=>e.syscall==='clone'&&e.args?.includes('CLONE_NEWNS'),s:'MEDIUM',ty:'NAMESPACE',m:()=>'New namespace created — potential container escape'},
+  {t:e=>['setuid','setreuid','setresuid'].includes(e.syscall)&&!e.isError,s:'HIGH',ty:'PRIV_ESC',m:e=>'Privilege change via '+e.syscall},
+];
+
+const SEV_ORDER=['CRITICAL','HIGH','MEDIUM','LOW'];
+
+function buildAlerts(entries){
+  const als=[];
+  for(const e of entries)for(const r of RULES){try{if(r.t(e))als.push({sev:r.s,type:r.ty,msg:r.m(e),pid:e.pid,raw:e.raw});}catch(x){}}
+  return als;
+}
+
+const SAMPLE=`1234  openat(AT_FDCWD, "/etc/ld.so.cache", O_RDONLY|O_CLOEXEC) = 3
+1234  fstat(3, {st_mode=S_IFREG|0644, st_size=89567, ...}) = 0
+1234  mmap(NULL, 89567, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f4a2c000000
+1234  close(3) = 0
+1234  openat(AT_FDCWD, "/usr/lib/libpython3.11.so.1.0", O_RDONLY|O_CLOEXEC) = 3
+1234  mmap(NULL, 3710248, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f4a28000000
+1234  mprotect(0x7f4a2b800000, 2097152, PROT_NONE) = 0
+1234  mprotect(0x7f4a2ba00000, 131072, PROT_READ|PROT_WRITE) = 0
+1234  close(3) = 0
+1234  brk(NULL) = 0x562234000000
+1234  brk(0x562234021000) = 0x562234021000
+1234  openat(AT_FDCWD, "/proc/self/maps", O_RDONLY) = 4
+1234  read(4, "7f4a28000000-7f4a2b400000 r-xp", 4096) = 4096
+1234  close(4) = 0
+1235  openat(AT_FDCWD, "/etc/passwd", O_RDONLY|O_CLOEXEC) = 5
+1235  read(5, "root:x:0:0:root:/root:/bin/bash", 4096) = 1987
+1235  close(5) = 0
+1235  socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, IPPROTO_TCP) = 6
+1235  connect(6, {sa_family=AF_INET, sin_port=htons(443), sin_addr=inet_addr("142.250.80.46")}, 16) = 0
+1235  sendto(6, "POST /api/exfil HTTP/1.1\\r\\nHost: remote.endpoint.io", 512, MSG_NOSIGNAL, NULL, 0) = 512
+1235  recvfrom(6, "HTTP/1.1 200 OK", 4096, 0, NULL, NULL) = 2048
+1235  close(6) = 0
+1235  execve("/bin/sh", ["/bin/sh", "-c", "id"], NULL) = 0
+1235  ptrace(PTRACE_ATTACH, 1230, NULL, 0) = -1 EPERM (Operation not permitted)
+1235  prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, {len=12, filter=0x562234010000}) = 0
+1235  mprotect(0x7f4a2c100000, 4096, PROT_READ|PROT_WRITE|PROT_EXEC) = 0
+1236  clone(child_stack=NULL, flags=CLONE_NEWNS|CLONE_NEWPID, tls=0) = 1237
+1236  setuid(0) = -1 EPERM (Operation not permitted)
+1236  futex(0x7f4a2c100200, FUTEX_WAIT, 0, NULL) = 0
+1236  pipe2([7, 8], O_CLOEXEC) = 0
+1236  nanosleep({tv_sec=0, tv_nsec=100000000}, NULL) = 0
+1236  getpid() = 1236
+1236  exit_group(0) = ?
++++ exited with 0 +++`;
+
+let allE=[],allA=[],filtered=[],PAGE=0,catCh=null,topCh=null;
+const PGS=40;
+
+function countLines(){const v=document.getElementById('log-in').value;document.getElementById('lc').textContent=v.split('\n').filter(l=>l.trim()).length+' linhas';}
+function loadSample(){document.getElementById('log-in').value=SAMPLE;countLines();}
+
+function doParseLog(){
+  const raw=document.getElementById('log-in').value;
+  if(!raw.trim())return;
+  allE=raw.split('\n').map(parseLine).filter(Boolean);
+  allA=buildAlerts(allE);
+  renderAll();
+}
+
+function renderAll(){
+  document.getElementById('results').classList.remove('hidden');
+  renderStats();renderCharts();renderAlerts();populateFilters();applyFlt();
+}
+
+function renderStats(){
+  const errors=allE.filter(e=>e.isError).length;
+  const pids=[...new Set(allE.map(e=>e.pid).filter(Boolean))];
+  const unique=[...new Set(allE.map(e=>e.syscall))];
+  const crit=allA.filter(a=>a.sev==='CRITICAL').length;
+  const items=[
+    {v:allE.length,l:'Total syscalls'},
+    {v:unique.length,l:'Unique calls'},
+    {v:pids.length,l:'Processes'},
+    {v:errors,l:'Errors',warn:errors>0},
+    {v:allA.length,l:'Alerts',warn:allA.length>0}
+  ];
+  document.getElementById('stat-grid').innerHTML=items.map(s=>
+    `<div class="stat-c"><div class="stat-v" style="${s.warn&&s.v>0?'color:var(--color-text-danger)':''}">${s.v}</div><div class="stat-l">${s.l}</div></div>`
+  ).join('');
+  const pills=[];
+  pills.push(`<span style="font-size:11px;font-family:var(--font-mono);color:var(--color-text-tertiary)">${allE.length} entries</span>`);
+  if(crit>0)pills.push(`<span class="badge" style="background:var(--color-background-danger);color:var(--color-text-danger);border:0.5px solid var(--color-border-danger)">⚠ ${crit} critical</span>`);
+  document.getElementById('pills').innerHTML=pills.join('');
+}
+
+function renderCharts(){
+  const cntC={};for(const e of allE)cntC[e.category]=(cntC[e.category]||0)+1;
+  const catD=Object.entries(CATS).map(([k,v])=>({l:v.l,n:cntC[k]||0,c:v.c}))
+    .concat([{l:'Other',n:cntC['other']||0,c:'#888780'}])
+    .filter(d=>d.n>0).sort((a,b)=>b.n-a.n);
+
+  const cntS={};for(const e of allE)cntS[e.syscall]=(cntS[e.syscall]||0)+1;
+  const topS=Object.entries(cntS).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  if(catCh)catCh.destroy();if(topCh)topCh.destroy();
+  const gColor='rgba(120,120,120,0.12)',tColor='rgba(120,120,120,0.65)';
+  const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.raw},bodyFont:{family:'monospace',size:11},titleFont:{family:'monospace',size:11}}},scales:{x:{ticks:{color:tColor,font:{family:'monospace',size:10}},grid:{color:gColor},border:{display:false}},y:{ticks:{color:tColor,font:{family:'monospace',size:10},maxTicksLimit:8},grid:{color:gColor},border:{display:false}}}};
+
+  catCh=new Chart(document.getElementById('cat-ch'),{
+    type:'bar',data:{labels:catD.map(d=>d.l),datasets:[{data:catD.map(d=>d.n),backgroundColor:catD.map(d=>d.c+'99'),borderColor:catD.map(d=>d.c),borderWidth:1,borderRadius:2}]},
+    options:{...base,indexAxis:'y'}
+  });
+  topCh=new Chart(document.getElementById('top-ch'),{
+    type:'bar',data:{labels:topS.map(([s])=>s),datasets:[{data:topS.map(([,n])=>n),backgroundColor:topS.map(([s])=>(CATS[getCat(s)]?.c||'#888780')+'99'),borderColor:topS.map(([s])=>CATS[getCat(s)]?.c||'#888780'),borderWidth:1,borderRadius:2}]},
+    options:{...base,indexAxis:'y',scales:{...base.scales,y:{...base.scales.y,ticks:{...base.scales.y.ticks,font:{family:'monospace',size:10},maxTicksLimit:10}}}}
+  });
+}
+
+function renderAlerts(){
+  const panel=document.getElementById('al-panel');
+  if(allA.length===0){panel.classList.add('hidden');return;}
+  panel.classList.remove('hidden');
+  document.getElementById('al-title').textContent='⚠ alertas de segurança ('+allA.length+')';
+  const sorted=allA.slice().sort((a,b)=>SEV_ORDER.indexOf(a.sev)-SEV_ORDER.indexOf(b.sev));
+  const SEV_MAP={
+    CRITICAL:{bg:'var(--color-background-danger)',c:'var(--color-text-danger)',bd:'var(--color-border-danger)'},
+    HIGH:{bg:'var(--color-background-warning)',c:'var(--color-text-warning)',bd:'var(--color-border-warning)'},
+    MEDIUM:{bg:'var(--color-background-info)',c:'var(--color-text-info)',bd:'var(--color-border-info)'},
+    LOW:{bg:'var(--color-background-success)',c:'var(--color-text-success)',bd:'var(--color-border-success)'}
+  };
+  document.getElementById('al-list').innerHTML=sorted.map(a=>{
+    const st=SEV_MAP[a.sev]||SEV_MAP.LOW;
+    return`<div class="al-item">
+      <span class="badge" style="background:${st.bg};color:${st.c};border:0.5px solid ${st.bd}">${a.sev}</span>
+      <span class="badge" style="background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)">${a.type}</span>
+      <span style="color:var(--color-text-primary);flex:1;font-size:11px">${a.msg}</span>
+      ${a.pid!=null?`<span style="color:var(--color-text-tertiary);font-size:10px">pid:${a.pid}</span>`:''}
+    </div>`;
+  }).join('');
+}
+
+function populateFilters(){
+  const pids=[...new Set(allE.map(e=>e.pid).filter(x=>x!=null))].sort((a,b)=>a-b);
+  document.getElementById('pid-flt').innerHTML='<option value="all">all PIDs</option>'+pids.map(p=>`<option value="${p}">${p}</option>`).join('');
+  document.getElementById('cat-flt').innerHTML='<option value="all">all categories</option>'+
+    Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v.l}</option>`).join('')+
+    '<option value="other">Other</option>';
+}
+
+function applyFlt(){
+  PAGE=0;
+  const srch=document.getElementById('srch').value.toLowerCase();
+  const cat=document.getElementById('cat-flt').value;
+  const pid=document.getElementById('pid-flt').value;
+  const errOnly=document.getElementById('err-flt').checked;
+  filtered=allE.filter(e=>{
+    if(cat!=='all'&&e.category!==cat)return false;
+    if(pid!=='all'&&String(e.pid)!==pid)return false;
+    if(errOnly&&!e.isError)return false;
+    if(srch&&!e.syscall?.toLowerCase().includes(srch)&&!e.args?.toLowerCase().includes(srch)&&!e.raw?.toLowerCase().includes(srch))return false;
+    return true;
+  });
+  renderTable();
+}
+
+function renderTable(){
+  const total=Math.ceil(filtered.length/PGS);
+  const page=filtered.slice(PAGE*PGS,(PAGE+1)*PGS);
+  document.getElementById('tbl-body').innerHTML=page.map(e=>{
+    const cc=CATS[e.category]?.c||'#888780';
+    const cl=CATS[e.category]?.l||'other';
+    const argsSafe=(e.args||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const retSafe=(e.retval||'—').replace(/</g,'&lt;');
+    return`<tr>
+      <td style="color:var(--color-text-tertiary)">${e.pid??'—'}</td>
+      <td><span style="color:${cc};font-weight:500">${e.syscall}</span>${e.unfinished?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↩</span>':''}${e.resumed?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↪</span>':''}</td>
+      <td><span class="badge" style="background:${cc}18;color:${cc};border:0.5px solid ${cc}55">${cl}</span></td>
+      <td title="${argsSafe}" style="color:var(--color-text-secondary)">${argsSafe.substring(0,55)}${argsSafe.length>55?'…':''}</td>
+      <td style="color:${e.isError?'var(--color-text-danger)':'var(--color-text-tertiary)'}">${retSafe}</td>
+    </tr>`;
+  }).join('');
+  if(total<=1){document.getElementById('pg').innerHTML='';return;}
+  document.getElementById('pg').innerHTML=`
+    <button onclick="goPg(${PAGE-1})" ${PAGE===0?'disabled':''} style="font-family:var(--font-mono);font-size:11px">‹ prev</button>
+    <span>${PAGE+1} / ${total} &nbsp;(${filtered.length} rows)</span>
+    <button onclick="goPg(${PAGE+1})" ${PAGE>=total-1?'disabled':''} style="font-family:var(--font-mono);font-size:11px">next ›</button>
+  `;
+}
+
+function goPg(n){PAGE=n;renderTable();}
+
+function resetAll(){
+  document.getElementById('results').classList.add('hidden');
+  document.getElementById('log-in').value='';
+  document.getElementById('lc').textContent='0 linhas';
+  document.getElementById('pills').innerHTML='';
+  allE=[];allA=[];filtered=[];PAGE=0;
+  if(catCh){catCh.destroy();catCh=null;}
+  if(topCh){topCh.destroy();topCh=null;}
+}
+</script>

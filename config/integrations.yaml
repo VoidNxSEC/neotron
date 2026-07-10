@@ -18,5 +18,5 @@ phantom:
 
 spectre:
   nats:
-    enabled: false
+    enabled: true
     url: "nats://localhost:4222"
