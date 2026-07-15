@@ -301,8 +301,18 @@ function renderTable(){
   document.getElementById('tbl-body').innerHTML=page.map(e=>{
     const cc=CATS[e.category]?.c||'#888780';
     const cl=CATS[e.category]?.l||'other';
-    const argsSafe=(e.args||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const retSafe=(e.retval||'—').replace(/</g,'&lt;');
+    const argsSafe=(e.args||'')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
+    const retSafe=(e.retval||'—')
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#39;');
     return`<tr>
       <td style="color:var(--color-text-tertiary)">${e.pid??'—'}</td>
       <td><span style="color:${cc};font-weight:500">${e.syscall}</span>${e.unfinished?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↩</span>':''}${e.resumed?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↪</span>':''}</td>
