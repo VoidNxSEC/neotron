@@ -295,12 +295,24 @@ function applyFlt(){
   renderTable();
 }
 
+function escHtml(v){
+  return String(v??'')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
 function renderTable(){
   const total=Math.ceil(filtered.length/PGS);
   const page=filtered.slice(PAGE*PGS,(PAGE+1)*PGS);
   document.getElementById('tbl-body').innerHTML=page.map(e=>{
     const cc=CATS[e.category]?.c||'#888780';
     const cl=CATS[e.category]?.l||'other';
+    const pidSafe=escHtml(e.pid??'—');
+    const syscallSafe=escHtml(e.syscall||'');
+    const clSafe=escHtml(cl);
     const argsSafe=(e.args||'')
       .replace(/&/g,'&amp;')
       .replace(/</g,'&lt;')
@@ -314,9 +326,9 @@ function renderTable(){
       .replace(/"/g,'&quot;')
       .replace(/'/g,'&#39;');
     return`<tr>
-      <td style="color:var(--color-text-tertiary)">${e.pid??'—'}</td>
-      <td><span style="color:${cc};font-weight:500">${e.syscall}</span>${e.unfinished?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↩</span>':''}${e.resumed?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↪</span>':''}</td>
-      <td><span class="badge" style="background:${cc}18;color:${cc};border:0.5px solid ${cc}55">${cl}</span></td>
+      <td style="color:var(--color-text-tertiary)">${pidSafe}</td>
+      <td><span style="color:${cc};font-weight:500">${syscallSafe}</span>${e.unfinished?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↩</span>':''}${e.resumed?'<span style="color:var(--color-text-tertiary);font-size:9px"> ↪</span>':''}</td>
+      <td><span class="badge" style="background:${cc}18;color:${cc};border:0.5px solid ${cc}55">${clSafe}</span></td>
       <td title="${argsSafe}" style="color:var(--color-text-secondary)">${argsSafe.substring(0,55)}${argsSafe.length>55?'…':''}</td>
       <td style="color:${e.isError?'var(--color-text-danger)':'var(--color-text-tertiary)'}">${retSafe}</td>
     </tr>`;
