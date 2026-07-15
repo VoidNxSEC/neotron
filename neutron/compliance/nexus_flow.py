@@ -1,7 +1,8 @@
 """
-NEXUS 4-Layer Defense-in-Depth Compliance Flow
+NEXUS 5-Layer Defense-in-Depth Compliance Flow
 
 Orchestrates the complete compliance enforcement chain:
+Layer 0: TEMPORAL (LangMath — temporal reputation + linguistic algebra)
 Layer 1: SENTINEL (Application-level validation)
 Layer 2: BASTION (Kernel-level enforcement)
 Layer 3: CORTEX (Multi-agent LLM) + ORACLE (Explainability)
@@ -14,6 +15,7 @@ mathematically impossible through defense-in-depth architecture.
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import time
 import uuid
@@ -93,6 +95,7 @@ class NEXUSComplianceFlow:
 
     def __init__(
         self,
+        enable_temporal: bool = True,
         enable_bastion: bool = True,
         enable_smart_contracts: bool = False,
         enable_memory: bool = True,
@@ -101,15 +104,18 @@ class NEXUSComplianceFlow:
         Initialize compliance flow.
 
         Args:
+            enable_temporal: Enable Layer 0 temporal reputation guard (LangMath)
             enable_bastion: Enable kernel-level enforcement (Layer 2)
             enable_smart_contracts: Enable on-chain logging (Layer 3)
             enable_memory: Enable agent memory for learning
         """
+        self.enable_temporal = enable_temporal
         self.enable_bastion = enable_bastion
         self.enable_smart_contracts = enable_smart_contracts
         self.enable_memory = enable_memory
 
         # Lazy import heavy dependencies
+        self._temporal_guard = None
         self._sentinel = None
         self._cortex_swarm = None
         self._oracle = None
@@ -117,10 +123,20 @@ class NEXUSComplianceFlow:
 
         logger.info(
             f"NEXUS Compliance Flow initialized: "
+            f"temporal={enable_temporal}, "
             f"bastion={enable_bastion}, "
             f"smart_contracts={enable_smart_contracts}, "
             f"memory={enable_memory}"
         )
+
+    def _get_temporal_guard(self):
+        """Lazy-load Layer 0 TemporalGuard (LangMath integration)."""
+        if self._temporal_guard is None:
+            from neutron.compliance.temporal_guard import TemporalGuard
+
+            self._temporal_guard = TemporalGuard()
+            logger.debug("Layer 0 TemporalGuard initialized")
+        return self._temporal_guard
 
     def _get_sentinel(self):
         """Lazy-load SENTINEL guardrails."""
@@ -128,13 +144,13 @@ class NEXUSComplianceFlow:
             from neutron.compliance.auditors.lgpd import get_lgpd_guardrails
 
             self._sentinel = get_lgpd_guardrails()
-            logger.debug("SENTINEL guardrails loaded")
+            logger.debug("SENTINEL guardrails loaded (Layer 1)")
         return self._sentinel
 
     def _get_cortex_swarm(self):
         """Lazy-load CORTEX agent swarm."""
         if self._cortex_swarm is None:
-            from neutron.agents.cortex import Agent, AgentSwarm, ConsensusStrategy
+            from neutron.orchestration.cortex import Agent, AgentSwarm, ConsensusStrategy
 
             # Create specialized agents
             agents = [
@@ -194,6 +210,80 @@ class NEXUSComplianceFlow:
             self._storage = DecentralizedStorage()
             logger.debug("Decentralized storage initialized")
         return self._storage
+
+    async def _layer0_temporal(self, request: ComplianceRequest) -> LayerResult:
+        """
+        Layer 0: TEMPORAL - Temporal reputation + linguistic algebra (LangMath).
+
+        Detects boiling-frog attacks via:
+        - Linguistic manipulation scoring (CriticalDiscourseAnalyzer)
+        - Temporal reputation tracking (TemporalReputation)
+        - Gradual escalation detection (linear regression on risk scores)
+        - Dynamic threshold adaptation per agent
+        """
+        start = time.time()
+        logger.info(f"[Layer 0: TEMPORAL] Analyzing request {request.request_id}")
+
+        if not self.enable_temporal:
+            return LayerResult(
+                layer_name="TEMPORAL",
+                passed=True,
+                status="SKIPPED",
+                details="Temporal guard disabled (enable_temporal=False)",
+                processing_time_ms=(time.time() - start) * 1000,
+                metadata={"enabled": False},
+            )
+
+        try:
+            guard = self._get_temporal_guard()
+
+            # Extract agent_id and content from the request
+            agent_id = request.customer_id or "anonymous"
+            content = (
+                json.dumps(request.data, ensure_ascii=False) if request.data else request.action
+            )
+
+            # Run temporal validation
+            verdict = guard.validate(agent_id=agent_id, content=content)
+
+            status = "PASS" if verdict.passed else "TEMPORAL_BLOCK"
+            details = verdict.reason
+
+            logger.info(
+                f"[Layer 0: TEMPORAL] {'✓ Passed' if verdict.passed else '❌ Blocked'} - "
+                f"risk={verdict.risk_score:.3f}, R={verdict.reputation:.3f}, "
+                f"T={verdict.threshold:.3f}, escalation={verdict.escalation_detected}"
+            )
+
+            return LayerResult(
+                layer_name="TEMPORAL",
+                passed=verdict.passed,
+                status=status,
+                details=details,
+                processing_time_ms=(time.time() - start) * 1000,
+                metadata={
+                    "reputation": verdict.reputation,
+                    "risk_score": verdict.risk_score,
+                    "threshold": verdict.threshold,
+                    "escalation_detected": verdict.escalation_detected,
+                    "escalation_slope": verdict.escalation_slope,
+                    "manipulation_score": verdict.manipulation_score,
+                    "agent_id": agent_id,
+                    "langmath_available": guard._has_full_langmath,
+                },
+            )
+
+        except Exception as e:
+            logger.error(f"[Layer 0: TEMPORAL] Error: {e}")
+            return LayerResult(
+                layer_name="TEMPORAL",
+                passed=True,  # Fail open — don't block on temporal error
+                status="ERROR",
+                details=f"Temporal guard error (fail-open): {str(e)}",
+                processing_time_ms=(time.time() - start) * 1000,
+                error=str(e),
+                metadata={"fail_open": True},
+            )
 
     async def _layer1_sentinel(self, request: ComplianceRequest) -> LayerResult:
         """
@@ -578,9 +668,10 @@ class NEXUSComplianceFlow:
 
     async def validate(self, request: ComplianceRequest) -> ComplianceResponse:
         """
-        Execute the complete 4-layer defense-in-depth compliance flow.
+        Execute the complete 5-layer defense-in-depth compliance flow.
 
         Flow:
+        0. TEMPORAL: Temporal reputation + linguistic algebra (LangMath)
         1. SENTINEL: Application-level validation (consent, structure)
         2. BASTION: Kernel-level enforcement (syscall filtering)
         3. CORTEX: Multi-agent LLM decision + ORACLE explanation
@@ -593,17 +684,37 @@ class NEXUSComplianceFlow:
             ComplianceResponse with decision, explanation, and audit trail
         """
         overall_start = time.time()
-        logger.info(f"🚀 Starting 4-layer compliance flow for {request.request_id}")
+        logger.info(f"🚀 Starting 5-layer compliance flow for {request.request_id}")
 
         layers: dict[str, LayerResult] = {}
         explanation = ""
+
+        # Layer 0: TEMPORAL (LangMath — boiling frog detection)
+        layer0 = await self._layer0_temporal(request)
+        layers["TEMPORAL"] = layer0
+
+        if not layer0.passed:
+            total_time = (time.time() - overall_start) * 1000
+            logger.warning(
+                f"⚠️  Layer 0 (TEMPORAL) failed - "
+                f"Request {request.request_id} rejected: {layer0.details}"
+            )
+
+            return ComplianceResponse(
+                request_id=request.request_id,
+                decision=ComplianceDecision.REJECTED,
+                confidence=1.0,
+                explanation=layer0.details,
+                audit_hash="",
+                layers=layers,
+                total_processing_time_ms=total_time,
+            )
 
         # Layer 1: SENTINEL
         layer1 = await self._layer1_sentinel(request)
         layers["SENTINEL"] = layer1
 
         if not layer1.passed:
-            # Early rejection if SENTINEL fails
             total_time = (time.time() - overall_start) * 1000
             logger.warning(f"⚠️  Layer 1 (SENTINEL) failed - Request {request.request_id} rejected")
 
@@ -612,7 +723,7 @@ class NEXUSComplianceFlow:
                 decision=ComplianceDecision.REJECTED,
                 confidence=layer1.metadata.get("confidence", 1.0),
                 explanation=layer1.details,
-                audit_hash="",  # No audit if rejected at Layer 1
+                audit_hash="",
                 layers=layers,
                 total_processing_time_ms=total_time,
             )
@@ -658,7 +769,7 @@ class NEXUSComplianceFlow:
         total_time = (time.time() - overall_start) * 1000
 
         logger.info(
-            f"✅ 4-layer flow complete for {request.request_id}: "
+            f"✅ 5-layer flow complete for {request.request_id}: "
             f"{decision.value} (confidence: {confidence:.2f}, "
             f"time: {total_time:.0f}ms)"
         )

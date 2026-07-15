@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:voidnxlabs:stf:schema:1.0",
+  "title": "Secure Trust Framework Schema",
+  "description": "JSON Schema for validating STF metadata blocks in .stf/*.stf files",
+  "type": "object",
+  "required": ["protocol", "stf_version", "mode"],
+  "properties": {
+    "protocol": {
+      "type": "string",
+      "description": "STF protocol identifier (e.g. NEXUS)",
+      "minLength": 1
+    },
+    "stf_version": {
+      "type": "string",
+      "description": "STF version (semver string)",
+      "pattern": "^\\d+\\.\\d+(\\.\\d+)?$"
+    },
+    "mode": {
+      "type": "string",
+      "description": "Operating mode of the component",
+      "enum": ["compliance", "audit", "enforcement", "monitor"]
+    },
+    "scope": {
+      "type": "string",
+      "description": "Regulatory scope (e.g. eu_ai_act_lgpd)"
+    },
+    "component": {
+      "type": "string",
+      "description": "Component name this STF applies to"
+    }
+  },
+  "additionalProperties": true
+}

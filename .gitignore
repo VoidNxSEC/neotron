@@ -9,7 +9,7 @@
 dist/
 *.egg-info/
 __pypackages__/
-
+INSTRUCTIONS.md
 # Python
 __pycache__/
 *.py[cod]

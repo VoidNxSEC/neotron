@@ -21,6 +21,8 @@ dependencies = [
   "tqdm>=4.66.0",
   "click>=8.1.0",
   "PyYAML>=6.0.3",
+  # Event bus
+  "nats-py>=0.8.0",
   # Note: ML deps (mlflow, ray, torch, anthropic, openai, dspy, etc.)
   # have been moved to ml-offload-api/python/pyproject.toml (mlops package)
   "lint (>=1.2.1,<2.0.0)",
@@ -100,6 +102,7 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
 addopts = "-v --tb=short -m 'not integration'"
+asyncio_mode = "auto"
 markers = [
     "integration: Integration tests",
     "benchmark: Benchmark tests",

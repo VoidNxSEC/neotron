@@ -3,6 +3,7 @@ import { Inter } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/lib/contracts/providers"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
+import { MultiChainStatus } from "@/components/web3/MultiChainStatus"
 import Link from "next/link"
 
 const inter = Inter({ subsets: ["latin"] })
@@ -51,7 +52,10 @@ export default function RootLayout({
                       </Link>
                     </div>
                   </div>
-                  <ConnectButton />
+                  <div className="flex items-center gap-3">
+                    <MultiChainStatus />
+                    <ConnectButton />
+                  </div>
                 </div>
               </div>
             </nav>

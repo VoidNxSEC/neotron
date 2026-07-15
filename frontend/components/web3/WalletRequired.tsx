@@ -24,7 +24,7 @@ export function WalletRequired({ children }: WalletRequiredProps) {
             </div>
             <CardTitle className="text-2xl">Wallet Required</CardTitle>
             <CardDescription>
-              Please connect your wallet to access this page
+              Please connect your wallet to access this page, or if you don't have one, you can create one using the button below.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">

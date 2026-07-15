@@ -134,7 +134,10 @@
                 python313Packages.numpy
                 python313Packages.mypy
                 python313Packages.click
-
+                python313Packages.web3
+                python313Packages.eth-account
+                python313Packages.temporalio
+                python313Packages.sqlalchemy
                 # System dependencies
                 postgresql_15
                 docker
@@ -164,6 +167,7 @@
                 # Monitoring tools
                 htop
                 nvtopPackages.full
+
 
                 # CUDA (fornecido pelo Nix - versão específica)
                 cudaPackages.cudatoolkit
@@ -296,6 +300,10 @@
             cfg = config.services.neutron-ml-pipeline;
           in
           {
+            imports = [
+              ./nix/langmath/modules
+            ];
+
             options.services.neutron-ml-pipeline = {
               enable = mkEnableOption "Neutron ML Pipeline services";
 
@@ -494,5 +502,6 @@
               ];
             };
           };
+      nixosModules.langmath = import ./nix/langmath/modules;
     };
 }

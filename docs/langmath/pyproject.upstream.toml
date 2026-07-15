@@ -1,0 +1,35 @@
+[project]
+name = "langmath"
+version = "0.1.0"
+description = "Heuristics applied to advanced epistemology and linear algebra for studies of behaviors and biases in language models - Multilingual Research"
+authors = [{ name = "marcosfpina", email = "sec@voidnx.com" }]
+license = "Apache 2.0"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+  "pip",
+  "typer",
+  "rich",
+  "chromadb",
+  "sentence-transformers",
+  "langchain",
+  "langchain-openai",
+  "pydantic-settings",
+  "requests",
+  "brev",
+  "transformers",
+  "torch",
+  "accelerate",
+  "bitsandbytes",
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
+
+[project.scripts]
+langmath = "neutron.langmath.cli:app"

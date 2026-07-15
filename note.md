@@ -1,0 +1,3 @@
+- Neotron pode agir como um guardrails de comentarios e conteudo nas redes sociais ou apps.
+- Neotron vai usar eBPF em conjunto com SECOMP-BPF para monitorar e agir ativamente avaliando todas as chamadas em trabalhos agenticos.
+- Neotron vai ser integrado com LangMath
