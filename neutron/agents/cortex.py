@@ -288,6 +288,7 @@ class AgentSwarm:
             "individual_results": [
                 {
                     "agent": r.agent_name,
+                    "content": r.content,
                     "confidence": r.confidence,
                     "metadata": r.metadata,
                 }

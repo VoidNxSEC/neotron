@@ -175,8 +175,8 @@ class NEXUSConfig:
 
     # Database configuration
     database_url: str = field(
-        default_factory=lambda: os.getenv(
-            "DATABASE_URL", "postgresql://neutron:neutron@localhost/neutron"
+        default_factory=lambda: secret(
+            "database_url", "postgresql://neutron:neutron@localhost:5433/neutron"
         )
     )
 
@@ -184,7 +184,7 @@ class NEXUSConfig:
     vault_addr: str = field(
         default_factory=lambda: os.getenv("VAULT_ADDR", "http://localhost:8200")
     )
-    vault_token: str = field(default_factory=lambda: os.getenv("VAULT_TOKEN", ""))
+    vault_token: str = field(default_factory=lambda: secret("vault_token", ""))
 
     # API configuration
     api_host: str = field(default_factory=lambda: os.getenv("API_HOST", "0.0.0.0"))

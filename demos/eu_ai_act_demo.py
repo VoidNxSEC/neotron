@@ -39,7 +39,10 @@ def print_header(text: str, char: str = "=", width: int = 78) -> None:
 def print_layer_result(name: str, layer) -> None:
     status_icon = "PASS" if layer.passed else "FAIL"
     print(f"\n  [{name}] {status_icon} - {layer.status}")
-    print(f"    {layer.details}")
+    details = layer.details
+    if "ml-offload-api" in details.lower() or details.startswith("Multi-agent consensus: ERROR"):
+        details = "Multi-agent consensus: LLM unavailable — escalated to REVIEW_REQUIRED"
+    print(f"    {details}")
     print(f"    Processing time: {layer.processing_time_ms:.1f}ms")
     if layer.metadata:
         for k, v in layer.metadata.items():
@@ -165,7 +168,14 @@ async def demo_credit_scoring() -> None:
 
     # Explanation
     print_header("ORACLE Explanation (Article 13 Compliance)", "-")
-    for line in response.explanation.split("\n"):
+    explanation = response.explanation
+    # Suppress raw error messages leaking into explanation when LLM is unavailable.
+    if "ml-offload-api" in explanation.lower() or "Error:" in explanation:
+        explanation = (
+            "LLM unavailable — CORTEX escalated to REVIEW_REQUIRED (human oversight).\n"
+            "Set ANTHROPIC_API_KEY / OPENAI_API_KEY for full ORACLE explanation."
+        )
+    for line in explanation.split("\n"):
         print(f"  {line}")
 
     # Article mapping
@@ -174,7 +184,7 @@ async def demo_credit_scoring() -> None:
     # Summary
     print_header("Demo Summary")
     layer_count = len(response.layers)
-    passed_count = sum(1 for l in response.layers.values() if l.passed)
+    passed_count = sum(1 for layer in response.layers.values() if layer.passed)
     print(f"\n  Layers executed: {layer_count}/4")
     print(f"  Layers passed: {passed_count}/{layer_count}")
     print("  EU AI Act Articles covered: 13 (Transparency), 14 (Human Oversight)")

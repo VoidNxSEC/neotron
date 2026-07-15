@@ -162,3 +162,7 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# SOPS — nunca commitar plaintext
+secrets/*.yaml
+!secrets/*.enc.yaml
