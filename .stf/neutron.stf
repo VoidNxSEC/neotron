@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Secure Trust Framework (STF) — Neotron Compliance Engine
+  Protocol: NEXUS | Version: 1.0 | Mode: compliance
+-->
+---
+protocol: NEXUS
+stf_version: "1.0"
+mode: compliance
+scope: eu_ai_act_lgpd
+component: neotron
+---
+
+<stf xmlns="urn:voidnxlabs:stf:1.0"
+     protocol="NEXUS"
+     version="1.0"
+     mode="compliance"
+     component="neotron">
+
+  <!-- ── Directives ──────────────────────────────────────────────────── -->
+
+  <directive id="STF-D001" priority="critical">
+    <title>Data Minimisation</title>
+    <description>
+      All personal data processed by Neotron must be limited to what is strictly
+      necessary for the compliance evaluation purpose (EU AI Act Art. 10 / LGPD Art. 6 IV).
+    </description>
+    <enforcement>mandatory</enforcement>
+  </directive>
+
+  <directive id="STF-D002" priority="high">
+    <title>Auditability</title>
+    <description>
+      All AI system decisions and compliance evaluations must produce a structured
+      audit trail consumable by adr-ledger and spectre event mesh.
+    </description>
+    <enforcement>mandatory</enforcement>
+  </directive>
+
+  <directive id="STF-D003" priority="high">
+    <title>Human Oversight</title>
+    <description>
+      High-risk AI decisions (as defined in EU AI Act Annex III) must route through
+      a human-in-the-loop gate before final output is emitted.
+    </description>
+    <enforcement>mandatory</enforcement>
+  </directive>
+
+  <directive id="STF-D004" priority="medium">
+    <title>Transparency</title>
+    <description>
+      Natural persons interacting with Neotron must be informed they are interacting
+      with an AI system (EU AI Act Art. 52).
+    </description>
+    <enforcement>recommended</enforcement>
+  </directive>
+
+  <directive id="STF-D005" priority="medium">
+    <title>Model Robustness</title>
+    <description>
+      Compliance models must be evaluated for accuracy, robustness, and bias on
+      representative datasets before production deployment.
+    </description>
+    <enforcement>recommended</enforcement>
+  </directive>
+
+  <!-- ── Constraints ─────────────────────────────────────────────────── -->
+
+  <constraint id="STF-C001" type="security">
+    <title>No Plaintext Credentials</title>
+    <description>
+      API keys, secrets, and credentials must never appear in plaintext in source
+      code, logs, or structured outputs. Use SOPS-encrypted secrets only.
+    </description>
+    <violation_action>block_deployment</violation_action>
+  </constraint>
+
+  <constraint id="STF-C002" type="data">
+    <title>PII Retention Limit</title>
+    <description>
+      Personally Identifiable Information must not be retained beyond 90 days
+      without explicit legal basis (LGPD Art. 15).
+    </description>
+    <violation_action>alert_dpo</violation_action>
+  </constraint>
+
+  <constraint id="STF-C003" type="operational">
+    <title>Compliance Evidence Required</title>
+    <description>
+      Every high-risk AI output must be accompanied by a compliance evidence
+      document linking to applicable regulatory articles.
+    </description>
+    <violation_action>reject_output</violation_action>
+  </constraint>
+
+  <constraint id="STF-C004" type="governance">
+    <title>ADR Coverage for Breaking Changes</title>
+    <description>
+      Any breaking change to the Neotron API or data schema must have an accepted
+      ADR in adr-ledger before the change is merged to main.
+    </description>
+    <violation_action>block_merge</violation_action>
+  </constraint>
+
+  <constraint id="STF-C005" type="security">
+    <title>Dependency CVE Gate</title>
+    <description>
+      No dependency with a CVSS score >= 7.0 may be introduced without an explicit
+      risk acceptance ADR.
+    </description>
+    <violation_action>block_deployment</violation_action>
+  </constraint>
+
+</stf>

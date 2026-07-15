@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# ADR management CLI for neotron
+set -euo pipefail
+
+CMD="${1:-help}"
+shift || true
+
+ADR_DIR="adr"
+PROPOSED="$ADR_DIR/proposed"
+ACCEPTED="$ADR_DIR/accepted"
+
+usage() {
+  cat <<EOF
+Usage: scripts/adr <command> [args]
+
+Commands:
+  new <id> <title>   Create a new proposed ADR
+  list               List all ADRs
+  accept <id>        Move ADR from proposed to accepted
+  reject <id>        Move ADR to rejected status
+  help               Show this help
+EOF
+}
+
+cmd_new() {
+  local id="${1:?ID required}" title="${2:?Title required}"
+  local file="$PROPOSED/${id}.md"
+  cat > "$file" <<EOF
+---
+id: "$id"
+title: "$title"
+status: proposed
+date: "$(date +%Y-%m-%d)"
+---
+
+## Context
+
+[Describe the context and problem statement]
+
+## Decision
+
+[Describe the decision that was made]
+
+## Consequences
+
+[Describe the consequences of the decision]
+EOF
+  echo "✓ Created: $file"
+}
+
+cmd_list() {
+  echo "=== Proposed ==="
+  for f in "$PROPOSED"/*.md; do [ -f "$f" ] && echo "  $(basename "$f")"; done 2>/dev/null || echo "  (none)"
+  echo "=== Accepted ==="
+  for f in "$ACCEPTED"/*.md; do [ -f "$f" ] && echo "  $(basename "$f")"; done 2>/dev/null || echo "  (none)"
+}
+
+case "$CMD" in
+  new)    cmd_new "$@" ;;
+  list)   cmd_list ;;
+  accept) echo "Use scripts/adr accept <id> — not yet implemented" ;;
+  reject) echo "Use scripts/adr reject <id> — not yet implemented" ;;
+  help|*) usage ;;
+esac
